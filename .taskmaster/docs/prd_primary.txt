@@ -1,25 +1,35 @@
-Product Requirements Document (PRD) — __PRIMARY_PRD__
+# Product Requirements Document (PRD)
 
-1) Overview
-- What are we building? Who benefits?
+## 1. Overview
+**What:** [One sentence describing what we're building]
+**Who:** [Target users/beneficiaries]
+**Why:** [Problem being solved]
 
-2) Core Features
-- Bullet list of must-have capabilities.
+## 2. Core Features
+- [ ] Feature 1: [Description]
+- [ ] Feature 2: [Description]
+- [ ] Feature 3: [Description]
 
-3) Architecture & APIs
-- Describe data flow, services, and external APIs.
+## 3. Architecture
+- **Components:** [List main system components]
+- **Data Flow:** [Describe how data moves through system]
+- **External APIs:** [List any third-party integrations]
 
-4) Acceptance Criteria
-- Functional + non-functional checks.
+## 4. Acceptance Criteria
+### Functional
+- [ ] [Criterion 1]
+- [ ] [Criterion 2]
 
-5) Sources
-- Link research docs or meeting notes.
+### Non-Functional
+- [ ] Performance: [Target metrics]
+- [ ] Security: [Requirements]
 
-6) Acceptance by Metrics
-- Quantitative targets.
+## 5. Out of Scope
+- [What is explicitly NOT included in this phase]
 
-7) Out of Scope & Assumptions
-- Clarify what is excluded.
+## 6. Dependencies & Risks
+- **Dependencies:** [What this relies on]
+- **Risks:** [Potential blockers and mitigations]
 
-8) Glossary
-- Define key terms.
+## 7. Sources
+- [Link to research docs, meeting notes, etc.]

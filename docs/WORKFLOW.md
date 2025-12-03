@@ -1,25 +1,27 @@
-# Standard Workflow: Cursor → PRDs/AGENTS → GitHub → Task Master
+# Standard Workflow: Claude Code → PRDs → GitHub → Task Master
 
 ## Overview
-Use Cursor (or any editor) to draft PRDs/AGENTS, set up repo hygiene, then switch to Codex + Task Master for execution. Adapt steps to your org, but keep the sequence consistent.
+Use Claude Code to draft PRDs, set up repo structure, then use Task Master for task management. Adapt steps to your team, but keep the sequence consistent.
 
 ## Phases
-1. **Cursor / Docs Phase**
-   - Author PRDs in `.taskmaster/docs/` and `AGENTS.md`.
-   - Maintain sources in `research-documents/`.
-   - Keep guardrails mapped in `docs/GUARDRAILS.md`.
+
+1. **Documentation Phase**
+   - Author PRDs in `.taskmaster/docs/`
+   - Maintain research in `research-documents/`
+   - Map guardrails in `docs/GUARDRAILS.md`
 
 2. **GitHub Hygiene**
-   - Commit/push docs and scaffolding.
-   - Ensure CI (lint/tests) is green.
+   - Commit/push docs and scaffolding
+   - Ensure CI (lint/tests) is green
 
-3. **Codex + Task Master**
-   - Configure Codex CLI + Task Master.
-   - Parse one PRD per tag, analyze, expand tasks.
-   - Package-first restructure after switching: create `src/<package>/`, update `pyproject.toml`, ensure CI installs the package.
+3. **Task Master Setup**
+   - Parse PRD: `task-master parse-prd --file .taskmaster/docs/prd_primary.txt`
+   - Analyze complexity: `task-master analyze-complexity`
+   - Expand tasks: `task-master expand --all`
 
 4. **Implementation**
-   - Work the Task Master backlog, append notes, keep docs updated.
+   - Work Task Master backlog
+   - Update docs as behavior changes
 
 5. **QA & Release**
-   - Run smoke + pytest, update CHANGELOG, collect review findings, and release.
+   - Run `pytest`, update CHANGELOG, release

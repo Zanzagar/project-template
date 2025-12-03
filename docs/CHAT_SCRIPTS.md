@@ -1,8 +1,8 @@
 # Chat Scripts (Copy/Paste)
 
-Adapt these prompts when coordinating in Cursor/Codex/Task Master.
+Useful prompts for Claude Code and Task Master workflows.
 
-## Docs Phase
+## Documentation Phase
 ```
 Draft a PRD for <scope>. Include Overview, Core Features, Architecture, Acceptance Criteria, Sources, Metrics, Out of Scope, Glossary.
 ```
@@ -11,28 +11,30 @@ Draft a PRD for <scope>. Include Overview, Core Features, Architecture, Acceptan
 Summarize guardrails for <system> and map them to source files in docs/GUARDRAILS.md.
 ```
 
-## Codex Prep
-```
-Confirm Codex CLI + Task Master install. Show `codex --version` and config path (read-only).
-```
-
-```
-Document how to set Task Master main model to gpt-5-codex. Do not run the command now.
-```
-
 ## Task Master Phase
 ```
-Parse each PRD into its own tag (<primary_tag>, etc.) and stop after parsing.
+Parse the PRD and generate tasks:
+task-master parse-prd --file .taskmaster/docs/prd_primary.txt
 ```
 
 ```
-Analyze current tag, cite sources, expand tasks with tool mode standard.
+Analyze task complexity and expand into subtasks:
+task-master analyze-complexity --research
+task-master expand --all
 ```
 
 ```
-For subtask <id>, outline plan (files, functions, risks), mark in-progress, append notes, and record tests.
+Show current tasks and recommend next action:
+task-master list
+task-master next
+```
+
+## Implementation
+```
+For task <id>, outline plan (files, functions, risks), then implement.
 ```
 
 ```
-Update task statuses and summarize blockers.
+Mark task complete and update any affected documentation:
+task-master set-status --id=<id> --status=done
 ```

@@ -5,14 +5,15 @@
 | __Agent__ | Describe the workstream | Checklist for success |
 
 ## Collaboration Rituals
-- Daily async update (channel of choice) with blocker/progress/plan.
-- Weekly sync referencing GOALS + PRDs.
-- **Claude Review Gate** before any Task Master parse: run lint/tests, summarize findings, confirm docs updated.
+- Daily async update with blocker/progress/plan
+- Weekly sync referencing GOALS + PRDs
+- **Review Gate** before Task Master parse: run lint/tests, confirm docs updated
 
 ## Escalation Rules
-1. Document how issues escalate (security, comms, infra, etc.).
+1. Document how issues escalate (security, comms, infra, etc.)
 
-## MCP & Model References
-- `CLAUDE.md` – Project context file read by Claude Code at conversation start.
-- `.taskmaster/config.json` – Claude Opus 4.5 / Sonnet 4.5 model configuration.
-- Keep config in sync with template and restart `task-master-ai` after edits.
+## Claude Code References
+- `CLAUDE.md` – Project context (read automatically at conversation start)
+- `.claude/skills/` – Model-invoked capabilities (code-review, debugging, git-recovery)
+- `.claude/commands/` – User-invoked slash commands
+- `.taskmaster/config.json` – Task Master model configuration

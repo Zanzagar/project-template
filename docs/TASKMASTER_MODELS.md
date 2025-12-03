@@ -4,8 +4,8 @@ Use these defaults whenever you initialize Task Master for a new project.
 
 | Role | Provider | Model | Max Tokens | Temperature |
 | --- | --- | --- | --- | --- |
-| main | `codex-cli` | `gpt-5.1-codex` | 260,000 | 0.2 |
-| research | `codex-cli` | `gpt-5.1` | 200,000 | 0.1 |
-| fallback | `codex-cli` | `gpt-5.1` | 200,000 | 0.2 |
+| main | `claude-code` | `claude-opus-4-5-20250929` | 200,000 | 0.2 |
+| research | `claude-code` | `claude-opus-4-5-20250929` | 200,000 | 0.1 |
+| fallback | `claude-code` | `claude-sonnet-4-5-20250929` | 200,000 | 0.2 |
 
-Copy `.taskmaster/config.json` from this template and update only if you have a specific reason (document differences in README/GOALS).
+Copy `.taskmaster/config.json` from this template. Update only if needed (document changes in README).

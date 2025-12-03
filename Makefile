@@ -1,21 +1,25 @@
 PY=python
 PIP=pip
 
-.PHONY: install dev fmt lint test build
+.PHONY: install dev fmt lint test build check
 
 install:
-	$(PIP) install -r requirements.txt
+	$(PIP) install -e .
 
 dev:
-	$(PIP) install -r requirements-dev.txt
+	$(PIP) install -e ".[dev]"
 	pre-commit install
 
 fmt:
-	black .
-	isort .
+	ruff format .
+	ruff check --fix .
 
 lint:
-	ruff .
+	ruff check .
+
+check:
+	ruff check .
+	mypy src/
 
 test:
 	pytest -q

@@ -39,7 +39,6 @@ STOCK_RULES=(
     "docs/rules/git-workflow.md"
     "docs/rules/python-standards.md"
     "docs/rules/self-improve.md"
-    "docs/rules/cursor-rules-format.md"
 )
 
 STOCK_COMMANDS=(
@@ -86,6 +85,20 @@ done
 
 echo -e "${BLUE}Template Sync Tool v1.0.0${NC}"
 echo "=========================="
+
+# Check for saved template source if none provided
+if [ -z "$TEMPLATE_GIT" ] && [ "$TEMPLATE_PATH" = "$HOME/projects/project-template" ]; then
+    if [ -f ".template/source" ]; then
+        SAVED_SOURCE=$(cat .template/source)
+        if [[ "$SAVED_SOURCE" == http* ]] || [[ "$SAVED_SOURCE" == git@* ]]; then
+            TEMPLATE_GIT="$SAVED_SOURCE"
+            echo "Using saved template source: $TEMPLATE_GIT"
+        elif [ -d "$SAVED_SOURCE" ]; then
+            TEMPLATE_PATH="$SAVED_SOURCE"
+            echo "Using saved template path: $TEMPLATE_PATH"
+        fi
+    fi
+fi
 
 # If git URL provided, clone to temp directory
 if [ -n "$TEMPLATE_GIT" ]; then
@@ -220,5 +233,19 @@ if [ "$DRY_RUN" = true ]; then
     echo "Dry run complete. No files were modified."
     echo "Run without --dry-run to apply changes."
 else
+    # Record template source for future syncs
+    mkdir -p .template
+    if [ -n "$TEMPLATE_GIT" ]; then
+        echo "$TEMPLATE_GIT" > .template/source
+    else
+        echo "$TEMPLATE_PATH" > .template/source
+    fi
+
+    # Record template version if available
+    if [ -f "$TEMPLATE_PATH/.template-version" ]; then
+        cp "$TEMPLATE_PATH/.template-version" .template/version
+    fi
+
     echo -e "${GREEN}Sync complete.${NC}"
+    echo "Template source saved to .template/source"
 fi
