@@ -1,0 +1,25 @@
+Product Requirements Document (PRD) — __${name^^}_PRD__
+
+1) Overview
+- Describe the problem and the desired outcome.
+
+2) Core Features
+- List major capabilities.
+
+3) Architecture & APIs
+- Note integrations, data stores, scripts.
+
+4) Acceptance Criteria
+- Behavioral + quality targets.
+
+5) Sources
+- Cite PRDs, research, or transcripts.
+
+6) Acceptance by Metrics
+- Quantifiable success measures.
+
+7) Out of Scope & Assumptions
+- What is intentionally excluded?
+
+8) Glossary
+- Important definitions.
