@@ -55,3 +55,4 @@ mypy src/
 When needed, consult:
 - `docs/rules/git-workflow.md` - Git commands and recovery
 - `docs/rules/python-standards.md` - Code style reference
+- `docs/MCP_SETUP.md` - MCP server configuration (Task Master, Context7, GitHub)

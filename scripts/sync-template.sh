@@ -39,6 +39,7 @@ STOCK_RULES=(
     "docs/rules/git-workflow.md"
     "docs/rules/python-standards.md"
     "docs/rules/self-improve.md"
+    "docs/MCP_SETUP.md"
 )
 
 STOCK_COMMANDS=(
