@@ -10,7 +10,8 @@
 #   --template PATH   Use local template path (default: ~/projects/project-template)
 #   --git URL         Use git remote URL instead of local path
 #   --commands        Also sync .claude/commands/ files
-#   --all             Sync all template files (rules + commands)
+#   --skills          Also sync .claude/skills/ files
+#   --all             Sync all template files (rules + commands + skills)
 #   --force           Overwrite without prompting
 #   --check-versions  Show version info for synced files
 
@@ -21,6 +22,7 @@ TEMPLATE_PATH="${TEMPLATE_PATH:-$HOME/projects/project-template}"
 TEMPLATE_GIT=""
 DRY_RUN=false
 SYNC_COMMANDS=false
+SYNC_SKILLS=false
 FORCE=false
 CHECK_VERSIONS=false
 TEMP_DIR=""
@@ -48,6 +50,12 @@ STOCK_COMMANDS=(
     ".claude/commands/prd.md"
 )
 
+STOCK_SKILLS=(
+    ".claude/skills/code-review/SKILL.md"
+    ".claude/skills/debugging/SKILL.md"
+    ".claude/skills/git-recovery/SKILL.md"
+)
+
 # Cleanup function
 cleanup() {
     if [ -n "$TEMP_DIR" ] && [ -d "$TEMP_DIR" ]; then
@@ -63,7 +71,8 @@ while [[ "$#" -gt 0 ]]; do
         --template) TEMPLATE_PATH="$2"; shift ;;
         --git) TEMPLATE_GIT="$2"; shift ;;
         --commands) SYNC_COMMANDS=true ;;
-        --all) SYNC_COMMANDS=true ;;
+        --skills) SYNC_SKILLS=true ;;
+        --all) SYNC_COMMANDS=true; SYNC_SKILLS=true ;;
         --force) FORCE=true ;;
         --check-versions) CHECK_VERSIONS=true ;;
         --help|-h)
@@ -105,6 +114,9 @@ FILES_TO_SYNC=("${STOCK_RULES[@]}")
 if [ "$SYNC_COMMANDS" = true ]; then
     FILES_TO_SYNC+=("${STOCK_COMMANDS[@]}")
 fi
+if [ "$SYNC_SKILLS" = true ]; then
+    FILES_TO_SYNC+=("${STOCK_SKILLS[@]}")
+fi
 
 # Check versions mode
 if [ "$CHECK_VERSIONS" = true ]; then
@@ -137,6 +149,11 @@ fi
 mkdir -p docs/rules
 if [ "$SYNC_COMMANDS" = true ]; then
     mkdir -p .claude/commands
+fi
+if [ "$SYNC_SKILLS" = true ]; then
+    mkdir -p .claude/skills/code-review
+    mkdir -p .claude/skills/debugging
+    mkdir -p .claude/skills/git-recovery
 fi
 
 # Sync files
