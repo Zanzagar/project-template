@@ -44,6 +44,52 @@ mypy src/
 - Example: "API endpoints go in `src/api/`"
 - Example: "All models inherit from `BaseModel`"
 
+## Key Decisions & Constraints
+
+<!-- Document important architectural decisions -->
+- Example: "Package-first: Core code in `src/`, notebooks for demos"
+- Example: "All database queries go through the repository layer"
+
+## Gotchas & Watch-outs
+
+<!-- Document project-specific pitfalls to avoid -->
+- Example: "Widget X requires version 8.1+ to work"
+- Example: "Never call function Y without checking Z first"
+
+## Taskmaster Workflows
+
+```bash
+# List tasks for current tag
+task-master list --with-subtasks
+
+# Show specific task details
+task-master show <id>
+
+# Update task status
+task-master set-status --id <id> --status=<status>
+
+# Get next recommended task
+task-master next
+
+# Expand task into subtasks
+task-master expand --id=<id>
+
+# Parse PRD to generate tasks
+task-master parse-prd <prdfile> [--num-tasks N]
+```
+
+## Development Workflow
+
+### Daily Loop
+1. Pull latest changes; check task-master for next task
+2. Implement changes; run linter and tests
+3. Small, focused commits; PR when ready
+
+### Release Loop
+1. All tests passing; CHANGELOG entry added
+2. PR with references to tasks/PRDs
+3. Review, merge, tag release if applicable
+
 ## Current Focus
 
 <!-- Update frequently - helps Claude understand context -->
