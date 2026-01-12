@@ -15,15 +15,18 @@
 #   --dry-run         Preview changes without applying
 #   --template PATH   Use local template path (default: ~/projects/project-template)
 #   --git URL         Use git remote URL instead of local path
-#   --commands        Also sync .claude/commands/ files
-#   --skills          Also sync .claude/skills/ files
-#   --plugins         Also sync plugin system files
-#   --hooks           Also sync .claude/hooks/ files
-#   --mcps            Also sync MCP management files
+#   --rules           Sync .claude/rules/ files (auto-loaded by Claude Code)
+#   --commands        Sync .claude/commands/ files
+#   --skills          Sync .claude/skills/ files
+#   --plugins         Sync plugin system files
+#   --hooks           Sync .claude/hooks/ files
+#   --mcps            Sync MCP management files
 #   --all             Sync all template files
 #   --force           Overwrite without prompting
 #   --check-versions  Show version info for synced files
 #   --minimal         Only sync essential files (CLAUDE.md template, core commands)
+#
+# Note: If no category flags given, defaults to syncing rules only.
 
 set -e
 
@@ -52,11 +55,25 @@ DIM='\033[2m'
 NC='\033[0m'
 
 # Stock files to sync
-STOCK_RULES=(
+# New location: .claude/rules/ (auto-loaded by Claude Code)
+STOCK_CLAUDE_RULES=(
+    ".claude/rules/claude-behavior.md"
+    ".claude/rules/git-workflow.md"
+    ".claude/rules/python-standards.md"
+)
+
+# Legacy location: docs/rules/ (kept for backward compatibility)
+STOCK_DOCS_RULES=(
     "docs/rules/git-workflow.md"
     "docs/rules/python-standards.md"
     "docs/rules/self-improve.md"
     "docs/MCP_SETUP.md"
+)
+
+# Combined for default sync
+STOCK_RULES=(
+    "${STOCK_CLAUDE_RULES[@]}"
+    "${STOCK_DOCS_RULES[@]}"
 )
 
 STOCK_COMMANDS=(
@@ -110,10 +127,11 @@ STOCK_MCPS=(
 # Minimal set for quick adoption
 STOCK_MINIMAL=(
     "CLAUDE.md"
+    ".claude/rules/claude-behavior.md"
+    ".claude/rules/git-workflow.md"
     ".claude/commands/tasks.md"
     ".claude/commands/commit.md"
     ".claude/commands/setup.md"
-    "docs/rules/git-workflow.md"
 )
 
 # Cleanup function
@@ -136,7 +154,8 @@ while [[ "$#" -gt 0 ]]; do
         --plugins) SYNC_PLUGINS=true ;;
         --hooks) SYNC_HOOKS=true ;;
         --mcps) SYNC_MCPS=true ;;
-        --all) SYNC_COMMANDS=true; SYNC_SKILLS=true; SYNC_PLUGINS=true; SYNC_HOOKS=true; SYNC_MCPS=true ;;
+        --rules) SYNC_RULES=true ;;
+        --all) SYNC_COMMANDS=true; SYNC_SKILLS=true; SYNC_PLUGINS=true; SYNC_HOOKS=true; SYNC_MCPS=true; SYNC_RULES=true ;;
         --minimal) MINIMAL=true ;;
         --force) FORCE=true ;;
         --check-versions) CHECK_VERSIONS=true ;;
@@ -208,9 +227,27 @@ build_file_list() {
         return
     fi
 
-    # Default sync: rules + selected categories
-    FILES_TO_SYNC=("${STOCK_RULES[@]}")
+    # Check if any specific sync flags were given
+    ANY_FLAGS=false
+    [ "$SYNC_COMMANDS" = true ] && ANY_FLAGS=true
+    [ "$SYNC_SKILLS" = true ] && ANY_FLAGS=true
+    [ "$SYNC_PLUGINS" = true ] && ANY_FLAGS=true
+    [ "$SYNC_HOOKS" = true ] && ANY_FLAGS=true
+    [ "$SYNC_MCPS" = true ] && ANY_FLAGS=true
+    [ "$SYNC_RULES" = true ] && ANY_FLAGS=true
 
+    # If no flags given, default to rules only
+    if [ "$ANY_FLAGS" = false ]; then
+        FILES_TO_SYNC=("${STOCK_RULES[@]}")
+        return
+    fi
+
+    # Otherwise, only sync what's explicitly requested
+    FILES_TO_SYNC=()
+
+    if [ "$SYNC_RULES" = true ]; then
+        FILES_TO_SYNC+=("${STOCK_RULES[@]}")
+    fi
     if [ "$SYNC_COMMANDS" = true ]; then
         FILES_TO_SYNC+=("${STOCK_COMMANDS[@]}")
     fi

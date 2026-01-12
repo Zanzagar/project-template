@@ -72,6 +72,7 @@ fi
 [ ! -f "$REGISTRY" ] && MISSING_COMPONENTS+=("mcp-registry.json")
 [ ! -d "$PROJECT_DIR/.claude/hooks" ] && MISSING_COMPONENTS+=("hooks/")
 [ ! -d "$PROJECT_DIR/.claude/commands" ] && MISSING_COMPONENTS+=("commands/")
+[ ! -d "$PROJECT_DIR/.claude/rules" ] && MISSING_COMPONENTS+=("rules/")
 [ ! -f "$SYNC_SCRIPT" ] && MISSING_COMPONENTS+=("sync-template.sh")
 
 # Check if CLAUDE.md has been customized (not still placeholder)
@@ -205,6 +206,7 @@ case $SCENARIO in
             echo "  ./scripts/sync-template.sh sync --all"
             echo ""
             echo "Or selectively add:"
+            echo "  ./scripts/sync-template.sh sync --rules    # Add .claude/rules/ (auto-loaded)"
             echo "  ./scripts/sync-template.sh sync --hooks    # Add automation hooks"
             echo "  ./scripts/sync-template.sh sync --commands # Add new slash commands"
         else
