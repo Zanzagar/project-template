@@ -400,16 +400,16 @@ Apply a preset configuration based on project type:
 ./scripts/manage-mcps.sh preset python-backend  # Apply preset
 ```
 
-| Preset | MCPs Enabled | Est. Tokens |
-|--------|--------------|-------------|
-| `minimal` | task-master-ai, context7 | ~4,300 |
-| `python-backend` | + github, postgres | ~7,500 |
-| `frontend` | + github, playwright, magic, figma | ~10,200 |
-| `fullstack` | + github, playwright, postgres | ~10,800 |
-| `e-commerce` | + github, paypal, postgres | ~11,500 |
-| `content` | + github, wpcom-mcp | ~8,800 |
-| `testing` | + playwright | ~6,800 |
-| `data-engineering` | + github, postgres, mongodb | ~9,100 |
+| Preset | MCPs Enabled | Measured Tokens |
+|--------|--------------|-----------------|
+| `minimal` | task-master-ai, context7 | ~8,000 |
+| `python-backend` | + github, postgres | ~8,100 |
+| `frontend` | + github, playwright, magic | ~12,950 |
+| `fullstack` | + github, playwright, postgres | ~11,610 |
+| `e-commerce` | + github, paypal, postgres | ~18,060 |
+| `content` | + github, wpcom-mcp | ~13,900 |
+| `testing` | + playwright | ~11,450 |
+| `data-engineering` | + github, postgres, mongodb | ~11,760 |
 
 ### Token Usage
 
@@ -420,6 +420,47 @@ Check your current token overhead:
 ```
 
 **Note:** Changes require restarting Claude Code to take effect.
+
+## MCP Token Cost Reference
+
+Each MCP server consumes context tokens for its tool definitions. These costs are **per-session overhead** - paid regardless of whether tools are used.
+
+### Measured Token Costs (January 2026)
+
+| MCP Server | Tools | Tokens | Notes |
+|------------|-------|--------|-------|
+| **task-master-ai** | 46 | ~7,100 | Task management, autopilot, tags |
+| **paypal** | 28 | ~9,900 | Invoices, subscriptions, orders, disputes |
+| **wpcom-mcp** | 16 | ~5,900 | WordPress.com site management |
+| **mongodb** | 16 | ~3,600 | Queries, aggregations, Atlas |
+| **playwright** | 21 | ~3,450 | Browser automation |
+| **canva-dev** | 11 | ~2,500 | Canva app development |
+| **magic** | 4 | ~1,400 | 21st.dev UI components |
+| **context7** | 2 | ~900 | Library documentation |
+| **postgres** | 1 | ~60 | Read-only SQL queries |
+
+### Token Budget Guidelines
+
+| Context Window | Recommended Max MCP Tokens | Remaining for Work |
+|----------------|---------------------------|-------------------|
+| 200k (Opus) | ~40k (20%) | ~160k |
+| 200k (Sonnet) | ~40k (20%) | ~160k |
+| 128k (Haiku) | ~25k (20%) | ~103k |
+
+**Your current config**: 35.4k tokens (17.7%) - within healthy range.
+
+### Cost Optimization Strategies
+
+1. **Disable unused MCPs per-project**:
+   ```bash
+   claude mcp disable paypal --scope project
+   ```
+
+2. **Use presets matching your project type** (see below)
+
+3. **Check overhead with `/context`** after changes
+
+4. **Essential MCPs only**: `task-master-ai` + `context7` = ~8k tokens
 
 ## Security Notes
 
