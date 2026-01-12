@@ -1,3 +1,10 @@
+---
+paths:
+  - "**/*.py"
+  - "src/**/*.py"
+  - "tests/**/*.py"
+  - "scripts/**/*.py"
+---
 <!-- template-version: 2.0.0 -->
 <!-- template-file: .claude/rules/python-standards.md -->
 # Python Coding Standards

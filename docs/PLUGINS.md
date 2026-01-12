@@ -121,11 +121,57 @@ Available presets:
 
 ## Using Claude Code's Native Plugin System
 
-The wshobson/agents repository is designed to work with Claude Code's built-in plugin marketplace:
+Claude Code has a built-in `/plugin` command that provides official plugin management:
 
+### Official /plugin Commands
+
+```bash
+# List installed plugins
+/plugin list
+
+# Search marketplace
+/plugin search <query>
+
+# Install from marketplace
+/plugin install <plugin-name>
+
+# Install from GitHub repository
+/plugin install github:wshobson/agents/python-development
+
+# Remove a plugin
+/plugin remove <plugin-name>
+
+# View plugin details
+/plugin info <plugin-name>
+
+# Add a marketplace source
+/plugin marketplace add wshobson/agents
 ```
+
+### Official vs Template Plugin Management
+
+| Feature | Official `/plugin` | Template Scripts |
+|---------|-------------------|------------------|
+| Plugin installation | Yes | Yes |
+| Marketplace search | Yes | No |
+| Token tracking | No | Yes |
+| Interactive presets | No | Yes |
+| Project-type recommendations | No | Yes |
+| Installed plugin metrics | No | Yes |
+
+**Recommendation**: Use the official `/plugin` command for individual installs, and the template's `/plugins` wizard when setting up new projects or managing token budgets.
+
+### wshobson/agents Integration
+
+The wshobson/agents repository works with both systems:
+
+```bash
+# Official method
 /plugin marketplace add wshobson/agents
 /plugin install python-development
+
+# Template method (with token tracking)
+./scripts/manage-plugins.sh install python-development
 ```
 
 This project's plugin management script provides an additional layer for:
