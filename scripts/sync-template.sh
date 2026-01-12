@@ -1,9 +1,15 @@
 #!/bin/bash
 # sync-template.sh - Sync stock files from project-template
-# Version: 1.0.0
+# Version: 2.0.0
 #
 # Usage:
-#   ./scripts/sync-template.sh [options]
+#   ./scripts/sync-template.sh [command] [options]
+#
+# Commands:
+#   sync              Sync template files (default)
+#   adopt             Adopt template into existing project (first-time setup)
+#   update            Update to latest template version
+#   status            Show sync status and version info
 #
 # Options:
 #   --dry-run         Preview changes without applying
@@ -11,18 +17,27 @@
 #   --git URL         Use git remote URL instead of local path
 #   --commands        Also sync .claude/commands/ files
 #   --skills          Also sync .claude/skills/ files
-#   --all             Sync all template files (rules + commands + skills)
+#   --plugins         Also sync plugin system files
+#   --hooks           Also sync .claude/hooks/ files
+#   --mcps            Also sync MCP management files
+#   --all             Sync all template files
 #   --force           Overwrite without prompting
 #   --check-versions  Show version info for synced files
+#   --minimal         Only sync essential files (CLAUDE.md template, core commands)
 
 set -e
 
 # Configuration
 TEMPLATE_PATH="${TEMPLATE_PATH:-$HOME/projects/project-template}"
 TEMPLATE_GIT=""
+COMMAND="sync"
 DRY_RUN=false
 SYNC_COMMANDS=false
 SYNC_SKILLS=false
+SYNC_PLUGINS=false
+SYNC_HOOKS=false
+SYNC_MCPS=false
+MINIMAL=false
 FORCE=false
 CHECK_VERSIONS=false
 TEMP_DIR=""
@@ -32,6 +47,8 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+BOLD='\033[1m'
+DIM='\033[2m'
 NC='\033[0m'
 
 # Stock files to sync
@@ -48,12 +65,55 @@ STOCK_COMMANDS=(
     ".claude/commands/tasks.md"
     ".claude/commands/task-status.md"
     ".claude/commands/prd.md"
+    ".claude/commands/commit.md"
+    ".claude/commands/pr.md"
+    ".claude/commands/changelog.md"
+    ".claude/commands/generate-tests.md"
+    ".claude/commands/security-audit.md"
+    ".claude/commands/optimize.md"
+    ".claude/commands/settings.md"
+    ".claude/commands/setup.md"
+    ".claude/commands/health.md"
 )
 
 STOCK_SKILLS=(
     ".claude/skills/code-review/SKILL.md"
     ".claude/skills/debugging/SKILL.md"
     ".claude/skills/git-recovery/SKILL.md"
+)
+
+STOCK_PLUGINS=(
+    ".claude/plugins/registry.json"
+    ".claude/commands/plugins.md"
+    "scripts/manage-plugins.sh"
+    "docs/PLUGINS.md"
+)
+
+STOCK_HOOKS=(
+    ".claude/hooks/session-init.sh"
+    ".claude/hooks/pre-commit-check.sh"
+    ".claude/hooks/post-edit-format.sh"
+    ".claude/hooks/protect-sensitive-files.sh"
+    ".claude/hooks/session-summary.sh"
+    ".claude/hooks/settings-example.json"
+    ".claude/hooks/README.md"
+    ".claude/settings-presets.json"
+    "docs/HOOKS.md"
+)
+
+STOCK_MCPS=(
+    ".claude/mcp-registry.json"
+    ".claude/commands/mcps.md"
+    "scripts/manage-mcps.sh"
+)
+
+# Minimal set for quick adoption
+STOCK_MINIMAL=(
+    "CLAUDE.md"
+    ".claude/commands/tasks.md"
+    ".claude/commands/commit.md"
+    ".claude/commands/setup.md"
+    "docs/rules/git-workflow.md"
 )
 
 # Cleanup function
@@ -67,16 +127,21 @@ trap cleanup EXIT
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
     case $1 in
+        sync|adopt|update|status) COMMAND="$1" ;;
         --dry-run) DRY_RUN=true ;;
         --template) TEMPLATE_PATH="$2"; shift ;;
         --git) TEMPLATE_GIT="$2"; shift ;;
         --commands) SYNC_COMMANDS=true ;;
         --skills) SYNC_SKILLS=true ;;
-        --all) SYNC_COMMANDS=true; SYNC_SKILLS=true ;;
+        --plugins) SYNC_PLUGINS=true ;;
+        --hooks) SYNC_HOOKS=true ;;
+        --mcps) SYNC_MCPS=true ;;
+        --all) SYNC_COMMANDS=true; SYNC_SKILLS=true; SYNC_PLUGINS=true; SYNC_HOOKS=true; SYNC_MCPS=true ;;
+        --minimal) MINIMAL=true ;;
         --force) FORCE=true ;;
         --check-versions) CHECK_VERSIONS=true ;;
         --help|-h)
-            head -20 "$0" | tail -n +2 | sed 's/^# //'
+            head -28 "$0" | tail -n +2 | sed 's/^# //'
             exit 0
             ;;
         *) echo -e "${RED}Unknown parameter: $1${NC}"; exit 1 ;;
@@ -84,8 +149,9 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
-echo -e "${BLUE}Template Sync Tool v1.0.0${NC}"
-echo "=========================="
+echo -e "${BLUE}Template Sync Tool v2.0.0${NC}"
+echo "==========================="
+echo -e "Command: ${BOLD}$COMMAND${NC}"
 
 # Check for saved template source if none provided
 if [ -z "$TEMPLATE_GIT" ] && [ "$TEMPLATE_PATH" = "$HOME/projects/project-template" ]; then
@@ -123,14 +189,46 @@ if [ ! -d "$TEMPLATE_PATH" ]; then
     exit 1
 fi
 
-# Build file list
-FILES_TO_SYNC=("${STOCK_RULES[@]}")
-if [ "$SYNC_COMMANDS" = true ]; then
-    FILES_TO_SYNC+=("${STOCK_COMMANDS[@]}")
-fi
-if [ "$SYNC_SKILLS" = true ]; then
-    FILES_TO_SYNC+=("${STOCK_SKILLS[@]}")
-fi
+# Build file list based on command and options
+build_file_list() {
+    FILES_TO_SYNC=()
+
+    if [ "$MINIMAL" = true ]; then
+        FILES_TO_SYNC=("${STOCK_MINIMAL[@]}")
+        return
+    fi
+
+    if [ "$COMMAND" = "adopt" ]; then
+        # Adopt mode: Include everything needed for first-time setup
+        FILES_TO_SYNC=("${STOCK_RULES[@]}")
+        FILES_TO_SYNC+=("${STOCK_COMMANDS[@]}")
+        FILES_TO_SYNC+=("${STOCK_HOOKS[@]}")
+        FILES_TO_SYNC+=("${STOCK_MCPS[@]}")
+        FILES_TO_SYNC+=("CLAUDE.md")
+        return
+    fi
+
+    # Default sync: rules + selected categories
+    FILES_TO_SYNC=("${STOCK_RULES[@]}")
+
+    if [ "$SYNC_COMMANDS" = true ]; then
+        FILES_TO_SYNC+=("${STOCK_COMMANDS[@]}")
+    fi
+    if [ "$SYNC_SKILLS" = true ]; then
+        FILES_TO_SYNC+=("${STOCK_SKILLS[@]}")
+    fi
+    if [ "$SYNC_PLUGINS" = true ]; then
+        FILES_TO_SYNC+=("${STOCK_PLUGINS[@]}")
+    fi
+    if [ "$SYNC_HOOKS" = true ]; then
+        FILES_TO_SYNC+=("${STOCK_HOOKS[@]}")
+    fi
+    if [ "$SYNC_MCPS" = true ]; then
+        FILES_TO_SYNC+=("${STOCK_MCPS[@]}")
+    fi
+}
+
+build_file_list
 
 # Check versions mode
 if [ "$CHECK_VERSIONS" = true ]; then
@@ -159,16 +257,58 @@ if [ "$CHECK_VERSIONS" = true ]; then
     exit 0
 fi
 
+# Status command - show sync state
+if [ "$COMMAND" = "status" ]; then
+    echo ""
+    echo -e "${BOLD}Template Status${NC}"
+    echo "---------------"
+
+    if [ -f ".template/source" ]; then
+        echo -e "Source: $(cat .template/source)"
+    else
+        echo -e "Source: ${YELLOW}Not tracked (run sync to save)${NC}"
+    fi
+
+    if [ -f ".template/version" ]; then
+        echo -e "Version: $(cat .template/version)"
+    fi
+
+    echo ""
+    echo -e "${BOLD}Configuration:${NC}"
+    [ -d ".taskmaster" ] && echo -e "  ${GREEN}✓${NC} Taskmaster initialized" || echo -e "  ${RED}✗${NC} Taskmaster not initialized"
+    [ -f "CLAUDE.md" ] && ! grep -q "\[PROJECT_NAME\]" CLAUDE.md && echo -e "  ${GREEN}✓${NC} CLAUDE.md customized" || echo -e "  ${YELLOW}!${NC} CLAUDE.md needs customization"
+    [ -f ".claude/mcp-project.json" ] && echo -e "  ${GREEN}✓${NC} MCPs configured" || echo -e "  ${YELLOW}!${NC} MCPs not configured"
+    [ -f ".claude/settings.local.json" ] && echo -e "  ${GREEN}✓${NC} Hooks enabled" || echo -e "  ${DIM}○${NC} Hooks not enabled (optional)"
+
+    echo ""
+    echo "Run './scripts/sync-template.sh --check-versions' to see file versions"
+    exit 0
+fi
+
 # Ensure directories exist
-mkdir -p docs/rules
-if [ "$SYNC_COMMANDS" = true ]; then
-    mkdir -p .claude/commands
-fi
-if [ "$SYNC_SKILLS" = true ]; then
-    mkdir -p .claude/skills/code-review
-    mkdir -p .claude/skills/debugging
-    mkdir -p .claude/skills/git-recovery
-fi
+ensure_directories() {
+    mkdir -p docs/rules
+
+    if [ "$SYNC_COMMANDS" = true ] || [ "$COMMAND" = "adopt" ]; then
+        mkdir -p .claude/commands
+    fi
+    if [ "$SYNC_SKILLS" = true ]; then
+        mkdir -p .claude/skills/code-review
+        mkdir -p .claude/skills/debugging
+        mkdir -p .claude/skills/git-recovery
+    fi
+    if [ "$SYNC_PLUGINS" = true ] || [ "$COMMAND" = "adopt" ]; then
+        mkdir -p .claude/plugins
+    fi
+    if [ "$SYNC_HOOKS" = true ] || [ "$COMMAND" = "adopt" ]; then
+        mkdir -p .claude/hooks
+    fi
+    if [ "$SYNC_MCPS" = true ] || [ "$COMMAND" = "adopt" ]; then
+        mkdir -p scripts
+    fi
+}
+
+ensure_directories
 
 # Sync files
 for file in "${FILES_TO_SYNC[@]}"; do
@@ -247,6 +387,31 @@ else
         cp "$TEMPLATE_PATH/.template-version" .template/version
     fi
 
+    # Make scripts executable
+    chmod +x scripts/*.sh 2>/dev/null || true
+    chmod +x .claude/hooks/*.sh 2>/dev/null || true
+
     echo -e "${GREEN}Sync complete.${NC}"
     echo "Template source saved to .template/source"
+
+    # Command-specific next steps
+    if [ "$COMMAND" = "adopt" ]; then
+        echo ""
+        echo -e "${BOLD}Next steps to complete adoption:${NC}"
+        echo ""
+        echo "  1. Customize CLAUDE.md with your project details"
+        echo "     - Replace [PROJECT_NAME] with your project name"
+        echo "     - Fill in tech stack and patterns"
+        echo ""
+        echo "  2. Initialize Taskmaster:"
+        echo "     task-master init"
+        echo ""
+        echo "  3. Enable hooks (optional but recommended):"
+        echo "     cp .claude/hooks/settings-example.json .claude/settings.local.json"
+        echo ""
+        echo "  4. Configure MCPs for your project:"
+        echo "     /mcps"
+        echo ""
+        echo "  5. Start Claude Code and run /setup for guided configuration"
+    fi
 fi

@@ -57,4 +57,23 @@ node_modules/
 
 # Task files
 # tasks.json
-# tasks/ 
+# tasks/
+
+# Plugins - installed plugins are user-specific
+.claude/plugins/installed/
+.claude/plugins/installed.json
+
+# Claude Code logs from hooks
+.claude/logs/
+
+# Project-specific MCP configuration (user preference)
+.claude/mcp-project.json
+
+# Local settings (not committed)
+.claude/settings.local.json
+
+# Template testing directory
+test-projects/
+
+# Template tracking (created by sync-template.sh in target projects)
+.template/

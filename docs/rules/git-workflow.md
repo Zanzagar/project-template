@@ -49,12 +49,48 @@ refactor/cleanup-database   # Code improvements
 
 ## Commit Message Rules
 
+### Conventional Commits Format
+
+All commits MUST follow the conventional commits specification:
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer]
+```
+
+### Types (Required)
+
+| Type | Description | Example |
+|------|-------------|---------|
+| `feat` | New feature | `feat: Add user login endpoint` |
+| `fix` | Bug fix | `fix: Resolve null pointer in parser` |
+| `docs` | Documentation | `docs: Update API reference` |
+| `style` | Formatting (no code change) | `style: Fix indentation` |
+| `refactor` | Code restructure | `refactor: Extract helper function` |
+| `test` | Adding tests | `test: Add auth unit tests` |
+| `chore` | Maintenance | `chore: Update dependencies` |
+| `perf` | Performance | `perf: Optimize database query` |
+| `ci` | CI/CD changes | `ci: Add GitHub Actions workflow` |
+
+### Scope (Optional)
+
+Indicates the area affected:
+```bash
+feat(auth): Add password reset flow
+fix(api): Handle timeout errors
+docs(readme): Add installation steps
+```
+
 ### Good Messages:
 ```bash
-git commit -m "Add user authentication with JWT tokens"
-git commit -m "Fix memory leak in image processing"
-git commit -m "Update README with installation instructions"
-git commit -m "Refactor database queries for better performance"
+git commit -m "feat: Add user authentication with JWT tokens"
+git commit -m "fix: Resolve memory leak in image processing"
+git commit -m "docs: Update README with installation instructions"
+git commit -m "refactor: Optimize database queries for performance"
+git commit -m "test(auth): Add integration tests for login flow"
 ```
 
 ### Bad Messages:
@@ -62,7 +98,16 @@ git commit -m "Refactor database queries for better performance"
 git commit -m "fix"           # Too vague
 git commit -m "updates"       # Meaningless
 git commit -m "stuff"         # Useless
+git commit -m "WIP"           # Not descriptive
+git commit -m "Fixed bug"     # Missing type prefix
 ```
+
+### Why Conventional Commits?
+
+1. **Automated changelogs** - `/changelog` command categorizes by type
+2. **Clear history** - Easy to understand what changed
+3. **Semantic versioning** - `feat` = minor, `fix` = patch
+4. **Searchable** - `git log --grep="feat:"` finds all features
 
 ## Recovery Commands
 
