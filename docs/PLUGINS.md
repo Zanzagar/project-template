@@ -213,7 +213,80 @@ To add new plugins or presets to this template:
 3. Include token estimates (check source repo)
 4. Test with `./scripts/manage-plugins.sh install <plugin>`
 
+## Superpowers Plugin (Recommended)
+
+[Superpowers](https://github.com/obra/superpowers) is a comprehensive workflow enforcement plugin that complements this template and Task Master.
+
+### Installation
+
+```bash
+/plugin marketplace add obra/superpowers-marketplace
+/plugin install superpowers@superpowers-marketplace
+```
+
+### How It Works With Task Master
+
+| Layer | Tool | Purpose |
+|-------|------|---------|
+| Task Tracking | Task Master (MCP) | WHAT to work on - tasks, dependencies, status |
+| Workflow | Superpowers (Plugin) | HOW to work - TDD, debugging, code review |
+
+**Example workflow:**
+1. `task-master next` → Get next task from Task Master
+2. Superpowers activates → Enforces TDD for that task
+3. Write failing test (RED) → Superpowers validates
+4. Write minimal code (GREEN) → Superpowers validates
+5. Refactor → Superpowers validates tests still pass
+6. `task-master set-status --id X --status=done` → Mark complete
+
+### Superpowers Skills
+
+| Skill | Purpose |
+|-------|---------|
+| `test-driven-development` | Strict RED-GREEN-REFACTOR enforcement |
+| `systematic-debugging` | 4-phase root cause analysis |
+| `brainstorming` | Structured ideation before coding |
+| `writing-plans` | Break work into 2-5 minute tasks |
+| `executing-plans` | Subagent dispatch per task |
+| `using-git-worktrees` | Branch isolation for features |
+| `requesting-code-review` | Initiate peer review |
+| `receiving-code-review` | Process and address feedback |
+| `finishing-a-development-branch` | Verify and merge workflow |
+
+### Key Enforcement Rules
+
+**TDD (Non-negotiable):**
+- Code written before failing test exists → DELETED
+- Test passes immediately → Restart with proper failing test
+- No "just this once" exceptions
+
+**Debugging:**
+- No fixes until root cause identified
+- One variable changed at a time
+- 3 failed fixes → Stop and question architecture
+
+**Code Review:**
+- Two-stage review: spec compliance, then quality
+- Critical issues block progress
+
+### Token Overhead
+
+Estimated: ~3-5k tokens (14 skills × ~200-400 tokens each)
+
+### When to Use Superpowers
+
+**Recommended for:**
+- Teams committed to TDD discipline
+- Complex projects requiring systematic approaches
+- Training environments teaching best practices
+
+**Maybe skip if:**
+- Quick prototyping/exploration
+- Token budget is tight
+- Team prefers flexible workflows
+
 ## Resources
 
 - [wshobson/agents Repository](https://github.com/wshobson/agents)
+- [Superpowers Repository](https://github.com/obra/superpowers)
 - [Claude Code Plugin Documentation](https://docs.anthropic.com/claude-code/plugins)

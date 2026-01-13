@@ -111,6 +111,30 @@ Plugins add specialized agents and skills for specific domains (Python, DevOps, 
 **Note**: Plugins consume context tokens. Start minimal and add as needed.
 See `docs/PLUGINS.md` for full documentation.
 
+## Superpowers (Optional)
+
+For strict workflow enforcement, install the [superpowers](https://github.com/obra/superpowers) plugin:
+
+```bash
+/plugin marketplace add obra/superpowers-marketplace
+/plugin install superpowers@superpowers-marketplace
+```
+
+**Superpowers + Task Master work together:**
+- **Task Master** (MCP) = WHAT to work on (task tracking, dependencies, status)
+- **Superpowers** (Plugin) = HOW to work on it (TDD enforcement, debugging discipline)
+
+**What Superpowers enforces:**
+- Mandatory RED-GREEN-REFACTOR TDD cycles (deletes code written without failing tests)
+- Systematic debugging with 4 mandatory phases
+- Git worktree isolation for feature work
+- Subagent-driven development with code review gates
+- Plan writing before execution
+
+**Warning**: Superpowers is opinionated and strict. It will delete production code written without tests first. Recommended for teams committed to TDD discipline.
+
+Estimated token overhead: ~3-5k tokens.
+
 ## Slash Commands
 
 Available commands for common tasks:
@@ -169,5 +193,5 @@ These rules are synced from the template and can be updated independently of thi
 When needed, consult:
 - `.claude/rules/` - Auto-loaded behavior rules
 - `docs/MCP_SETUP.md` - MCP server configuration (Task Master, Context7, GitHub)
-- `docs/PLUGINS.md` - Plugin installation and management
+- `docs/PLUGINS.md` - Plugin installation and management (includes Superpowers)
 - `docs/HOOKS.md` - Automation hooks setup and customization
