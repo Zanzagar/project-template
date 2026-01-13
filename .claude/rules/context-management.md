@@ -113,19 +113,32 @@ Start a fresh session when you observe **symptoms**, not arbitrary thresholds:
 
 ## Session Management Best Practices
 
-### Persist Context Externally
+### Persist Context Appropriately
 
-Don't rely on conversation history for important context. Write it to files:
+Don't rely on conversation history for important context—but don't bloat CLAUDE.md either.
+
+**Where to persist different types of context:**
+
+| Context Type | Location | Loaded |
+|--------------|----------|--------|
+| Project patterns, constraints | CLAUDE.md | Every session |
+| Architectural decisions | `docs/decisions/*.md` | On demand |
+| Current task learnings | Task Master subtask notes | When working task |
+| Session discoveries | Update task description | With task |
+| Code rationale | Code comments | With file |
 
 ```
-Good: Update CLAUDE.md with architectural decisions
-Good: Add notes to task descriptions in Task Master
-Good: Create docs/decisions/YYYY-MM-DD-topic.md
+Good: Add stable project patterns to CLAUDE.md (sparingly)
+Good: Create docs/decisions/YYYY-MM-DD-topic.md for ADRs
+Good: Update Task Master task/subtask with learnings
+Good: Put "why" comments in code
 
-Bad: Assume Claude remembers conversation from 30 messages ago
-Bad: Keep unwieldy long conversations active
+Bad: Dump session notes into CLAUDE.md (bloats startup)
+Bad: Assume Claude remembers 30 messages ago
 Bad: Reference "what we discussed earlier" without specifics
 ```
+
+**CLAUDE.md should stay lean** - it's loaded every session. Use it for stable, long-term project context only.
 
 ### Use the Project Index
 
@@ -194,5 +207,6 @@ Context feeling sluggish?
     └─ Exploratory? → ultrathink, then decompose
 
 Key insight: If important context is in files (not just conversation),
-fresh sessions can reload what matters. Persist decisions to CLAUDE.md!
+fresh sessions can reload what matters. Use Task Master notes and
+docs/decisions/ for session learnings—keep CLAUDE.md lean!
 ```
