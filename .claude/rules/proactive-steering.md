@@ -172,6 +172,31 @@ Suggested next step: [specific action]
 Ready to continue, or take a break here?
 ```
 
+### Pattern: Session Wrap-Up
+
+At the end of significant sessions, append to `.claude/work-log.md`:
+
+```markdown
+## YYYY-MM-DD - [Brief Session Focus]
+
+**Actions:** What was researched, explored, decided
+**Changes:** Files modified, commits made
+**Decisions:** Key choices and why (alternatives rejected)
+**Next:** What's queued for follow-up
+
+---
+```
+
+**When to log:**
+- End of a focused work session (multiple commits)
+- Before suggesting a fresh session
+- After completing a major milestone
+- When context includes decisions that won't fit in commit messages
+
+**Token cost:** ~50-100 tokens (write-only, never auto-loaded)
+
+This creates a lightweight ledger of work beyond git commits—capturing research, decisions, and context that would otherwise be lost.
+
 ## Quality Guardrails
 
 ### Don't Over-Commit
