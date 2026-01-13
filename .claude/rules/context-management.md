@@ -74,34 +74,42 @@ Quality degradation is **gradual**, not a cliff. Watch for these symptoms:
 - Declining code quality
 - Ignoring established patterns
 
-### Practical Thresholds
+### Fresh Session vs Auto-Compacting
 
-| Context Usage | Status | Action |
-|---------------|--------|--------|
-| Under 60% | Normal | Continue working |
-| 60-75% | Monitor | Complete current task, consider wrapping up |
-| 75-85% | Caution | Finish current task, start fresh for new work |
-| 85%+ | Reset | Complete immediately, start new session |
+Claude Code can auto-compact conversations when context fills up. Neither approach is universally better:
 
-**Note**: These are percentages of *total* context (~200k), not working context. Given ~50k startup overhead, you have substantial working room before degradation.
+| Situation | Recommendation |
+|-----------|----------------|
+| Iterative refinement of same feature | Let it compact, continuity helps |
+| Switching to unrelated task | Fresh session |
+| Quality noticeably declining | Fresh session |
+| Deep in complex debugging | Let it compact, context is valuable |
+| After completing major milestone | Fresh session (clean slate) |
+| Claude contradicting itself | Fresh session |
+
+**The key principle:** Important context should live in files, not just conversation history.
+
+If you've been writing decisions to CLAUDE.md, task notes to Task Master, and code to files, then a fresh session can reload what matters. If critical context only exists in conversation history, compacting or resetting will lose it.
 
 ### Prevention Strategies
 
-1. **Isolate problems**: One focused task per conversation when possible
-2. **Break large tasks**: Use Task Master to decompose into smaller chunks
-3. **Spawn sub-agents**: Use the Task tool for isolated subtasks with fresh context
-4. **Monitor usage**: Check `/usage` periodically
-5. **Don't preemptively reset**: Quality degradation is gradual - reset based on symptoms, not arbitrary thresholds
+1. **Persist important context**: Write decisions, architecture notes, and learnings to files
+2. **Use Task Master**: Task descriptions survive sessions
+3. **Spawn sub-agents**: Fresh context for isolated subtasks
+4. **Monitor symptoms, not numbers**: Quality decline matters more than token counts
+5. **Trust the tools**: Auto-compacting exists for a reason - don't preemptively reset
 
-### When to Start a Fresh Session
+### When to Start Fresh
 
-- Quality noticeably declining (symptoms above)
-- Context usage exceeds ~80%
-- Switching to completely unrelated task domain
-- After completing a major milestone
-- Claude repeatedly contradicts earlier decisions
+Start a fresh session when you observe **symptoms**, not arbitrary thresholds:
 
-**Don't reset just because you've been working a while** - if Claude is still performing well, continue.
+- Claude forgets or contradicts earlier decisions
+- Quality of responses noticeably declines
+- Switching to completely unrelated work
+- After completing a major milestone (natural breakpoint)
+- You've lost track of what Claude "knows"
+
+**Don't reset preemptively** - if Claude is performing well, continue working regardless of token count.
 
 ## Session Management Best Practices
 
@@ -169,19 +177,22 @@ Sub-agents (via Task tool) get fresh context windows. Use them for:
 
 ```
 Context feeling sluggish?
-├─► Check /usage
-│   ├─ Under 75%? → Continue, quality degradation is gradual
-│   ├─ 75-85%? → Finish current task, then fresh session
-│   └─ Over 85%? → Wrap up immediately, start fresh
+├─► Quality actually declining? (forgetting, contradicting, poor output)
+│   ├─ Yes, same task → Spawn sub-agent for fresh perspective
+│   ├─ Yes, new task → Start fresh session
+│   └─ No, just anxious → Continue, trust auto-compacting
 │
-├─► Quality declining?
-│   ├─ Same task? → Spawn sub-agent for fresh perspective
-│   └─ New task? → Start fresh session
+├─► Switching task domains?
+│   ├─ Related work → Continue
+│   └─ Completely different → Fresh session (clean slate)
+│
+├─► Major milestone complete?
+│   └─ Natural breakpoint → Good time for fresh session
 │
 └─► Complex task ahead?
     ├─ Well-defined? → think hard, proceed
     └─ Exploratory? → ultrathink, then decompose
 
-Remember: ~50k tokens are consumed at startup.
-You have ~125-150k working context before any degradation.
+Key insight: If important context is in files (not just conversation),
+fresh sessions can reload what matters. Persist decisions to CLAUDE.md!
 ```
