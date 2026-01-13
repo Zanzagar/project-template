@@ -60,6 +60,7 @@ STOCK_CLAUDE_RULES=(
     ".claude/rules/claude-behavior.md"
     ".claude/rules/git-workflow.md"
     ".claude/rules/python-standards.md"
+    ".claude/rules/reasoning-patterns.md"
 )
 
 # Legacy location: docs/rules/ (kept for backward compatibility)
@@ -91,6 +92,8 @@ STOCK_COMMANDS=(
     ".claude/commands/settings.md"
     ".claude/commands/setup.md"
     ".claude/commands/health.md"
+    ".claude/commands/brainstorm.md"
+    ".claude/commands/github-sync.md"
 )
 
 STOCK_SKILLS=(

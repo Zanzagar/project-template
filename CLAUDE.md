@@ -156,6 +156,8 @@ Available commands for common tasks:
 | `/settings [preset]` | Configure Claude Code settings |
 | `/plugins` | Manage plugins |
 | `/mcps` | Manage MCP servers |
+| `/brainstorm <topic>` | Structured brainstorming with approaches |
+| `/github-sync [action]` | Sync tasks with GitHub Issues |
 
 ## Hooks (Optional)
 
@@ -185,6 +187,7 @@ Claude Code automatically loads behavior rules from `.claude/rules/`:
 - **claude-behavior.md** - Git commit enforcement, proactive behaviors, Context7 usage
 - **git-workflow.md** - Detailed git commands and recovery procedures
 - **python-standards.md** - Python coding conventions
+- **reasoning-patterns.md** - Clarification, brainstorming, reflection, and debugging patterns
 
 These rules are synced from the template and can be updated independently of this file.
 
