@@ -4,6 +4,24 @@
 
 This rule helps orchestrate the right tools at the right time. Apply automatically based on context.
 
+## Commitment Checkpoints
+
+**Before starting significant work, explicitly state your assessment:**
+
+```
+PHASE: [IDEATION | PLANNING | BUILDING | REVIEW | SHIPPING]
+CURRENT TASK: [Task ID or "none"]
+APPROACH: [Brief description of intended approach]
+```
+
+This commitment mechanism improves follow-through. Once you write "PHASE: BUILDING", you're committed to following Building phase behaviors.
+
+**When to use checkpoints:**
+- Starting a new conversation
+- User gives a new significant request
+- Switching between tasks
+- Before major implementation decisions
+
 ## Phase Detection
 
 Detect the current phase from context clues:
@@ -94,6 +112,13 @@ Ready to share with team or deploy.
 - Skip PR for significant changes
 
 ## Human Input Triggers
+
+**Before proceeding on ambiguous requests, state your decision:**
+
+```
+DECISION: [ASK USER | PROCEED]
+REASON: [Why this choice]
+```
 
 **Always ask the user when:**
 - Multiple valid approaches exist (use /brainstorm)
