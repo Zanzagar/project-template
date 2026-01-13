@@ -62,14 +62,19 @@ If you've made multiple changes without committing, proactively suggest:
 
 See `.claude/rules/git-workflow.md` for recovery commands and advanced workflows.
 
-## Context7 Usage
+## Documentation Lookup (Token-Conscious)
 
-Always use Context7 when you need:
-- Code generation for a library/framework
-- Setup or configuration steps
-- Library/API documentation
+Use a tiered approach to minimize token usage:
 
-This means you should automatically use the Context7 MCP tools (`resolve-library-id` and `query-docs`) without the user having to explicitly ask.
+**Tier 1 - Existing knowledge** (preferred): Use for common patterns, stable APIs you know well.
+
+**Tier 2 - WebFetch** (lightweight): For simple lookups to official documentation sites.
+
+**Tier 3 - Context7** (use sparingly): Reserve for complex queries, code examples, or unfamiliar libraries.
+
+Context7 queries inject 5-20k tokens per call. Multiple queries compound quickly.
+
+See `.claude/rules/reasoning-patterns.md` for detailed guidance.
 
 ## Task Management
 

@@ -89,10 +89,34 @@ When stuck or facing novel challenges:
 **Don't guess at library APIs or best practices.**
 
 When recommending technologies or approaches:
-1. Use Context7 to get current documentation
-2. Check for recent breaking changes
-3. Verify compatibility with project stack
+1. Check if you confidently know the answer (common patterns, stable APIs)
+2. For simple lookups, use WebFetch to official docs (lightweight)
+3. For complex queries or code examples, use Context7 (heavy - use sparingly)
 4. Cite sources for recommendations
+
+### Documentation Lookup Tiers (Token-Conscious)
+
+**Tier 1 - Use existing knowledge** (0 extra tokens):
+- Standard library functions (Python, JS, etc.)
+- Well-known frameworks with stable APIs
+- Common patterns you're confident about
+
+**Tier 2 - WebFetch** (lightweight, ~500-2k tokens):
+```
+Use for: Simple API questions, single function lookups
+Example: WebFetch to docs.python.org for pathlib usage
+```
+
+**Tier 3 - Context7** (heavy, ~5-20k tokens per query):
+```
+Reserve for:
+- Complex multi-part queries needing code examples
+- Unfamiliar or rapidly-changing libraries
+- When Tier 1-2 failed to answer
+```
 
 **Never say:** "I think the API works like..."
 **Instead:** "According to the documentation..." or "Let me check the current docs."
+
+### Why This Matters
+Context7 queries inject 5-20k tokens into your context each time. Multiple queries compound quickly, eating into your working context. Use the lightest option that works.
