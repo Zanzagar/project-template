@@ -41,13 +41,21 @@ generate_index() {
 
     # Find source files (Python, TypeScript, JavaScript)
     while IFS= read -r -d '' file; do
-        # Skip node_modules, venv, __pycache__, .git
+        # Skip build artifacts, dependencies, and hidden directories
         if [[ "$file" == *"node_modules"* ]] || \
            [[ "$file" == *"venv"* ]] || \
            [[ "$file" == *".venv"* ]] || \
            [[ "$file" == *"__pycache__"* ]] || \
            [[ "$file" == *".git"* ]] || \
-           [[ "$file" == *".claude"* ]]; then
+           [[ "$file" == *".claude"* ]] || \
+           [[ "$file" == *".next"* ]] || \
+           [[ "$file" == *"dist/"* ]] || \
+           [[ "$file" == *"build/"* ]] || \
+           [[ "$file" == *"coverage/"* ]] || \
+           [[ "$file" == *".cache"* ]] || \
+           [[ "$file" == *".tox"* ]] || \
+           [[ "$file" == *".pytest_cache"* ]] || \
+           [[ "$file" == *".mypy_cache"* ]]; then
             continue
         fi
 
@@ -98,7 +106,15 @@ generate_index() {
            [[ "$dir" == *"venv"* ]] || \
            [[ "$dir" == *".venv"* ]] || \
            [[ "$dir" == *"__pycache__"* ]] || \
-           [[ "$dir" == *".git"* ]]; then
+           [[ "$dir" == *".git"* ]] || \
+           [[ "$dir" == *".next"* ]] || \
+           [[ "$dir" == *"dist"* ]] || \
+           [[ "$dir" == *"build"* ]] || \
+           [[ "$dir" == *"coverage"* ]] || \
+           [[ "$dir" == *".cache"* ]] || \
+           [[ "$dir" == *".tox"* ]] || \
+           [[ "$dir" == *".pytest_cache"* ]] || \
+           [[ "$dir" == *".mypy_cache"* ]]; then
             continue
         fi
         local reldir="${dir#$PROJECT_DIR/}"

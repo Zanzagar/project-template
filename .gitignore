@@ -66,6 +66,9 @@ node_modules/
 # Claude Code logs from hooks
 .claude/logs/
 
+# Generated project index (created by project-index.sh hook)
+.claude/project-index.json
+
 # Project-specific MCP configuration (user preference)
 .claude/mcp-project.json
 
