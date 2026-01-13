@@ -55,7 +55,7 @@ Actively implementing features or fixes.
 
 **Do:**
 - Check current task with `task-master get-task`
-- Follow Superpowers TDD (if installed): RED → GREEN → REFACTOR
+- Follow Superpowers TDD workflow: RED → GREEN → REFACTOR
 - Run /test and /lint before considering done
 - Commit frequently (per claude-behavior.md rules)
 - Update task status as you progress

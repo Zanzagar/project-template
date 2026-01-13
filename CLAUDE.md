@@ -111,16 +111,16 @@ Plugins add specialized agents and skills for specific domains (Python, DevOps, 
 **Note**: Plugins consume context tokens. Start minimal and add as needed.
 See `docs/PLUGINS.md` for full documentation.
 
-## Superpowers (Optional)
+## Superpowers (Required)
 
-For strict workflow enforcement, install the [superpowers](https://github.com/obra/superpowers) plugin:
+This template requires the [Superpowers](https://github.com/obra/superpowers) plugin for workflow enforcement. Install it immediately after setting up the template:
 
 ```bash
 /plugin marketplace add obra/superpowers-marketplace
 /plugin install superpowers@superpowers-marketplace
 ```
 
-**Superpowers + Task Master work together:**
+**Task Master + Superpowers = Complete Workflow:**
 - **Task Master** (MCP) = WHAT to work on (task tracking, dependencies, status)
 - **Superpowers** (Plugin) = HOW to work on it (TDD enforcement, debugging discipline)
 
@@ -131,9 +131,9 @@ For strict workflow enforcement, install the [superpowers](https://github.com/ob
 - Subagent-driven development with code review gates
 - Plan writing before execution
 
-**Warning**: Superpowers is opinionated and strict. It will delete production code written without tests first. Recommended for teams committed to TDD discipline.
+**Important**: Superpowers is strict by design. It will delete production code written without tests first. This is intentional - the template enforces TDD discipline to ensure code quality.
 
-Estimated token overhead: ~3-5k tokens.
+Token overhead: ~3-5k tokens (included in template budget).
 
 ## Slash Commands
 

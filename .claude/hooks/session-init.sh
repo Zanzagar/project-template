@@ -52,6 +52,7 @@ HAS_CUSTOMIZED_CLAUDE_MD=false
 HAS_SRC=false
 HAS_UNCOMMITTED=false
 HAS_SYNC_SCRIPT=false
+HAS_SUPERPOWERS=false
 CURRENT_BRANCH=""
 CURRENT_TASK=""
 INSTALLED_VERSION=""
@@ -62,6 +63,14 @@ MISSING_COMPONENTS=()
 [ -d "$TASKMASTER_DIR" ] && HAS_TASKMASTER=true
 [ -d "$PROJECT_DIR/src" ] && HAS_SRC=true
 [ -f "$SYNC_SCRIPT" ] && HAS_SYNC_SCRIPT=true
+
+# Check for Superpowers plugin (marker file or common locations)
+# Users can create .superpowers-installed to confirm installation
+if [ -f "$PROJECT_DIR/.superpowers-installed" ] || \
+   [ -d "$HOME/.claude/plugins/superpowers" ] || \
+   [ -f "$PROJECT_DIR/.claude/superpowers.json" ]; then
+    HAS_SUPERPOWERS=true
+fi
 
 # Get installed template version
 if [ -f "$TEMPLATE_VERSION_FILE" ]; then
@@ -173,6 +182,14 @@ RECOMMENDATIONS=()
 if [ "$HAS_TASKMASTER" = false ]; then
     CRITICAL_ISSUES+=("Taskmaster not initialized")
     SETUP_NEEDED+=("Run: task-master init")
+fi
+
+# Check Superpowers (required for TDD enforcement)
+if [ "$HAS_SUPERPOWERS" = false ]; then
+    CRITICAL_ISSUES+=("Superpowers plugin not detected")
+    SETUP_NEEDED+=("Install: /plugin marketplace add obra/superpowers-marketplace")
+    SETUP_NEEDED+=("Then: /plugin install superpowers@superpowers-marketplace")
+    SETUP_NEEDED+=("Create .superpowers-installed after installation to dismiss this warning")
 fi
 
 # Check CLAUDE.md customization

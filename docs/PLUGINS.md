@@ -213,9 +213,9 @@ To add new plugins or presets to this template:
 3. Include token estimates (check source repo)
 4. Test with `./scripts/manage-plugins.sh install <plugin>`
 
-## Superpowers Plugin (Recommended)
+## Superpowers Plugin (Required)
 
-[Superpowers](https://github.com/obra/superpowers) is a comprehensive workflow enforcement plugin that complements this template and Task Master.
+[Superpowers](https://github.com/obra/superpowers) is a required component of this template. It provides workflow enforcement that complements Task Master.
 
 ### Installation
 
@@ -273,17 +273,16 @@ To add new plugins or presets to this template:
 
 Estimated: ~3-5k tokens (14 skills × ~200-400 tokens each)
 
-### When to Use Superpowers
+### Why Superpowers is Required
 
-**Recommended for:**
-- Teams committed to TDD discipline
-- Complex projects requiring systematic approaches
-- Training environments teaching best practices
+This template enforces a rigorous, structured workflow. Superpowers provides the enforcement mechanism:
 
-**Maybe skip if:**
-- Quick prototyping/exploration
-- Token budget is tight
-- Team prefers flexible workflows
+- **Task Master** tells you WHAT to work on
+- **Superpowers** ensures you work on it correctly (TDD, debugging discipline)
+
+Without Superpowers, the template's workflow guidance becomes suggestions rather than enforcement. The ~3-5k token overhead is included in the template's token budget.
+
+**Note**: For quick prototyping outside the main project workflow, you can temporarily disable Superpowers, but it should be re-enabled for any production code.
 
 ## Resources
 
