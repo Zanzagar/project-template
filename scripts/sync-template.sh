@@ -63,6 +63,7 @@ STOCK_CLAUDE_RULES=(
     ".claude/rules/reasoning-patterns.md"
     ".claude/rules/workflow-guide.md"
     ".claude/rules/context-management.md"
+    ".claude/rules/proactive-steering.md"
 )
 
 # Legacy location: docs/rules/ (kept for backward compatibility)

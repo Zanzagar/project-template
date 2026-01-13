@@ -192,6 +192,7 @@ Claude Code automatically loads behavior rules from `.claude/rules/`:
 - **reasoning-patterns.md** - Clarification, brainstorming, reflection, and debugging patterns
 - **workflow-guide.md** - Phase detection, tool selection, and human input triggers
 - **context-management.md** - Thinking modes, context rot prevention, session management
+- **proactive-steering.md** - Project co-pilot behaviors, auto-tool invocation, steering patterns
 
 These rules are synced from the template and can be updated independently of this file.
 
