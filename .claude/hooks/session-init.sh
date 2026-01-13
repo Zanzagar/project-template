@@ -92,6 +92,35 @@ fi
 # Get current Taskmaster task if available
 if [ "$HAS_TASKMASTER" = true ] && command -v task-master &> /dev/null; then
     CURRENT_TASK=$(cd "$PROJECT_DIR" && task-master next 2>/dev/null | head -3 || echo "")
+    TASK_COUNT=$(cd "$PROJECT_DIR" && task-master list 2>/dev/null | grep -c "^[0-9]" || echo "0")
+    IN_PROGRESS_COUNT=$(cd "$PROJECT_DIR" && task-master list --status in-progress 2>/dev/null | grep -c "^[0-9]" || echo "0")
+    DONE_COUNT=$(cd "$PROJECT_DIR" && task-master list --status done 2>/dev/null | grep -c "^[0-9]" || echo "0")
+fi
+
+# Detect project phase based on signals
+PROJECT_PHASE="ideation"
+HAS_PRD=false
+HAS_TASKS=false
+HAS_ACTIVE_TASK=false
+
+[ -f "$PROJECT_DIR/.taskmaster/docs/prd.txt" ] || [ -f "$PROJECT_DIR/.prd/prd.txt" ] && HAS_PRD=true
+[ "$TASK_COUNT" -gt 0 ] 2>/dev/null && HAS_TASKS=true
+[ "$IN_PROGRESS_COUNT" -gt 0 ] 2>/dev/null && HAS_ACTIVE_TASK=true
+
+# Phase detection logic
+if [ "$HAS_ACTIVE_TASK" = true ]; then
+    PROJECT_PHASE="building"
+elif [ "$HAS_TASKS" = true ] && [ "$HAS_ACTIVE_TASK" = false ]; then
+    # Has tasks but none in progress - could be planning or review
+    if [ "$DONE_COUNT" -gt 0 ] 2>/dev/null && [ "$TASK_COUNT" -eq "$DONE_COUNT" ] 2>/dev/null; then
+        PROJECT_PHASE="shipping"
+    else
+        PROJECT_PHASE="planning"
+    fi
+elif [ "$HAS_PRD" = true ]; then
+    PROJECT_PHASE="planning"
+else
+    PROJECT_PHASE="ideation"
 fi
 
 # Determine project scenario
@@ -238,12 +267,43 @@ case $SCENARIO in
         echo ""
         ;;
     existing)
-        # For existing projects, show context loading
-        if [ -n "$CURRENT_TASK" ]; then
-            echo "📋 Current Task:"
-            echo "$CURRENT_TASK"
-            echo ""
-        fi
+        # Show project phase
+        case $PROJECT_PHASE in
+            ideation)
+                echo "💭 PHASE: Ideation"
+                echo "   Ready to explore ideas and gather requirements."
+                echo ""
+                echo "   Suggested: /brainstorm <idea> | /research <topic>"
+                ;;
+            planning)
+                echo "📝 PHASE: Planning"
+                echo "   Tasks: $TASK_COUNT total | $DONE_COUNT done"
+                echo ""
+                if [ "$HAS_PRD" = true ] && [ "$HAS_TASKS" = false ]; then
+                    echo "   Next: task-master parse-prd to generate tasks"
+                else
+                    echo "   Suggested: task-master next | task-master expand"
+                fi
+                ;;
+            building)
+                echo "🔨 PHASE: Building"
+                echo "   Tasks: $IN_PROGRESS_COUNT in progress | $DONE_COUNT done"
+                echo ""
+                if [ -n "$CURRENT_TASK" ]; then
+                    echo "📋 Current Task:"
+                    echo "$CURRENT_TASK"
+                fi
+                echo ""
+                echo "   Suggested: /test | /lint | /commit"
+                ;;
+            shipping)
+                echo "🚀 PHASE: Shipping"
+                echo "   All $TASK_COUNT tasks complete!"
+                echo ""
+                echo "   Suggested: /pr | /changelog | /github-sync"
+                ;;
+        esac
+        echo ""
 
         if [ "$HAS_UNCOMMITTED" = true ]; then
             echo "⚠️  Uncommitted changes detected:"

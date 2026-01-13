@@ -158,6 +158,7 @@ Available commands for common tasks:
 | `/mcps` | Manage MCP servers |
 | `/brainstorm <topic>` | Structured brainstorming with approaches |
 | `/github-sync [action]` | Sync tasks with GitHub Issues |
+| `/research <topic>` | Structured research (papers, docs, exploration) |
 
 ## Hooks (Optional)
 
@@ -173,7 +174,7 @@ cp .claude/hooks/settings-example.json .claude/settings.local.json
 ```
 
 Available hooks:
-- **session-init.sh** - Detects project state (new/adopting/existing), loads context, shows next steps
+- **session-init.sh** - Detects project phase (ideation/planning/building/shipping), loads context, suggests next steps
 - **pre-commit-check.sh** - Validates code before git commits
 - **post-edit-format.sh** - Auto-formats files after edits
 - **protect-sensitive-files.sh** - Blocks edits to .env, keys, etc.
@@ -184,10 +185,11 @@ See `docs/HOOKS.md` for full documentation.
 ## Auto-Loaded Rules
 
 Claude Code automatically loads behavior rules from `.claude/rules/`:
-- **claude-behavior.md** - Git commit enforcement, proactive behaviors, Context7 usage
+- **claude-behavior.md** - Git commit enforcement, proactive behaviors, token-conscious documentation
 - **git-workflow.md** - Detailed git commands and recovery procedures
 - **python-standards.md** - Python coding conventions
 - **reasoning-patterns.md** - Clarification, brainstorming, reflection, and debugging patterns
+- **workflow-guide.md** - Phase detection, tool selection, and human input triggers
 
 These rules are synced from the template and can be updated independently of this file.
 
