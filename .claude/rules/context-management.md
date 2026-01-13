@@ -50,16 +50,40 @@ Include the mode in your prompt:
 - "Think harder about how these services should communicate"
 - "Ultrathink about the overall architecture for this feature"
 
-## Context Rot: The 50% Threshold
+## Context Awareness and Session Management
 
-**Critical insight:** Claude's ability to maintain coherent focus degrades significantly after ~50% of the context window is consumed.
+### Understanding Your Context Budget
 
-### Symptoms of Context Rot
+Claude Code's ~200k context window is NOT all available for work:
+
+| Component | Tokens | Notes |
+|-----------|--------|-------|
+| MCP tool definitions | ~25-30k | Loaded at startup |
+| Auto-loaded rules | ~5k | From `.claude/rules/` |
+| Superpowers plugin | ~3-5k | Required for TDD |
+| CLAUDE.md + base | ~5-10k | Project context |
+| **Startup overhead** | **~40-50k** | Before any work |
+| **Working context** | **~125-150k** | What's actually available |
+
+### When Quality Degrades
+
+Quality degradation is **gradual**, not a cliff. Watch for these symptoms:
 - Forgetting earlier instructions
 - Repeating previously rejected approaches
 - Missing obvious connections between files
 - Declining code quality
 - Ignoring established patterns
+
+### Practical Thresholds
+
+| Context Usage | Status | Action |
+|---------------|--------|--------|
+| Under 60% | Normal | Continue working |
+| 60-75% | Monitor | Complete current task, consider wrapping up |
+| 75-85% | Caution | Finish current task, start fresh for new work |
+| 85%+ | Reset | Complete immediately, start new session |
+
+**Note**: These are percentages of *total* context (~200k), not working context. Given ~50k startup overhead, you have substantial working room before degradation.
 
 ### Prevention Strategies
 
@@ -67,15 +91,17 @@ Include the mode in your prompt:
 2. **Break large tasks**: Use Task Master to decompose into smaller chunks
 3. **Spawn sub-agents**: Use the Task tool for isolated subtasks with fresh context
 4. **Monitor usage**: Check `/usage` periodically
-5. **Start fresh**: When quality degrades, begin a new session
+5. **Don't preemptively reset**: Quality degradation is gradual - reset based on symptoms, not arbitrary thresholds
 
 ### When to Start a Fresh Session
 
-- Context usage exceeds ~50%
-- Claude forgets or contradicts earlier decisions
-- Quality of responses noticeably declines
-- Switching to unrelated task domain
+- Quality noticeably declining (symptoms above)
+- Context usage exceeds ~80%
+- Switching to completely unrelated task domain
 - After completing a major milestone
+- Claude repeatedly contradicts earlier decisions
+
+**Don't reset just because you've been working a while** - if Claude is still performing well, continue.
 
 ## Session Management Best Practices
 
@@ -144,8 +170,9 @@ Sub-agents (via Task tool) get fresh context windows. Use them for:
 ```
 Context feeling sluggish?
 ├─► Check /usage
-│   ├─ Under 50%? → Continue, maybe use lighter thinking mode
-│   └─ Over 50%? → Consider fresh session
+│   ├─ Under 75%? → Continue, quality degradation is gradual
+│   ├─ 75-85%? → Finish current task, then fresh session
+│   └─ Over 85%? → Wrap up immediately, start fresh
 │
 ├─► Quality declining?
 │   ├─ Same task? → Spawn sub-agent for fresh perspective
@@ -154,4 +181,7 @@ Context feeling sluggish?
 └─► Complex task ahead?
     ├─ Well-defined? → think hard, proceed
     └─ Exploratory? → ultrathink, then decompose
+
+Remember: ~50k tokens are consumed at startup.
+You have ~125-150k working context before any degradation.
 ```
