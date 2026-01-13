@@ -179,6 +179,7 @@ Available hooks:
 - **post-edit-format.sh** - Auto-formats files after edits
 - **protect-sensitive-files.sh** - Blocks edits to .env, keys, etc.
 - **session-summary.sh** - Logs session activity
+- **project-index.sh** - Maintains lightweight JSON index of codebase structure
 
 See `docs/HOOKS.md` for full documentation.
 
@@ -190,6 +191,7 @@ Claude Code automatically loads behavior rules from `.claude/rules/`:
 - **python-standards.md** - Python coding conventions
 - **reasoning-patterns.md** - Clarification, brainstorming, reflection, and debugging patterns
 - **workflow-guide.md** - Phase detection, tool selection, and human input triggers
+- **context-management.md** - Thinking modes, context rot prevention, session management
 
 These rules are synced from the template and can be updated independently of this file.
 

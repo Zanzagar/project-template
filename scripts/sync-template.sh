@@ -62,6 +62,7 @@ STOCK_CLAUDE_RULES=(
     ".claude/rules/python-standards.md"
     ".claude/rules/reasoning-patterns.md"
     ".claude/rules/workflow-guide.md"
+    ".claude/rules/context-management.md"
 )
 
 # Legacy location: docs/rules/ (kept for backward compatibility)
@@ -117,6 +118,7 @@ STOCK_HOOKS=(
     ".claude/hooks/post-edit-format.sh"
     ".claude/hooks/protect-sensitive-files.sh"
     ".claude/hooks/session-summary.sh"
+    ".claude/hooks/project-index.sh"
     ".claude/hooks/settings-example.json"
     ".claude/hooks/README.md"
     ".claude/settings-presets.json"

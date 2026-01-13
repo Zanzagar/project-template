@@ -18,7 +18,7 @@ Hooks are shell scripts that run automatically during Claude Code's workflow, en
 
 ## Available Hook Scripts
 
-This template includes five ready-to-use hooks in `.claude/hooks/`:
+This template includes six ready-to-use hooks in `.claude/hooks/`:
 
 ### pre-commit-check.sh
 **Event:** PreToolUse (matcher: "Bash")
@@ -84,6 +84,24 @@ Activates for projects with:
 - `.claude/mcp-registry.json`, OR
 - `.template/source` (sync tracking), OR
 - Template-like structure (CLAUDE.md + .claude/commands or hooks)
+
+### project-index.sh
+**Event:** SessionStart
+**Purpose:** Maintains a lightweight JSON index of codebase structure
+
+Generates `.claude/project-index.json` containing:
+- File paths and directory structure
+- Import/export statements (with line numbers)
+- Function and class signatures (with line numbers)
+
+**Why this matters:**
+- Sub-agents can understand codebase structure without loading full files
+- Reduces context consumption during exploration
+- Regenerates automatically if older than 5 minutes
+
+**Token benefit:** Instead of reading 10 files to understand structure (~5-10k tokens), reference the index (~500-1k tokens).
+
+Supports: Python, TypeScript, JavaScript
 
 ## Configuration
 
