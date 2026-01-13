@@ -85,6 +85,7 @@ project/
 
 ## Error Handling
 
+### Basic Pattern
 ```python
 # DO: Specific exceptions with context
 try:
@@ -101,6 +102,86 @@ try:
     result = process_file(filepath)
 except:
     pass
+```
+
+### Custom Exception Hierarchies
+```python
+# Define domain-specific exceptions
+class AppError(Exception):
+    """Base exception for application errors."""
+    pass
+
+class ValidationError(AppError):
+    """Raised when input validation fails."""
+    pass
+
+class ExternalServiceError(AppError):
+    """Raised when external API calls fail."""
+    def __init__(self, service: str, status_code: int, message: str):
+        self.service = service
+        self.status_code = status_code
+        super().__init__(f"{service} returned {status_code}: {message}")
+```
+
+### When to Raise vs Return
+```python
+# RAISE when: Operation cannot proceed, caller must handle
+def get_user(user_id: int) -> User:
+    user = db.query(User).filter_by(id=user_id).first()
+    if not user:
+        raise UserNotFoundError(f"User {user_id} not found")
+    return user
+
+# RETURN None/Optional when: Missing data is expected/normal
+def find_user(email: str) -> User | None:
+    return db.query(User).filter_by(email=email).first()
+```
+
+### Retry Pattern for Transient Failures
+```python
+import time
+from functools import wraps
+
+def retry(max_attempts: int = 3, delay: float = 1.0, backoff: float = 2.0):
+    """Retry decorator for transient failures."""
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            last_exception = None
+            for attempt in range(max_attempts):
+                try:
+                    return func(*args, **kwargs)
+                except (ConnectionError, TimeoutError) as e:
+                    last_exception = e
+                    if attempt < max_attempts - 1:
+                        sleep_time = delay * (backoff ** attempt)
+                        logger.warning(f"Attempt {attempt + 1} failed, retrying in {sleep_time}s")
+                        time.sleep(sleep_time)
+            raise last_exception
+        return wrapper
+    return decorator
+
+@retry(max_attempts=3, delay=1.0)
+def fetch_data(url: str) -> dict:
+    return requests.get(url, timeout=10).json()
+```
+
+### Context Managers for Cleanup
+```python
+from contextlib import contextmanager
+
+@contextmanager
+def managed_resource(name: str):
+    """Ensure cleanup even on exceptions."""
+    resource = acquire_resource(name)
+    try:
+        yield resource
+    finally:
+        resource.cleanup()
+
+# Usage
+with managed_resource("database") as db:
+    db.execute(query)  # cleanup happens even if this fails
 ```
 
 ## Logging
@@ -122,8 +203,9 @@ print(f"Processing {item_id}")  # Use logger instead
 
 ## Testing
 
+### Test Naming and Structure
 ```python
-# DO: Descriptive test names and clear assertions
+# DO: Descriptive test names following pattern: test_<function>_<scenario>_<expected>
 def test_calculate_total_with_empty_list_returns_zero():
     result = calculate_total([])
     assert result == 0
@@ -136,6 +218,136 @@ def test_calculate_total_with_negative_values_raises_error():
 def test_calculate():
     assert calculate_total([1,2,3]) == 6
 ```
+
+### Test Organization
+```
+tests/
+├── conftest.py          # Shared fixtures
+├── unit/                # Fast, isolated tests
+│   ├── test_models.py
+│   └── test_utils.py
+├── integration/         # Tests with real dependencies
+│   ├── test_api.py
+│   └── test_database.py
+└── e2e/                 # End-to-end tests (optional)
+    └── test_workflows.py
+```
+
+### Fixtures and conftest.py
+```python
+# conftest.py - Shared fixtures available to all tests
+import pytest
+from myapp.database import Database
+
+@pytest.fixture
+def sample_user():
+    """Simple fixture returning test data."""
+    return {"name": "Test User", "email": "test@example.com"}
+
+@pytest.fixture
+def db_session():
+    """Fixture with setup and teardown."""
+    db = Database(":memory:")
+    db.create_tables()
+    yield db  # Test runs here
+    db.close()  # Cleanup after test
+
+@pytest.fixture(scope="module")
+def expensive_resource():
+    """Module-scoped fixture (shared across tests in module)."""
+    resource = create_expensive_resource()
+    yield resource
+    resource.cleanup()
+```
+
+### Mocking External Dependencies
+```python
+from unittest.mock import Mock, patch, MagicMock
+
+# Mock a function
+@patch("myapp.services.fetch_data")
+def test_process_uses_fetched_data(mock_fetch):
+    mock_fetch.return_value = {"key": "value"}
+    result = process()
+    mock_fetch.assert_called_once()
+    assert result == "processed: value"
+
+# Mock a class method
+@patch.object(UserService, "get_user")
+def test_handler_with_mocked_service(mock_get_user):
+    mock_get_user.return_value = User(id=1, name="Test")
+    response = handler(user_id=1)
+    assert response.status == 200
+
+# Mock context manager
+def test_with_mocked_file():
+    mock_file = MagicMock()
+    mock_file.__enter__.return_value.read.return_value = "content"
+    with patch("builtins.open", return_value=mock_file):
+        result = read_config("config.json")
+    assert result == "content"
+```
+
+### Parameterized Tests
+```python
+import pytest
+
+@pytest.mark.parametrize("input_val,expected", [
+    ([], 0),
+    ([1], 1),
+    ([1, 2, 3], 6),
+    ([10, -5, 3], 8),
+])
+def test_calculate_total_various_inputs(input_val, expected):
+    assert calculate_total(input_val) == expected
+
+@pytest.mark.parametrize("invalid_input,error_msg", [
+    (None, "cannot be None"),
+    ("string", "must be a list"),
+    ([1, "a"], "all elements must be numbers"),
+])
+def test_calculate_total_invalid_inputs(invalid_input, error_msg):
+    with pytest.raises(ValueError, match=error_msg):
+        calculate_total(invalid_input)
+```
+
+### Async Testing
+```python
+import pytest
+
+@pytest.mark.asyncio
+async def test_async_fetch():
+    result = await fetch_data_async("https://api.example.com")
+    assert result["status"] == "ok"
+
+@pytest.fixture
+async def async_client():
+    async with AsyncClient(app) as client:
+        yield client
+
+@pytest.mark.asyncio
+async def test_api_endpoint(async_client):
+    response = await async_client.get("/health")
+    assert response.status_code == 200
+```
+
+### Test Coverage Expectations
+```bash
+# Run with coverage
+pytest --cov=src --cov-report=term-missing
+
+# Minimum expectations:
+# - Unit tests: 80%+ coverage
+# - Critical paths (auth, payments): 95%+ coverage
+# - Happy path + error cases for all public APIs
+```
+
+### What Makes a Good Test
+1. **Independent**: No test depends on another test's state
+2. **Repeatable**: Same result every time, regardless of environment
+3. **Fast**: Unit tests should run in milliseconds
+4. **Focused**: Tests one behavior per test function
+5. **Clear failure messages**: Easy to diagnose what broke
 
 ## Dependencies
 
