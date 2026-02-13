@@ -256,6 +256,12 @@ Available hooks:
 - **post-edit-format.sh** - Auto-formats files after edits
 - **protect-sensitive-files.sh** - Blocks edits to .env, keys, etc.
 - **project-index.sh** - Maintains lightweight JSON index of codebase structure
+- **doc-file-blocker.sh** - Prevents LLM from creating random .md files outside docs/
+- **console-log-audit.sh** - Warns about debug statements (print, console.log) after edits
+- **pattern-extraction.sh** - Auto-extracts instinct candidates from session git history
+- **build-analysis.sh** - Advisory analysis of build command output
+- **typescript-check.sh** - Runs tsc --noEmit after editing .ts/.tsx files
+- **dev-server-blocker.sh** - Blocks dev servers outside tmux to prevent terminal capture
 
 See `docs/HOOKS.md` for full documentation.
 

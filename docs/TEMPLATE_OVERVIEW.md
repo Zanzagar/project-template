@@ -18,7 +18,7 @@ The template was developed through systematic analysis and integration of best p
 - 32 skills (domain-specific knowledge modules)
 - 46 slash commands
 - 17 behavior rules (7 core + 5 language-specific + 5 workflow)
-- 9 automation hooks
+- 15 automation hooks
 - Multi-model collaboration (Claude + Gemini + Codex)
 - Continuous learning system with cross-session memory
 
@@ -740,4 +740,4 @@ Any student using this template starts their project with the workflow enforceme
 ---
 
 *Built with Claude Code (Anthropic) | Informed by Everything Claude Code (45K+ stars)*
-*Template version 2.1.0 | 13 agents, 32 skills, 46 commands, 17 rules, 9 hooks*
+*Template version 2.2.0 | 13 agents, 32 skills, 46 commands, 17 rules, 15 hooks*
