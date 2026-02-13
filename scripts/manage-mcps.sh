@@ -13,6 +13,7 @@
 #   preset <name>     Apply a preset configuration
 #   select            Interactive MCP selection wizard
 #   tokens            Show estimated token usage
+#   audit             Check MCP budget (10/80 rule) and show warnings
 #   install <server>  Install an MCP server globally (if not installed)
 #
 # Options:
@@ -35,6 +36,11 @@ CYAN='\033[0;36m'
 BOLD='\033[1m'
 DIM='\033[2m'
 NC='\033[0m'
+
+# MCP Budget Limits (10/80 rule)
+# More MCPs = more tool definitions loaded = less working context
+MAX_MCPS=10
+MAX_TOOLS=80
 
 # Options
 SCOPE="project"
@@ -69,6 +75,107 @@ is_enabled() {
     claude mcp list 2>/dev/null | grep -q "^$server:" && return 0 || return 1
 }
 
+# Audit MCP budget against 10/80 limits
+# Usage: audit_mcp_budget [--brief]
+# Returns: 0=OK, 1=over MCP limit, 2=over tool limit, 3=both over
+audit_mcp_budget() {
+    check_jq
+    check_claude
+    local brief=false
+    [[ "${1:-}" == "--brief" ]] && brief=true
+
+    local installed=$(get_installed_mcps)
+    local mcp_count=0
+    local tool_count=0
+
+    for server in $installed; do
+        ((mcp_count++))
+        local tools=$(jq -r ".servers[\"$server\"].tools // 0" "$REGISTRY_FILE" 2>/dev/null)
+        if [[ "$tools" =~ ^[0-9]+$ ]]; then
+            tool_count=$((tool_count + tools))
+        fi
+    done
+
+    local status=0
+
+    # Determine status
+    local mcp_over=false tool_over=false
+    local mcp_warn=false tool_warn=false
+    if [ "$mcp_count" -ge "$MAX_MCPS" ]; then mcp_over=true; fi
+    if [ "$tool_count" -ge "$MAX_TOOLS" ]; then tool_over=true; fi
+    if [ "$mcp_count" -ge $((MAX_MCPS * 8 / 10)) ]; then mcp_warn=true; fi
+    if [ "$tool_count" -ge $((MAX_TOOLS * 8 / 10)) ]; then tool_warn=true; fi
+
+    if $mcp_over && $tool_over; then status=3;
+    elif $tool_over; then status=2;
+    elif $mcp_over; then status=1; fi
+
+    if $brief; then
+        # One-line summary for inline use
+        if [ "$status" -gt 0 ]; then
+            echo -e "${YELLOW}Budget: ${mcp_count}/${MAX_MCPS} MCPs, ${tool_count}/${MAX_TOOLS} tools${NC}"
+            $mcp_over && echo -e "${RED}  ⚠ Over MCP limit (max ${MAX_MCPS})${NC}"
+            $tool_over && echo -e "${RED}  ⚠ Over tool limit (max ${MAX_TOOLS})${NC}"
+        elif $mcp_warn || $tool_warn; then
+            echo -e "${YELLOW}Budget: ${mcp_count}/${MAX_MCPS} MCPs, ${tool_count}/${MAX_TOOLS} tools (approaching limit)${NC}"
+        fi
+        return $status
+    fi
+
+    # Full report
+    echo -e "${BOLD}${BLUE}MCP Budget Report (10/80 Rule)${NC}"
+    echo "==============================="
+    echo ""
+
+    # MCP count with bar
+    local mcp_pct=$((mcp_count * 100 / MAX_MCPS))
+    local mcp_color="$GREEN"
+    $mcp_warn && mcp_color="$YELLOW"
+    $mcp_over && mcp_color="$RED"
+
+    local mcp_filled=$((mcp_count > MAX_MCPS ? MAX_MCPS : mcp_count))
+    local mcp_empty=$((MAX_MCPS - mcp_filled))
+    local mcp_bar=""
+    for ((i=0; i<mcp_filled; i++)); do mcp_bar+="●"; done
+    for ((i=0; i<mcp_empty; i++)); do mcp_bar+="○"; done
+
+    echo -e "  MCPs:  ${mcp_color}${mcp_count}/${MAX_MCPS}${NC} ${mcp_color}${mcp_bar}${NC}"
+
+    # Tool count with bar
+    local tool_pct=$((tool_count * 100 / MAX_TOOLS))
+    local tool_color="$GREEN"
+    $tool_warn && tool_color="$YELLOW"
+    $tool_over && tool_color="$RED"
+
+    local tool_bar_len=20
+    local tool_filled=$((tool_pct * tool_bar_len / 100))
+    [ "$tool_filled" -gt "$tool_bar_len" ] && tool_filled=$tool_bar_len
+    local tool_empty=$((tool_bar_len - tool_filled))
+    local tool_bar=""
+    for ((i=0; i<tool_filled; i++)); do tool_bar+="█"; done
+    for ((i=0; i<tool_empty; i++)); do tool_bar+="░"; done
+
+    echo -e "  Tools: ${tool_color}${tool_count}/${MAX_TOOLS}${NC} ${tool_color}${tool_bar}${NC}"
+    echo ""
+
+    # Status line
+    if [ "$status" -eq 0 ] && ! $mcp_warn && ! $tool_warn; then
+        echo -e "  Status: ${GREEN}OK${NC} — within budget"
+    elif [ "$status" -eq 0 ]; then
+        echo -e "  Status: ${YELLOW}WARNING${NC} — approaching limits"
+    else
+        echo -e "  Status: ${RED}EXCEEDED${NC} — over budget"
+        $mcp_over && echo -e "  ${RED}⚠ Reduce MCPs to under ${MAX_MCPS} for optimal context usage${NC}"
+        $tool_over && echo -e "  ${RED}⚠ Reduce tools to under ${MAX_TOOLS} (disable heavy servers)${NC}"
+    fi
+
+    echo ""
+    echo -e "${DIM}Why this matters: Each tool definition consumes context tokens at startup.${NC}"
+    echo -e "${DIM}Staying under 10 MCPs / 80 tools keeps overhead at ~15-20% of context.${NC}"
+
+    return $status
+}
+
 # List all MCPs with status
 list_mcps() {
     check_jq
@@ -87,20 +194,31 @@ list_mcps() {
         local name=$(jq -r ".servers[\"$server\"].name" "$REGISTRY_FILE")
         local desc=$(jq -r ".servers[\"$server\"].description" "$REGISTRY_FILE")
         local tokens=$(jq -r ".servers[\"$server\"].estimated_tokens" "$REGISTRY_FILE")
+        local tools=$(jq -r ".servers[\"$server\"].tools // 0" "$REGISTRY_FILE")
         local categories=$(jq -r ".servers[\"$server\"].categories | join(\", \")" "$REGISTRY_FILE")
+
+        # Color-code tool count by weight
+        local tool_indicator="${GREEN}●${NC}"  # 1-5: lightweight
+        if [ "$tools" -ge 16 ]; then
+            tool_indicator="${RED}●${NC}"      # 16+: heavy
+        elif [ "$tools" -ge 6 ]; then
+            tool_indicator="${YELLOW}●${NC}"   # 6-15: moderate
+        fi
 
         # Check if installed
         if echo "$installed" | grep -q "^$server$"; then
             echo -e "${GREEN}●${NC} ${BOLD}$name${NC} ($server)"
             echo -e "  ${DIM}$desc${NC}"
-            echo -e "  Tokens: ~$tokens | Categories: $categories"
+            echo -e "  Tokens: ~$tokens | Tools: $tools $tool_indicator | $categories"
         else
             echo -e "${DIM}○ $name ($server)${NC}"
             echo -e "  ${DIM}$desc${NC}"
-            echo -e "  ${DIM}Tokens: ~$tokens | Not installed${NC}"
+            echo -e "  ${DIM}Tokens: ~$tokens | Tools: $tools | Not installed${NC}"
         fi
         echo ""
     done
+
+    echo -e "${DIM}Tool weight: ${GREEN}●${NC}${DIM} light (1-5) ${YELLOW}●${NC}${DIM} moderate (6-15) ${RED}●${NC}${DIM} heavy (16+)${NC}"
 }
 
 # Show current status
@@ -153,6 +271,9 @@ enable_mcp() {
 
     echo -e "${GREEN}Enabled successfully${NC}"
     echo -e "${YELLOW}Note: Restart Claude Code for changes to take effect${NC}"
+
+    # Budget check after successful enable
+    audit_mcp_budget --brief
 }
 
 # Disable an MCP
@@ -249,6 +370,9 @@ apply_preset() {
     else
         echo -e "${GREEN}Preset applied${NC}"
         echo -e "${YELLOW}Restart Claude Code for changes to take effect${NC}"
+
+        # Budget check after preset apply
+        audit_mcp_budget --brief
     fi
 }
 
@@ -279,7 +403,28 @@ show_tokens() {
     echo ""
     echo -e "${BOLD}Total MCP overhead:${NC} ~${CYAN}$total${NC} tokens"
     echo ""
+
+    # MCP budget summary
+    local mcp_count=0
+    local tool_count=0
+    for server in $installed; do
+        ((mcp_count++))
+        local tools=$(jq -r ".servers[\"$server\"].tools // 0" "$REGISTRY_FILE" 2>/dev/null)
+        [[ "$tools" =~ ^[0-9]+$ ]] && tool_count=$((tool_count + tools))
+    done
+
+    local mcp_color="$GREEN" tool_color="$GREEN"
+    [ "$mcp_count" -ge $((MAX_MCPS * 8 / 10)) ] && mcp_color="$YELLOW"
+    [ "$mcp_count" -ge "$MAX_MCPS" ] && mcp_color="$RED"
+    [ "$tool_count" -ge $((MAX_TOOLS * 8 / 10)) ] && tool_color="$YELLOW"
+    [ "$tool_count" -ge "$MAX_TOOLS" ] && tool_color="$RED"
+
+    echo -e "${BOLD}Budget (10/80 Rule):${NC}"
+    echo -e "  MCPs:  ${mcp_color}${mcp_count}/${MAX_MCPS}${NC}"
+    echo -e "  Tools: ${tool_color}${tool_count}/${MAX_TOOLS}${NC}"
+    echo ""
     echo -e "${DIM}Note: This is approximate. Actual usage varies by tool complexity.${NC}"
+    echo -e "${DIM}Run '$0 audit' for detailed budget analysis.${NC}"
 }
 
 # Interactive selection
@@ -455,6 +600,9 @@ main() {
             ;;
         tokens)
             show_tokens
+            ;;
+        audit)
+            audit_mcp_budget
             ;;
         install)
             install_mcp "${remaining[@]}"
