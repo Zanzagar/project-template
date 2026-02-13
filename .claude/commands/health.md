@@ -130,7 +130,37 @@ Report:
 
 If the script is unavailable, skip this section with note: "Install manage-mcps.sh for budget tracking"
 
-### 9. Hooks Status
+### 10. AgentShield Status
+
+Check if AgentShield has been run recently:
+
+```bash
+# Check for AgentShield marker
+ASHIELD_LAST_RUN=".claude/agentshield-last-run"
+if [ -f "$ASHIELD_LAST_RUN" ]; then
+    LAST_SCAN=$(cat "$ASHIELD_LAST_RUN")
+    SCAN_AGE=$(( ($(date +%s) - LAST_SCAN) / 86400 ))
+    if [ "$SCAN_AGE" -gt 7 ]; then
+        echo "AgentShield: Stale (${SCAN_AGE} days ago)"
+    else
+        echo "AgentShield: Recent (${SCAN_AGE} days ago)"
+    fi
+else
+    echo "AgentShield: Never run"
+fi
+```
+
+Report:
+- Recent (<7 days): Healthy
+- Stale (>7 days): Warning — suggest re-scan
+- Never run: Warning — suggest initial scan
+
+After running AgentShield, update the marker:
+```bash
+date +%s > .claude/agentshield-last-run
+```
+
+### 11. Hooks Status
 
 ```bash
 # Check if hooks enabled
@@ -160,10 +190,11 @@ Present results as a health report:
 ║ Dependencies          │ ⚠ Outdated  │ 3 packages            ║
 ║ MCPs                  │ ✓ Configured│ ~7,500 tokens         ║
 ║ Context Budget        │ ✓ Healthy   │ 4/10 MCPs, 35/80 tools║
+║ AgentShield           │ ⚠ Stale     │ Last scan: 14 days ago║
 ║ Hooks                 │ ○ Optional  │ Not enabled           ║
 ╚════════════════════════════════════════════════════════════╝
 
-Summary: 7 passed, 2 warnings, 1 failing
+Summary: 7 passed, 3 warnings, 1 failing
 
 Recommendations:
 1. Fix failing tests before continuing
@@ -184,4 +215,6 @@ Based on findings, suggest specific fixes:
 | MCPs not configured | `/mcps` |
 | MCP budget exceeded | `./scripts/manage-mcps.sh select` |
 | Hooks not enabled | `/settings safe` |
+| AgentShield never run | `npx ecc-agentshield scan` |
+| AgentShield scan stale | `npx ecc-agentshield scan` (re-scan) |
 | CLAUDE.md not customized | `/setup` |

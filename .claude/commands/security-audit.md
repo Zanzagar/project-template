@@ -82,3 +82,13 @@ Run if installed:
 bandit -r src/ -f json
 safety check --json
 ```
+
+## Config-Level Security
+
+This audit covers **code-level** vulnerabilities. For **config-level** security (CLAUDE.md secrets, MCP permissions, hook injection vectors, agent misconfigs), run AgentShield:
+
+```bash
+npx ecc-agentshield scan
+```
+
+See `docs/SECURITY.md` for full details on AgentShield scan modes and CI integration.
