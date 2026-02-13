@@ -17,7 +17,8 @@ Hooks are shell scripts that run automatically at specific points in Claude's wo
 | `pre-commit-check.sh` | PreToolUse (Bash) | Validates code before git commits |
 | `post-edit-format.sh` | PostToolUse (Edit\|Write) | Auto-formats files after edits |
 | `protect-sensitive-files.sh` | PreToolUse (Edit\|Write) | Blocks edits to .env, keys, etc. |
-| `session-summary.sh` | Stop | Logs session activity |
+| `session-summary.sh` | Stop | Logs session activity (lightweight) |
+| `session-end.sh` | Stop | Generates detailed session summary for cross-session continuity |
 
 ## How to Enable Hooks
 

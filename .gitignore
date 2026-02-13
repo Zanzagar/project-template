@@ -55,16 +55,15 @@ node_modules/
 *.sw?
 # OS specific
 
-# Task files
-# tasks.json
-# tasks/
-
 # Plugins - installed plugins are user-specific
 .claude/plugins/installed/
 .claude/plugins/installed.json
 
 # Claude Code logs from hooks
 .claude/logs/
+
+# Session summaries (ephemeral, per-user)
+.claude/sessions/*.md
 
 # Generated project index (created by project-index.sh hook)
 .claude/project-index.json
@@ -80,3 +79,7 @@ test-projects/
 
 # Template tracking (created by sync-template.sh in target projects)
 .template/
+
+# Task files
+# tasks.json
+# tasks/ 
