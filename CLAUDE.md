@@ -142,16 +142,18 @@ Available commands for common tasks:
 | Command | Description |
 |---------|-------------|
 | `/setup` | Guided project setup wizard |
-| `/health` | Project health check |
+| `/health` | Project health check (includes AgentShield status) |
 | `/tasks` | List Taskmaster tasks |
 | `/test` | Run pytest test suite |
 | `/lint` | Run ruff linter |
+| `/verify` | Full verification pipeline (test + lint + types + security) |
+| `/eval [--save]` | Code quality metrics with trend tracking |
 | `/commit [message]` | Create conventional commit |
 | `/pr [title]` | Create GitHub Pull Request |
 | `/changelog [version]` | Generate changelog from git history |
 | `/prd` | Show/parse PRD documents |
 | `/generate-tests <file>` | Generate tests for a file |
-| `/security-audit` | Security vulnerability scan |
+| `/security-audit` | Security vulnerability scan (code-level OWASP) |
 | `/optimize <file>` | Performance analysis |
 | `/settings [preset]` | Configure Claude Code settings |
 | `/plugins` | Manage plugins |
@@ -159,6 +161,17 @@ Available commands for common tasks:
 | `/brainstorm <topic>` | Structured brainstorming with approaches |
 | `/github-sync [action]` | Sync tasks with GitHub Issues |
 | `/research <topic>` | Structured research (papers, docs, exploration) |
+| `/orchestrate <pipeline>` | Multi-agent pipeline (feature, review, refactor) |
+| `/multi-plan <requirements>` | Parallel planning with Claude + Gemini + Codex |
+| `/multi-execute <task>` | Parallel implementation with multiple models |
+| `/checkpoint [label]` | Manual session state save |
+| `/skill-create` | Auto-generate skills from git history |
+| `/update-codemaps` | Generate architecture docs in `docs/CODEMAPS/` |
+| `/update-docs [scope]` | Trigger doc-updater agent on changed files |
+| `/instinct-status` | View learned instinct patterns |
+| `/instinct-import <file>` | Import instincts from shared JSON |
+| `/instinct-export` | Export instincts for sharing |
+| `/evolve` | Cluster instincts into new skills |
 
 ## Context Modes (CLI Aliases)
 
@@ -200,10 +213,22 @@ Enable via `/settings safe`, `/settings thorough`, or `/settings optimized`.
 ## Agents
 
 Specialized sub-agent definitions in `.claude/agents/`:
-- **planner.md** - Architecture planning (opus, read-only)
-- **code-reviewer.md** - Code review (sonnet, >80% confidence, severity tiers)
-- **security-reviewer.md** - Security audit (sonnet, OWASP Top 10)
-- **build-resolver.md** - Build/CI fixes (sonnet, minimal-diff)
+
+| Agent | Model | Access | Use Case |
+|-------|-------|--------|----------|
+| **planner** | opus | Read-only | Architecture planning, implementation design |
+| **code-reviewer** | sonnet | Read-only | Code review with severity tiers, >80% confidence |
+| **security-reviewer** | sonnet | + Bash | OWASP Top 10, dependency scanning |
+| **build-resolver** | sonnet | All | Build failures, CI fixes |
+| **architect** | opus | Read-only | System design, ADR output format |
+| **tdd-guide** | sonnet | Read-only | TDD coaching (advisory only, Superpowers enforces) |
+| **database-reviewer** | sonnet | Read-only | SQL optimization, N+1 detection, migration safety |
+| **doc-updater** | haiku | Write | README, docstrings, API docs, CHANGELOG |
+| **refactor-cleaner** | sonnet | Write | Controlled refactoring, preserves all tests |
+| **e2e-runner** | sonnet | + Bash | Playwright/Cypress/Selenium, flaky test diagnosis |
+| **go-reviewer** | sonnet | Read-only | Go-specific patterns, goroutine leaks |
+| **go-build-resolver** | sonnet | All | Go module/CGO/cross-compilation errors |
+| **python-reviewer** | sonnet | Read-only | Python async, metaclasses, GIL, packaging |
 
 ## MCP Discipline
 
@@ -234,24 +259,76 @@ Available hooks:
 
 See `docs/HOOKS.md` for full documentation.
 
+## Continuous Learning
+
+The instinct system allows Claude to learn patterns across sessions:
+
+- **Instincts** (`.claude/instincts/`) — Lightweight JSON patterns with confidence scoring (0-1)
+- **Authority hierarchy**: Rules (`.claude/rules/`) > Instincts > Defaults
+- **Management**: `/instinct-status`, `/instinct-import`, `/instinct-export`, `/evolve`
+- **Evolution**: When instincts cluster, `/evolve` promotes them to full skills
+
+See `.claude/instincts/README.md` for format and `.claude/rules/authority-hierarchy.md` for precedence.
+
+## Multi-Model Collaboration
+
+Use multiple AI models in parallel for diverse perspectives:
+
+```bash
+# Plan with Claude + Gemini + Codex
+/multi-plan "Design authentication system"
+
+# Implement with parallel model execution
+/multi-execute "Build JWT auth with refresh tokens"
+```
+
+Requires API keys in `.env` (optional — gracefully degrades to Claude-only):
+- `GOOGLE_AI_KEY` — Gemini (alternative perspectives)
+- `OPENAI_API_KEY` — Codex/GPT (implementation patterns)
+
+See `.claude/examples/multi-model-config.json` for setup.
+
+## Security
+
+Two-layer security model:
+
+| Layer | Tool | Scope |
+|-------|------|-------|
+| **Config-level** | AgentShield (`npx ecc-agentshield scan`) | CLAUDE.md secrets, MCP permissions, hook injection, agent misconfigs |
+| **Code-level** | `/security-audit` | OWASP Top 10, SQL injection, XSS, dependency vulnerabilities |
+
+See `docs/SECURITY.md` for full documentation.
+
 ## Auto-Loaded Rules
 
 Claude Code automatically loads behavior rules from `.claude/rules/`:
+
+**Core rules** (always loaded):
 - **claude-behavior.md** - Git commit enforcement, proactive behaviors, token-conscious documentation
 - **git-workflow.md** - Detailed git commands and recovery procedures
-- **python/coding-standards.md** - Python coding conventions (loads only for .py files)
 - **reasoning-patterns.md** - Clarification, brainstorming, reflection, and debugging patterns
 - **workflow-guide.md** - Phase detection, tool selection, and human input triggers
 - **context-management.md** - Thinking modes, context rot prevention, session management
 - **proactive-steering.md** - Project co-pilot behaviors, auto-tool invocation, steering patterns
+- **authority-hierarchy.md** - Rules > instincts > defaults precedence
+
+**Language-specific rules** (loaded only when matching files are edited):
+- **python/coding-standards.md** - Python conventions (`.py` files)
+- **typescript/coding-standards.md** - TypeScript strict mode, patterns (`.ts`, `.tsx` files)
+- **golang/coding-standards.md** - Go idioms, error handling (`.go` files)
+- **java/coding-standards.md** - Java/Spring Boot patterns (`.java` files)
+- **frontend/component-standards.md** - React/Vue/Svelte (`.jsx`, `.tsx`, `.vue`, `.svelte` files)
 
 These rules are synced from the template and can be updated independently of this file.
 
 ## Reference Docs
 
 When needed, consult:
-- `.claude/rules/` - Auto-loaded behavior rules
+- `.claude/rules/` - Auto-loaded behavior rules (core + language-specific)
 - `docs/ECC_INTEGRATION.md` - ECC integration features, token optimization, session persistence
+- `docs/SECURITY.md` - AgentShield config scanning + security audit workflows
 - `docs/MCP_SETUP.md` - MCP server configuration (Task Master, Context7, GitHub)
 - `docs/PLUGINS.md` - Plugin installation and management (includes Superpowers)
 - `docs/HOOKS.md` - Automation hooks setup and customization
+- `.claude/instincts/README.md` - Continuous learning instinct system
+- `.claude/examples/multi-model-config.json` - Multi-model API key setup

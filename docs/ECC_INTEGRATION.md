@@ -6,6 +6,7 @@ Features integrated from [Everything Claude Code](https://github.com/anthropics/
 
 | Feature | Source | Files |
 |---------|--------|-------|
+| **Phase 1** | | |
 | Token optimization presets | ECC settings patterns | `.claude/settings-presets.json` |
 | Context management docs | ECC token guidance | `.claude/rules/context-management.md` |
 | MCP discipline (10/80 rule) | ECC budget patterns | `scripts/manage-mcps.sh`, `docs/MCP_SETUP.md` |
@@ -14,9 +15,27 @@ Features integrated from [Everything Claude Code](https://github.com/anthropics/
 | Pre-compaction state | ECC state preservation | `.claude/hooks/pre-compact.sh` |
 | Context injection modes | ECC mode patterns | `.claude/contexts/dev.md`, `review.md`, `research.md` |
 | Python standards reorganization | ECC modular rules | `.claude/rules/python/coding-standards.md` |
-| Agent definitions | ECC agent patterns | `.claude/agents/` |
+| Agent definitions (4 core) | ECC agent patterns | `.claude/agents/` |
 | Code review enhancement | ECC review patterns | `.claude/skills/code-review/SKILL.md` |
 | Health check MCP audit | ECC budget monitoring | `.claude/commands/health.md` |
+| **Phase 2** | | |
+| AgentShield security scanning | ECC config security | `docs/SECURITY.md`, `/health` integration |
+| 9 additional agents | ECC agent library | `.claude/agents/` (13 total) |
+| 10 multi-language skills | ECC skill library | `.claude/skills/` (13 total) |
+| Continuous learning v2 | ECC instinct patterns | `.claude/instincts/`, `/evolve` |
+| Authority hierarchy | ECC rule precedence | `.claude/rules/authority-hierarchy.md` |
+| Multi-agent orchestration | ECC pipeline patterns | `/orchestrate` command |
+| Multi-model collaboration | ECC multi-model patterns | `/multi-plan`, `/multi-execute` |
+| Verification pipeline | ECC quality patterns | `/verify` command |
+| Quality eval tracking | ECC metrics patterns | `/eval` command, `.claude/evals/` |
+| Skill auto-generation | ECC evolution patterns | `/skill-create` command |
+| Architecture codemaps | ECC documentation patterns | `/update-codemaps`, `docs/CODEMAPS/` |
+| Session checkpoints | ECC session patterns | `/checkpoint` command |
+| Doc automation | ECC doc patterns | `/update-docs` command |
+| TypeScript rules | ECC polyglot patterns | `.claude/rules/typescript/coding-standards.md` |
+| Go rules | ECC polyglot patterns | `.claude/rules/golang/coding-standards.md` |
+| Java rules | ECC polyglot patterns | `.claude/rules/java/coding-standards.md` |
+| Frontend component rules | ECC polyglot patterns | `.claude/rules/frontend/component-standards.md` |
 
 ## Quick Start
 
@@ -76,22 +95,85 @@ alias claude-research='claude --append-system-prompt "$(cat .claude/contexts/res
 
 **Target:** Max 10 MCPs, 80 tools. Keeps startup overhead at ~15-20% of context.
 
-### Agents
+### Agents (13 total)
 
 Invoke via Task tool with agent-specific prompts. Definitions in `.claude/agents/`:
 
-| Agent | Model | Tools | Use Case |
-|-------|-------|-------|----------|
+| Agent | Model | Access | Use Case |
+|-------|-------|--------|----------|
 | planner | opus | Read-only | Architecture planning, implementation design |
 | code-reviewer | sonnet | Read-only | Code review with severity tiers |
 | security-reviewer | sonnet | + Bash | OWASP Top 10, dependency scanning |
 | build-resolver | sonnet | All | Build failures, CI fixes |
+| architect | opus | Read-only | System design, ADR output format |
+| tdd-guide | sonnet | Read-only | TDD coaching (advisory, Superpowers enforces) |
+| database-reviewer | sonnet | Read-only | SQL optimization, N+1, migration safety |
+| doc-updater | haiku | Write | README, docstrings, API docs, CHANGELOG |
+| refactor-cleaner | sonnet | Write | Controlled refactoring, preserves tests |
+| e2e-runner | sonnet | + Bash | Playwright/Cypress/Selenium, flaky tests |
+| go-reviewer | sonnet | Read-only | Go patterns, goroutine leaks |
+| go-build-resolver | sonnet | All | Go module/CGO/cross-compilation |
+| python-reviewer | sonnet | Read-only | Python async, metaclasses, GIL |
+
+### Continuous Learning
+
+```bash
+/instinct-status         # View learned patterns
+/evolve                  # Cluster instincts into skills
+/instinct-import file    # Import shared instincts
+/instinct-export         # Export for sharing
+```
+
+Instincts are lightweight JSON in `.claude/instincts/` with confidence scoring (0-1). Authority: Rules > Instincts > Defaults.
+
+### Multi-Agent Orchestration
+
+```bash
+/orchestrate feature     # Plan → Implement → Review → Security pipeline
+/orchestrate review      # Code review → Security audit pipeline
+/orchestrate refactor    # Review → Refactor → Verify pipeline
+```
+
+### Multi-Model Collaboration
+
+```bash
+/multi-plan <requirements>    # Claude + Gemini + Codex perspectives
+/multi-execute <task>         # Parallel implementation, Claude synthesizes
+```
+
+Requires optional API keys in `.env`:
+- `GOOGLE_AI_KEY` — Gemini (alternative perspectives)
+- `OPENAI_API_KEY` — Codex/GPT (implementation patterns)
+
+Gracefully degrades to Claude-only if keys are missing.
+
+### Security (Two-Layer)
+
+| Layer | Tool | Scope |
+|-------|------|-------|
+| Config-level | `npx ecc-agentshield scan` | CLAUDE.md, MCP permissions, hooks, agents |
+| Code-level | `/security-audit` | OWASP Top 10, SQL injection, XSS, deps |
+
+See `docs/SECURITY.md` for details.
+
+## Token Overhead
+
+| Component | Tokens | Loaded |
+|-----------|--------|--------|
+| Core rules (7 files) | ~5k | Every session (auto-loaded) |
+| Language rules (5 files) | 0 at startup | Only when matching files edited |
+| Skills (13 skills) | 0 at startup | Only when invoked via `/skill-name` |
+| Instincts (JSON) | ~50-200 each | Only when continuous-learning skill active |
+| Agents | 0 at startup | Only when spawned via Task tool |
+| AgentShield | 0 | External tool (npx), no context cost |
+
+**Key insight**: Phase 2 adds significant capability without increasing startup overhead. Skills, agents, instincts, and language rules are all on-demand.
 
 ## Migration Notes
 
-If upgrading from a pre-ECC template version:
+### From pre-ECC (Phase 1 upgrade)
 
-1. **New files** — Copy these directories:
+1. **New directories** — Copy:
    - `.claude/agents/`
    - `.claude/contexts/`
    - `.claude/sessions/` (with `.gitkeep`)
@@ -111,3 +193,51 @@ If upgrading from a pre-ECC template version:
    - `manage-mcps.sh` now has `audit` command
 
 5. **gitignore** — Add: `.claude/sessions/*.md`
+
+### From Phase 1 (Phase 2 upgrade)
+
+1. **New directories** — Copy:
+   - `.claude/instincts/` (with `README.md` and `example.json`)
+   - `.claude/evals/`
+   - `.claude/rules/typescript/`, `golang/`, `java/`, `frontend/`
+   - `.claude/skills/` (10 new skill directories)
+   - `docs/CODEMAPS/`
+
+2. **New agent files** — Copy to `.claude/agents/`:
+   - `architect.md`, `tdd-guide.md`, `database-reviewer.md`, `doc-updater.md`
+   - `refactor-cleaner.md`, `e2e-runner.md`, `go-reviewer.md`
+   - `go-build-resolver.md`, `python-reviewer.md`
+
+3. **New command files** — Copy to `.claude/commands/`:
+   - `orchestrate.md`, `multi-plan.md`, `multi-execute.md`
+   - `verify.md`, `eval.md`, `checkpoint.md`
+   - `skill-create.md`, `update-codemaps.md`, `update-docs.md`
+   - `instinct-status.md`, `instinct-import.md`, `instinct-export.md`, `evolve.md`
+
+4. **New rule files** — Copy:
+   - `.claude/rules/authority-hierarchy.md`
+   - `.claude/rules/typescript/coding-standards.md`
+   - `.claude/rules/golang/coding-standards.md`
+   - `.claude/rules/java/coding-standards.md`
+   - `.claude/rules/frontend/component-standards.md`
+
+5. **Updated files** — Review changes in:
+   - `.claude/commands/health.md` (AgentShield status section added)
+   - `.claude/commands/security-audit.md` (AgentShield reference added)
+   - `.claude/rules/proactive-steering.md` (orchestration patterns added)
+   - `.claude/rules/workflow-guide.md` (orchestration/multi-model in decision tree)
+   - `CLAUDE.md` (all Phase 2 sections)
+
+6. **New docs** — Copy:
+   - `docs/SECURITY.md` (AgentShield documentation)
+
+7. **gitignore** — Add:
+   - `.claude/instincts/*.json` (personal instincts)
+   - `!.claude/instincts/example.json` (keep the example)
+   - `.claude/evals/*.json` (eval history)
+   - `.claude/agentshield-last-run` (marker file)
+
+8. **Multi-model setup** (optional) — Add to `.env`:
+   - `GOOGLE_AI_KEY=your_key` (Gemini)
+   - `OPENAI_API_KEY=your_key` (Codex/GPT)
+   - See `.claude/examples/multi-model-config.json`
