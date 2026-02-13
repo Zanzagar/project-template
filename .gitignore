@@ -65,6 +65,13 @@ node_modules/
 # Session summaries (ephemeral, per-user)
 .claude/sessions/*.md
 
+# Instincts (personal learned patterns, not shared by default)
+.claude/instincts/*.json
+!.claude/instincts/example.json
+
+# AgentShield scan marker
+.claude/agentshield-last-run
+
 # Generated project index (created by project-index.sh hook)
 .claude/project-index.json
 
