@@ -160,6 +160,24 @@ Available commands for common tasks:
 | `/github-sync [action]` | Sync tasks with GitHub Issues |
 | `/research <topic>` | Structured research (papers, docs, exploration) |
 
+## Context Modes (CLI Aliases)
+
+Launch Claude Code with mode-specific behavior by appending context files:
+
+```bash
+alias claude-dev='claude --append-system-prompt "$(cat .claude/contexts/dev.md)"'
+alias claude-review='claude --append-system-prompt "$(cat .claude/contexts/review.md)"'
+alias claude-research='claude --append-system-prompt "$(cat .claude/contexts/research.md)"'
+```
+
+| Mode | Behavior | When to Use |
+|------|----------|-------------|
+| `dev` | Code-first, minimal explanation, frequent commits | Active implementation |
+| `review` | Read-first, severity-ordered findings, >80% confidence | PR review, audits |
+| `research` | Explore-first, no code until clear, cite sources | Investigation, planning |
+
+Add aliases to `~/.bashrc` or `~/.zshrc`. Default `claude` (no alias) uses the project's normal settings.
+
 ## Hooks (Optional)
 
 Automate validation and formatting with hooks. See `.claude/hooks/README.md` for details.
