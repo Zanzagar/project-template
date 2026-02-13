@@ -26,19 +26,35 @@ The template was developed through systematic analysis and integration of best p
 
 ## The Problem: Why "Out of the Box" Isn't Enough
 
-### What happens without a template
+### What actually goes wrong without a template
 
-When a developer opens Claude Code (or any LLM coding assistant) without configuration, they get:
+Consider a concrete scenario: a student building a web application for a senior capstone project. They open Claude Code and type "Build me a Flask app with user authentication and a PostgreSQL database."
 
-1. **A blank slate every session.** The AI has no memory of your project's conventions, architecture decisions, or past mistakes. Every session starts from zero.
+Within 60 seconds, Claude generates 400 lines of code — models, routes, templates, database setup. It looks complete. The student copies it into their project, runs it, and it works. They commit with the message "added auth" and move on.
 
-2. **No workflow enforcement.** The AI will happily write production code without tests, skip security reviews, push to main without review, or commit broken code. It does what you ask — including bad practices.
+Here's what they don't realize happened:
 
-3. **No resource management.** Claude Code has a ~200K token context window, but startup overhead (tool definitions, system prompts) consumes 15-25K tokens before you type a word. Without management, you hit quality degradation mid-session with no recovery strategy.
+1. **No tests exist.** The AI generated zero test files. The student now has a working application with 0% test coverage. When they modify the authentication flow two weeks later, they break registration without knowing it. They discover this the night before the demo.
 
-4. **Generic responses.** The AI doesn't know your team's conventions, your framework's idioms, or your project's architectural decisions. It generates "textbook" code that may not fit your codebase.
+2. **The password hashing is wrong.** Claude used `md5` instead of `bcrypt` because the student didn't specify. A security review would have caught this in seconds, but no review was requested and none was enforced. This is a critical vulnerability that a hiring manager would reject on sight.
 
-5. **No specialization.** A single general-purpose model handles everything — code review, security analysis, architecture planning, test generation — with equal (mediocre) depth in each.
+3. **The session is gone.** The next day, the student opens Claude Code and says "let's add the dashboard." Claude has no memory of yesterday's authentication decisions — which ORM it used, how the models are structured, what the route patterns look like. The student spends 20 minutes re-explaining their own codebase to the AI.
+
+4. **Context degraded mid-session.** After loading 10 MCP tool definitions (134 tools, 50K+ tokens), Claude's effective working context is already halved before the student types anything. By the time they've loaded a few files and had some back-and-forth, quality silently degrades. Claude starts forgetting instructions from earlier in the conversation, suggesting approaches it already tried, and generating code that contradicts the existing codebase.
+
+5. **The commit history is useless.** After three weeks of development, the git log reads: "added auth", "updates", "fixed stuff", "more changes", "final version", "actual final version". The professor reviewing the project can't tell what was built when, can't evaluate the development process, and can't distinguish the student's work from the AI's output.
+
+**None of these failures are caused by the AI being incapable.** Claude Code can write tests, use bcrypt, remember context, and produce clean commits. It just doesn't do these things *automatically*. Without a template, the quality of AI-assisted output depends entirely on the developer knowing to ask for best practices — which is exactly what students are still learning.
+
+### The five gaps a template fills
+
+| Gap | What Happens Without It | What the Template Does |
+|-----|------------------------|----------------------|
+| **Memory** | Every session starts from zero. The AI forgets your architecture, conventions, and past decisions. | Persistent session summaries, work logs, instinct system, and CLAUDE.md carry context across sessions indefinitely. |
+| **Discipline** | The AI writes whatever you ask for, including insecure code, untested features, and broken commits. | TDD enforcement (Superpowers deletes untested code), security gates, conventional commit rules, and verification pipelines make bad practices harder than good ones. |
+| **Resources** | 50K+ tokens consumed by unused tools at startup. Quality degrades silently mid-session with no recovery. | Token-conscious design (35K startup, 165K working). Strategic compaction, tiered documentation lookups, and on-demand skill loading maximize working context. |
+| **Context** | Generic "textbook" code that doesn't fit the project's patterns, framework idioms, or architectural decisions. | 17 behavior rules, 32 domain skills, and language-specific coding standards teach the AI your project's conventions. |
+| **Specialization** | One general-purpose model handles security review, architecture planning, test generation, and documentation with equal (shallow) depth. | 13 purpose-built agents with appropriate model tiers, tool access, and domain training produce categorically deeper results in each specialty. |
 
 ### What a well-configured template provides
 
@@ -190,35 +206,123 @@ Rules are **auto-loaded constraints** that define how Claude behaves. They're th
 
 ### 5. Continuous Learning System
 
-The template includes a **cross-session learning mechanism** inspired by ECC's instinct system:
+One of the fundamental limitations of LLMs is that they don't learn from experience. A model that makes a mistake on Monday will make the same mistake on Tuesday, because each session starts with the same weights. The template's continuous learning system works around this limitation by **persisting patterns as structured data** that gets loaded into future sessions.
+
+#### How It Works
+
+The system operates on three levels:
 
 ```
-Session Work → Pattern Extraction → Instinct (confidence 0.3-0.7)
-                                        ↓ (reinforced)
-                                   Active Instinct (>0.7)
-                                        ↓ (clustered via /evolve)
-                                   Promoted to Skill
+Level 1: INSTINCTS (lightweight, automatic)
+  Session Work → Pattern Extraction → Instinct JSON (confidence 0.3)
+                                           ↓ reinforced by repetition
+                                      Active Instinct (confidence >0.7)
+                                           ↓ unused for 2+ weeks
+                                      Decayed Instinct (confidence <0.3) → removed
+
+Level 2: SKILLS (permanent, curated)
+  Multiple related instincts → /evolve command → Promoted to SKILL.md
+  Skills don't decay. They become permanent reference material.
+
+Level 3: RULES (immutable, project-defined)
+  Rules are written by the developer and never modified by the learning system.
+  Authority hierarchy: Rules > Instincts > Defaults (always)
 ```
 
-- **Instincts** are lightweight JSON patterns with confidence scores that decay when unused
-- When multiple instincts cluster around a theme, `/evolve` promotes them into full skills
-- Authority hierarchy ensures instincts never override explicit rules
-- Instincts can be exported/imported for team sharing
+#### Concrete Example
+
+Suppose a student is building a Django application and discovers that `select_related()` is needed to avoid N+1 query problems. The first time this happens:
+
+1. The student (or Claude) fixes the N+1 issue manually
+2. `/learn` or the automatic pattern extraction hook captures this as an instinct:
+
+```json
+{
+  "pattern": "django-n-plus-one",
+  "trigger": "When writing Django ORM queries that traverse foreign keys",
+  "action": "Use select_related() for ForeignKey/OneToOne, prefetch_related() for ManyToMany",
+  "confidence": 0.5,
+  "source": "session-2026-02-13"
+}
+```
+
+3. The next session, when Claude sees Django ORM code, it proactively suggests `select_related()` — even though the student didn't ask
+4. If the student confirms this is useful (by accepting the suggestion), confidence increases toward 0.7
+5. After several reinforcements, the pattern becomes an active instinct that Claude applies automatically
+6. If the student accumulates several Django query optimization instincts, `/evolve` clusters them into a full `django-query-optimization` skill
+
+#### Why This Matters
+
+The learning system means that a student's Claude instance **gets better over the course of a semester**. The template they use in September is more knowledgeable than the one they started with in August — not because the model changed, but because the accumulated instincts represent the student's growing expertise, persisted in a format the AI can use.
+
+For teams, instincts can be exported and imported (`/instinct-export`, `/instinct-import`). When one team member discovers a workaround, the entire team benefits in their next session.
+
+#### Governance
+
+The authority hierarchy prevents learned patterns from overriding explicit project rules:
+
+| Source | Authority | Can Override? |
+|--------|-----------|--------------|
+| Rules (`.claude/rules/`) | Highest | Cannot be overridden by anything |
+| Instincts (`.claude/instincts/`) | Medium | Override defaults, but yield to rules |
+| Default Claude behavior | Lowest | Overridden by everything above |
+
+This means a rule like "always use conventional commits" cannot be weakened by an instinct that says "batch commits are faster." The learning system supplements the rules — it never contradicts them.
 
 ### 6. Multi-Model Collaboration
 
-The template supports **parallel execution across multiple AI models** for diverse perspectives:
+A single AI model, no matter how capable, has blind spots. It was trained on a specific dataset, optimized for specific objectives, and develops characteristic patterns in its outputs. When an architect makes all decisions alone, the result reflects their biases. The same is true for AI models.
+
+The template addresses this by enabling **parallel execution across multiple AI models**, synthesizing diverse perspectives into a single plan or implementation:
+
+#### How It Works
 
 ```
 /multi-plan "Design authentication system"
-    ├── Claude (Opus): Architecture, security considerations
-    ├── Gemini: Alternative approaches, frontend patterns
-    └── Codex: Implementation patterns, code generation
 
-    → Synthesized plan combining strengths of each
+    ┌─────────────────────────────────────────────────────┐
+    │  Claude (Opus)          Gemini              Codex   │
+    │  ─────────────          ──────              ─────   │
+    │  JWT with refresh       Session-based       OAuth2  │
+    │  tokens. Redis for      auth. PostgreSQL    with    │
+    │  token blacklist.       session store.      PKCE    │
+    │  Middleware pattern.    Cookie-based.       flow.   │
+    │  Argues: stateless      Argues: simpler,    Argues: │
+    │  scales better.         less moving parts.  proven  │
+    │                                             standard│
+    └─────────────────────────────────────────────────────┘
+                              ↓
+    ┌─────────────────────────────────────────────────────┐
+    │  SYNTHESIZED PLAN                                   │
+    │  ─────────────────                                  │
+    │  Primary: JWT + refresh tokens (Claude's approach)  │
+    │  Adopted from Gemini: Cookie transport for CSRF     │
+    │  Adopted from Codex: PKCE flow for OAuth providers  │
+    │  Rejected: Redis blacklist (PostgreSQL simpler for  │
+    │            this scale, per Gemini's argument)        │
+    └─────────────────────────────────────────────────────┘
 ```
 
-This is particularly valuable for architectural decisions where groupthink from a single model can lead to blind spots.
+#### Why Multiple Models?
+
+Each model brings different strengths:
+
+| Model | Strength | Weakness |
+|-------|----------|----------|
+| **Claude (Opus)** | Deep reasoning, security awareness, architectural rigor | Can over-engineer, favors complexity |
+| **Gemini** | Broad knowledge, alternative perspectives, strong on frontend patterns | Less depth on backend architecture |
+| **Codex/GPT** | Practical implementation patterns, large code training corpus | Less architectural reasoning |
+
+When all three agree, you can be highly confident in the approach. When they disagree, the disagreement itself is valuable — it surfaces trade-offs that a single model might gloss over.
+
+#### Practical Impact
+
+For a student project, multi-model collaboration means:
+- **Architectural decisions** get three independent reviews before code is written
+- **Implementation** can route backend work to the model strongest at backend (Codex) and frontend work to the model strongest at frontend (Gemini), with Claude orchestrating
+- **Code review** from a different model than the one that wrote the code catches patterns the author model would overlook
+
+The template gracefully degrades when API keys aren't available — `/multi-plan` works with just Claude, but produces richer results with all three models.
 
 ---
 
@@ -308,29 +412,67 @@ The difference isn't just quality — it's **reproducibility**. The template pro
 
 ### For Students
 
-1. **Enforced best practices from day one.** Students don't need to know all the best practices — the template enforces them. TDD, conventional commits, security reviews, and code quality gates become habits, not afterthoughts.
+**Scenario: A sophomore takes on their first full-stack project.**
 
-2. **Domain expertise on demand.** Need to set up a Django project? The `python-django` skill provides production-grade patterns. Need PostgreSQL optimization? The `postgresql-patterns` skill knows about indexing strategies, N+1 detection, and migration safety.
+Without the template, they face a blank directory and an AI that will generate whatever they ask for — including bad habits they'll spend years unlearning. They hardcode database credentials because they don't know about environment variables. They write no tests because nobody required them. They commit once a week with messages like "update." They discover their authentication is insecure when a classmate finds the flaw during peer review.
 
-3. **Consistent quality at scale.** A senior capstone project with 10,000+ lines of code maintains the same quality standards as the first 100 lines, because the template scales with the project.
+With the template:
+- Their first `/commit` is rejected because the message doesn't follow conventional commit format. They learn the convention immediately.
+- Their first attempt to write a route handler triggers the TDD guide: "Write a failing test first." They learn TDD not from a lecture, but from the tool refusing to let them skip it.
+- Their first database query is accompanied by the `python-django` skill's guidance on `select_related()`. They learn about N+1 queries before they ever create one.
+- When they introduce a SQL injection vulnerability, the security reviewer catches it within minutes — not weeks later when the project is deployed.
 
-4. **Learning acceleration.** The `/learn` and instinct system means discoveries in one session carry forward. Students build a growing knowledge base that compounds over time.
+**The result isn't just a better project — it's a better developer.** The template's enforced workflows become muscle memory. Students who use it for a semester internalize TDD, conventional commits, security awareness, and code review practices that distinguish junior developers from senior ones.
+
+**Specific capabilities students gain:**
+
+| Situation | What the Template Does | What the Student Learns |
+|-----------|----------------------|----------------------|
+| Starting a new feature | `/plan` creates phased approach, waits for approval | Planning before coding, scope management |
+| Writing any code | TDD enforces tests first | Test-driven development as a habit |
+| Committing code | Rules require conventional format | Professional commit practices, semantic versioning |
+| Completing a feature | `/verify` runs test + lint + type + security pipeline | Multi-stage quality gates |
+| Encountering an error | Five Whys debugging pattern (from reasoning rules) | Root cause analysis vs symptom fixing |
+| Feeling stuck | Proactive steering detects uncertainty, offers structured help | Breaking problems down, asking for help productively |
+| End of session | `/learn` extracts patterns, instincts persist | Reflection and knowledge management |
 
 ### For Research
 
-1. **Reproducible engineering processes.** The template's workflow enforcement means two different students using it will follow the same development process, making collaboration and peer review meaningful.
+**Scenario: A graduate student building a machine learning pipeline for their thesis.**
 
-2. **Multi-model perspectives.** `/multi-plan` and `/multi-execute` provide diverse AI perspectives on architectural decisions, reducing single-model bias in AI-assisted research tooling.
+Research code is notoriously difficult to reproduce. Hardcoded paths, missing random seeds, unversioned dependencies, and undocumented preprocessing steps mean that even the author can't reproduce their own results six months later.
 
-3. **Audit trail.** Conventional commits, work logs, session summaries, and task management create a complete record of how software was developed — valuable for methodology sections of papers.
+The template addresses this at the process level:
+
+1. **Every decision is recorded.** Conventional commits, work logs, and session summaries create an audit trail that documents not just *what* was built, but *why* each decision was made. When a reviewer asks "why did you use LSTM instead of Transformer?", the answer is in the work log — captured in the moment, not reconstructed from memory.
+
+2. **Dependencies are tracked from day one.** The template's verification pipeline catches unversioned dependencies before they become a problem. `pip freeze > requirements.txt` isn't something the student has to remember — it's part of the workflow.
+
+3. **Multi-model perspectives reduce bias.** If a student asks one AI model "what architecture should I use for this NLP task?", they get one opinion shaped by that model's training. `/multi-plan` gives them three independent opinions, surfaces disagreements, and forces the student to reason about trade-offs rather than accepting the first suggestion.
+
+4. **The methodology section writes itself.** When every commit follows a convention, every development phase is tracked in Task Master, and every session generates a summary, the student has a complete record of their development process. The template doesn't just produce better code — it produces documentable process.
 
 ### For the Department
 
-1. **Standardized starting point.** Every project begins with production-grade tooling, not a blank directory. This raises the floor for all student work.
+**Scenario: A professor overseeing 30 capstone projects with 4-person teams.**
 
-2. **Template as teaching tool.** The rules and skills encode best practices that students absorb through use. The authority hierarchy (Rules > Instincts > Defaults) teaches software engineering governance.
+Without standardization, each team invents their own workflow. Some use git effectively; others email zip files. Some write tests; others don't. Some teams communicate well; others have one person doing all the work while others struggle in silence. The professor has no visibility into process quality until the final presentation.
 
-3. **Scalable mentorship.** The template acts as an "always-available senior engineer" that catches mistakes, suggests next steps, and enforces quality — supplementing (not replacing) faculty guidance.
+The template changes this:
+
+1. **Every team starts with the same foundation.** The template is cloned once and provides identical tooling, rules, and workflows to every team. This eliminates the "our team didn't know about X" excuse and establishes a baseline of professional practice.
+
+2. **Process quality becomes measurable.** The professor can look at any team's git log and see:
+   - Are commits frequent and well-described? (Enforced by commit rules)
+   - Are features tested before they're committed? (Enforced by TDD)
+   - Are security issues caught early? (Tracked by `/security-audit`)
+   - Is the team following a structured workflow? (Tracked by Task Master)
+
+   This is not surveillance — it's the same visibility that a tech lead has on a professional team. The template creates a paper trail that makes good process visible and bad process obvious.
+
+3. **The AI becomes a force multiplier for faculty guidance.** A professor can't sit with every team during every coding session. But the template can. It catches the same mistakes the professor would catch — hardcoded credentials, untested code, broken commits — and addresses them in real time. The professor's limited time can then focus on higher-level guidance: architecture decisions, research direction, and career mentorship.
+
+4. **Grading becomes more meaningful.** Instead of evaluating only the final output (does the app work?), the professor can evaluate the process (was the app built well?). The template's audit trail — commits, task completion, code review findings, test coverage — provides evidence of engineering discipline that a working demo alone cannot show.
 
 ---
 
@@ -338,26 +480,47 @@ The difference isn't just quality — it's **reproducibility**. The template pro
 
 ### Completed (v2.0.0 — v2.1.0)
 
-**Phase 1: ECC Integration (15 tasks)**
-- Token optimization presets (60-80% cost reduction)
-- Session persistence (summaries, pre-compaction state preservation)
-- Dynamic context modes (dev, review, research)
-- MCP discipline (10/80 rule enforcement)
-- 4 core agent definitions + code review confidence filtering
+The template's development followed a deliberate research-first methodology: study the best existing implementations, understand their design decisions, then build something that combines their strengths with our unique requirements.
 
-**Phase 2: Full Feature Parity (35 tasks)**
-- 9 additional agents (13 total)
-- 10 multi-language skills
-- Continuous learning v2 (instinct system)
-- Multi-model collaboration (/multi-plan, /multi-execute)
-- Orchestration pipelines (feature, review, refactor, bugfix, security)
-- AgentShield security scanning
-- Language-specific coding standards (Python, TypeScript, Go, Java, Frontend)
+#### Phase 1: ECC Integration (15 tasks, 75 subtasks)
 
-**Phase 2.1: Gap-Filling Release**
-- 6 new skills (docker, API design, deployment, database migrations, backend patterns, iterative retrieval)
-- 5 commands upgraded from ECC source comparison (eval, update-codemaps, orchestrate, checkpoint, update-docs)
-- 12 agent-invoking slash commands (/plan, /tdd, /code-review, /e2e, /build-fix, /refactor-clean, /go-review, /python-review, /go-build, /go-test, /test-coverage, /learn)
+**The catalyst:** After building an initial template with workflow enforcement rules, proactive steering, and Task Master integration, we discovered [Everything Claude Code](https://github.com/affaan-m/everything-claude-code) — a 45K+ star repository that won Anthropic's hackathon for Claude Code configuration. Rather than compete with ECC, we studied it systematically and integrated its best patterns.
+
+**What we learned from ECC and adopted:**
+- **Token optimization** was a blind spot. Our original template loaded 10 MCP servers (134 tools, 50K+ startup tokens) — violating ECC's own 10/80 rule. We reduced to 2 MCPs (42 tools, 25K startup). This single change recovered ~25K tokens of working context.
+- **Session persistence** was critical. Without it, every session started from zero. ECC's pattern of saving session summaries on exit and reloading them on start meant context survived across sessions without manual effort.
+- **Context modes** (dev/review/research) let the same template behave differently based on the task. A review session loads read-only rules and emphasizes thoroughness; a dev session loads write-first rules and emphasizes speed.
+- **Agent architecture** with model tiering (Opus for high-stakes reasoning, Sonnet for frequent operations, Haiku for documentation) matched cost to value instead of using the most expensive model for everything.
+
+**What we kept from our original design:**
+- **Proactive steering** — Claude detects the development phase and adjusts behavior automatically. ECC doesn't have this.
+- **Task Master integration** — AI-powered task management with dependencies, status tracking, and expansion. ECC uses a different approach.
+- **Superpowers TDD enforcement** — The template requires the Superpowers plugin, which will delete production code written without failing tests. This is stricter than ECC's advisory TDD.
+
+#### Phase 2: Full Feature Parity (35 tasks, 175 subtasks)
+
+**The goal:** Bring the template to feature parity with ECC's component inventory — 13 agents, comprehensive skill coverage, multi-language support — while maintaining our architectural advantages.
+
+**Key implementation decisions:**
+- **Language-specific rules use `paths:` frontmatter** so they load only when matching files are edited. A Python developer never pays the token cost for Go rules. This was our innovation — ECC loads all language rules at startup.
+- **Skills are on-demand** (loaded when Claude detects relevance), not startup-loaded. This means 32 skills contribute exactly 0 tokens to startup overhead. ECC handles this similarly.
+- **The instinct system uses confidence scoring** (0.0-1.0) with automatic decay. Unused patterns lose 0.05 confidence per week and are removed when they reach 0. This prevents knowledge rot — outdated patterns fade naturally instead of persisting forever.
+
+**Delivery:** 50 tasks, 250 subtasks total across both phases. All implemented through Claude Code itself — the template was built using the template's own workflow enforcement, which served as both a development tool and a stress test.
+
+#### Phase 2.1: Gap-Filling Release (v2.1.0)
+
+**The honest reckoning:** After declaring "feature parity," we performed a quantitative audit against ECC's actual component inventory. The results were humbling:
+- Raw coverage: ~62% (we had claimed ~82% "effective" coverage by counting functional equivalents)
+- The gap: we had been generous in counting our components as "equivalent" without actually comparing implementations
+
+**What we did about it:**
+1. **Fetched ECC's actual source code** for every overlapping command and compared line-by-line
+2. **Replaced 2 commands entirely** (`/eval`, `/update-codemaps`) where ECC's design philosophy was fundamentally superior — ECC's feature-level eval model (`pass@k` capability, `pass^k` regression) was architecturally better than our metrics-only approach
+3. **Merged improvements into 3 commands** (`/orchestrate`, `/checkpoint`, `/update-docs`) taking the best from both implementations
+4. **Kept 3 commands unchanged** (`/verify`, `/code-review`, `/skill-create`) where our implementations were genuinely stronger — our `/verify` is more polyglot and our `/code-review` has confidence filtering that ECC lacks
+5. **Added 6 new skills** covering gaps in Docker, API design, deployment, database migrations, backend patterns, and iterative retrieval
+6. **Added 12 agent-invoking commands** (`/plan`, `/tdd`, `/code-review`, `/e2e`, `/build-fix`, `/refactor-clean`, `/go-review`, `/python-review`, `/go-build`, `/go-test`, `/test-coverage`, `/learn`) — the biggest UX gap, as we had all 13 agents but no user-facing commands to invoke most of them
 
 ### In Progress (v2.2.0 — to resume on Journel)
 
