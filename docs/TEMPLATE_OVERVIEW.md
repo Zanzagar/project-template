@@ -1,6 +1,6 @@
 # Project Template: An AI-Augmented Software Engineering Framework
 
-**Author:** CJ Hoskinson
+**Author:** Corey Hoydic
 **Date:** February 13, 2026
 **Version:** 2.1.0
 **Repository:** github.com/Zanzagar/project-template
