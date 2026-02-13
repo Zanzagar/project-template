@@ -28,23 +28,23 @@ The template was developed through systematic analysis and integration of best p
 
 ### What actually goes wrong without a template
 
-Consider a concrete scenario: a student building a web application for a senior capstone project. They open Claude Code and type "Build me a Flask app with user authentication and a PostgreSQL database."
+Consider a concrete scenario: a graduate student building a geostatistical interpolation pipeline for their thesis. They open Claude Code and type "Build me a kriging pipeline that reads borehole data from CSV, fits a variogram, and generates a prediction grid as a GeoTIFF."
 
-Within 60 seconds, Claude generates 400 lines of code — models, routes, templates, database setup. It looks complete. The student copies it into their project, runs it, and it works. They commit with the message "added auth" and move on.
+Within 90 seconds, Claude generates 300 lines of code — CSV parsing, variogram fitting with `pykrige`, grid generation, rasterio export. It looks complete. The student runs it, gets a GeoTIFF output, and commits with the message "added kriging" and moves on.
 
 Here's what they don't realize happened:
 
-1. **No tests exist.** The AI generated zero test files. The student now has a working application with 0% test coverage. When they modify the authentication flow two weeks later, they break registration without knowing it. They discover this the night before the demo.
+1. **No tests exist.** The AI generated zero test files. The student now has a working pipeline with 0% test coverage. When they modify the variogram model from spherical to exponential two weeks later, the grid dimensions silently change because of a parameter they didn't understand. They discover this the night before their thesis committee meeting — their prediction surface no longer aligns with their validation data.
 
-2. **The password hashing is wrong.** Claude used `md5` instead of `bcrypt` because the student didn't specify. A security review would have caught this in seconds, but no review was requested and none was enforced. This is a critical vulnerability that a hiring manager would reject on sight.
+2. **The coordinate reference system is wrong.** Claude assumed WGS84 (EPSG:4326) but the borehole data is in a local projected CRS (e.g., NAD83 / UTM Zone 17N). The kriging results look reasonable because the data is clustered, but the spatial statistics are computed on unprojected coordinates — meaning distances are in degrees, not meters. Every variogram parameter and every prediction is subtly wrong. A code review would have caught this immediately, but none was enforced.
 
-3. **The session is gone.** The next day, the student opens Claude Code and says "let's add the dashboard." Claude has no memory of yesterday's authentication decisions — which ORM it used, how the models are structured, what the route patterns look like. The student spends 20 minutes re-explaining their own codebase to the AI.
+3. **The session is gone.** The next day, the student opens Claude Code and says "now add cross-validation." Claude has no memory of yesterday's decisions — which variogram model was chosen, what the grid resolution is, how the CRS was handled. The student spends 20 minutes re-explaining their own pipeline to the AI.
 
-4. **Context degraded mid-session.** After loading 10 MCP tool definitions (134 tools, 50K+ tokens), Claude's effective working context is already halved before the student types anything. By the time they've loaded a few files and had some back-and-forth, quality silently degrades. Claude starts forgetting instructions from earlier in the conversation, suggesting approaches it already tried, and generating code that contradicts the existing codebase.
+4. **Context degraded mid-session.** After loading 10 MCP tool definitions (134 tools, 50K+ tokens), Claude's effective working context is already halved before the student types anything. By the time they've loaded rasterio documentation, a few data files, and had some back-and-forth, quality silently degrades. Claude starts forgetting the CRS conventions from earlier, suggesting `matplotlib` plots when `rasterio` was already being used, and generating code that contradicts the existing pipeline.
 
-5. **The commit history is useless.** After three weeks of development, the git log reads: "added auth", "updates", "fixed stuff", "more changes", "final version", "actual final version". The professor reviewing the project can't tell what was built when, can't evaluate the development process, and can't distinguish the student's work from the AI's output.
+5. **The commit history is useless.** After three weeks of development, the git log reads: "added kriging", "updates", "fixed stuff", "more changes", "final version", "actual final version". The thesis advisor reviewing the code can't tell what was built when, can't evaluate the development process, and has no way to verify which decisions the student made versus which the AI made.
 
-**None of these failures are caused by the AI being incapable.** Claude Code can write tests, use bcrypt, remember context, and produce clean commits. It just doesn't do these things *automatically*. Without a template, the quality of AI-assisted output depends entirely on the developer knowing to ask for best practices — which is exactly what students are still learning.
+**None of these failures are caused by the AI being incapable.** Claude Code can write tests, handle CRS transformations, remember context, and produce clean commits. It just doesn't do these things *automatically*. Without a template, the quality of AI-assisted output depends entirely on the developer knowing to ask for best practices — which is exactly what students are still learning.
 
 ### The five gaps a template fills
 
@@ -231,25 +231,25 @@ Level 3: RULES (immutable, project-defined)
 
 #### Concrete Example
 
-Suppose a student is building a Django application and discovers that `select_related()` is needed to avoid N+1 query problems. The first time this happens:
+Suppose a student is building a geostatistical pipeline and discovers that all spatial operations must use a projected CRS (meters) rather than geographic coordinates (degrees) — otherwise distance-based computations like variogram fitting produce nonsensical results. The first time this happens:
 
-1. The student (or Claude) fixes the N+1 issue manually
+1. The student (or Claude) debugs the variogram issue and adds a CRS reprojection step
 2. `/learn` or the automatic pattern extraction hook captures this as an instinct:
 
 ```json
 {
-  "pattern": "django-n-plus-one",
-  "trigger": "When writing Django ORM queries that traverse foreign keys",
-  "action": "Use select_related() for ForeignKey/OneToOne, prefetch_related() for ManyToMany",
+  "pattern": "spatial-crs-projection",
+  "trigger": "When performing distance-based spatial operations (kriging, IDW, variograms, buffer, nearest-neighbor)",
+  "action": "Verify data is in a projected CRS (units=meters). If geographic (EPSG:4326), reproject with geopandas.to_crs() before computing distances.",
   "confidence": 0.5,
   "source": "session-2026-02-13"
 }
 ```
 
-3. The next session, when Claude sees Django ORM code, it proactively suggests `select_related()` — even though the student didn't ask
+3. The next session, when Claude sees spatial code using `pykrige` or `scipy.spatial`, it proactively checks the CRS and suggests reprojection — even though the student didn't ask
 4. If the student confirms this is useful (by accepting the suggestion), confidence increases toward 0.7
 5. After several reinforcements, the pattern becomes an active instinct that Claude applies automatically
-6. If the student accumulates several Django query optimization instincts, `/evolve` clusters them into a full `django-query-optimization` skill
+6. If the student accumulates several geospatial instincts (CRS handling, NoData masking, raster alignment), `/evolve` clusters them into a full `geospatial-data-hygiene` skill
 
 #### Why This Matters
 
@@ -278,29 +278,34 @@ The template addresses this by enabling **parallel execution across multiple AI 
 #### How It Works
 
 ```
-/multi-plan "Design authentication system"
+/multi-plan "Design spatial interpolation pipeline for soil contamination mapping"
 
-    ┌─────────────────────────────────────────────────────┐
-    │  Claude (Opus)          Gemini              Codex   │
-    │  ─────────────          ──────              ─────   │
-    │  JWT with refresh       Session-based       OAuth2  │
-    │  tokens. Redis for      auth. PostgreSQL    with    │
-    │  token blacklist.       session store.      PKCE    │
-    │  Middleware pattern.    Cookie-based.       flow.   │
-    │  Argues: stateless      Argues: simpler,    Argues: │
-    │  scales better.         less moving parts.  proven  │
-    │                                             standard│
-    └─────────────────────────────────────────────────────┘
-                              ↓
-    ┌─────────────────────────────────────────────────────┐
-    │  SYNTHESIZED PLAN                                   │
-    │  ─────────────────                                  │
-    │  Primary: JWT + refresh tokens (Claude's approach)  │
-    │  Adopted from Gemini: Cookie transport for CSRF     │
-    │  Adopted from Codex: PKCE flow for OAuth providers  │
-    │  Rejected: Redis blacklist (PostgreSQL simpler for  │
-    │            this scale, per Gemini's argument)        │
-    └─────────────────────────────────────────────────────┘
+    ┌───────────────────────────────────────────────────────────┐
+    │  Claude (Opus)            Gemini                Codex     │
+    │  ─────────────            ──────                ─────     │
+    │  Ordinary Kriging with    Random Forest with    Gaussian  │
+    │  automatic variogram      spatial features      Process   │
+    │  fitting. Cross-          (lat, lon, elevation, Regression│
+    │  validation with          distance to source).  with RBF  │
+    │  leave-one-out.           Argues: handles non-  kernel.   │
+    │  Argues: geostatistical   stationarity better,  Argues:   │
+    │  gold standard, provides  no variogram needed,  provides  │
+    │  uncertainty estimates.   scales to many vars.  native UQ.│
+    └───────────────────────────────────────────────────────────┘
+                                ↓
+    ┌───────────────────────────────────────────────────────────┐
+    │  SYNTHESIZED PLAN                                         │
+    │  ─────────────────                                        │
+    │  Primary: Ordinary Kriging (Claude) — gold standard for   │
+    │    the geostatistics audience, provides defensible UQ     │
+    │  Adopted from Gemini: Add RF as comparison model to show  │
+    │    kriging outperforms ML on this sparse-data problem     │
+    │  Adopted from Codex: Use GPR's RBF kernel as a           │
+    │    third comparison — mathematically equivalent to kriging │
+    │    but connects to the ML literature                      │
+    │  Rejected: Gemini's "no variogram needed" — the thesis    │
+    │    committee expects variogram analysis as methodology     │
+    └───────────────────────────────────────────────────────────┘
 ```
 
 #### Why Multiple Models?
@@ -309,18 +314,18 @@ Each model brings different strengths:
 
 | Model | Strength | Weakness |
 |-------|----------|----------|
-| **Claude (Opus)** | Deep reasoning, security awareness, architectural rigor | Can over-engineer, favors complexity |
-| **Gemini** | Broad knowledge, alternative perspectives, strong on frontend patterns | Less depth on backend architecture |
-| **Codex/GPT** | Practical implementation patterns, large code training corpus | Less architectural reasoning |
+| **Claude (Opus)** | Deep reasoning, mathematical rigor, understanding of statistical methodology | Can over-engineer, favors complexity |
+| **Gemini** | Broad knowledge across ML literature, strong on recent papers and alternative approaches | Less depth on classical geostatistics |
+| **Codex/GPT** | Practical implementation patterns, strong on NumPy/scikit-learn/PyTorch code generation | Less methodological reasoning |
 
 When all three agree, you can be highly confident in the approach. When they disagree, the disagreement itself is valuable — it surfaces trade-offs that a single model might gloss over.
 
 #### Practical Impact
 
-For a student project, multi-model collaboration means:
-- **Architectural decisions** get three independent reviews before code is written
-- **Implementation** can route backend work to the model strongest at backend (Codex) and frontend work to the model strongest at frontend (Gemini), with Claude orchestrating
-- **Code review** from a different model than the one that wrote the code catches patterns the author model would overlook
+For a research project, multi-model collaboration means:
+- **Methodology decisions** get three independent perspectives before code is written — reducing the risk of choosing an approach just because it was the first one the AI suggested
+- **Implementation** can route numerical computation to the model strongest at NumPy/SciPy (Codex) and experimental design to the model strongest at methodology (Claude), with results synthesized
+- **Literature awareness** from Gemini surfaces recent papers and alternative approaches that Claude or Codex might miss, broadening the student's awareness of the field
 
 The template gracefully degrades when API keys aren't available — `/multi-plan` works with just Claude, but produces richer results with all three models.
 
@@ -370,41 +375,41 @@ The template automatically detects what phase of development you're in and adjus
 
 ## Comparison: Template vs. Raw Claude Code
 
-### Scenario: "Build a REST API for user management"
+### Scenario: "Build a kriging pipeline with cross-validation for soil heavy metal prediction"
 
 **Without template (raw Claude Code):**
-1. Developer types the request
-2. Claude generates the entire API in one shot — models, routes, middleware, database
-3. No tests. No security review. No type checking.
-4. Developer copy-pastes into their project
-5. Bugs, security holes, and architectural decisions are discovered in production
+1. Student types the request
+2. Claude generates the entire pipeline in one shot — data loading, variogram fitting, kriging, export
+3. No tests. No CRS validation. No cross-validation correctness check. No type hints.
+4. Student runs it, gets a pretty GeoTIFF, presents it
+5. Thesis committee asks: "How did you handle spatial autocorrelation in your cross-validation?" The student has no answer — they didn't realize that random k-fold CV is invalid for spatially correlated data, and the AI didn't mention it because it wasn't asked
 
 **With template:**
-1. `/plan Build a REST API for user management` → Planner agent creates phased plan, waits for approval
-2. Developer approves Phase 1 (database models)
-3. `/tdd` → TDD guide writes failing tests for User model, then implementation
-4. `/verify` → Tests pass, linting clean, types checked
-5. `/commit` → Conventional commit with semantic message
-6. Repeat for Phase 2 (routes), Phase 3 (middleware)
-7. `/code-review` → Code reviewer checks quality (>80% confidence filtering)
-8. `/security-audit` → Security reviewer checks OWASP Top 10
-9. `/pr` → Pull request with summary and test plan
-10. `/learn` → Extract any reusable patterns from the session
+1. `/plan Build a kriging pipeline with cross-validation for soil heavy metal data` → Planner agent creates phased plan: (1) data loading & CRS validation, (2) exploratory spatial analysis, (3) variogram modeling, (4) kriging with spatial cross-validation, (5) export & visualization. Waits for approval.
+2. Student approves Phase 1 (data loading)
+3. `/tdd` → TDD guide writes failing tests: "test that input data is reprojected to UTM", "test that NaN values are handled", "test that output CRS matches input CRS"
+4. `/verify` → Tests pass, ruff linting clean, mypy types checked
+5. `/commit` → `feat(data): Add borehole CSV loader with CRS validation`
+6. Repeat for Phase 2 (variogram), Phase 3 (kriging), Phase 4 (spatial CV — the planner flags that random k-fold is invalid for spatial data and recommends spatial leave-one-out or block CV)
+7. `/code-review` → Python reviewer checks for NumPy anti-patterns, type safety, proper error handling
+8. `/python-review` → Catches mutable default arguments, missing type hints, hardcoded file paths
+9. `/pr` → Pull request documenting methodology decisions with test plan
+10. `/learn` → Captures "spatial CV required for spatially correlated data" as an instinct for future sessions
 
-The difference isn't just quality — it's **reproducibility**. The template produces consistently high-quality output because the process is enforced, not optional.
+The difference isn't just quality — it's **reproducibility**. The template produces consistently high-quality output because the process is enforced, not optional. And critically, the planner agent caught the spatial cross-validation issue *before* code was written — saving the student from a methodological error that would have undermined the entire thesis.
 
 ### Quantitative Comparison
 
 | Metric | Raw Claude Code | With Template |
 |--------|----------------|---------------|
 | Test coverage | 0% (tests not written) | 80%+ (TDD enforced) |
-| Security review | None | Automated OWASP scan |
-| Commit quality | "fixed stuff" | `feat(auth): Add JWT token refresh` |
+| CRS validation | None (silent errors) | Enforced by tests and code review |
+| Commit quality | "added kriging" | `feat(variogram): Add spherical model with auto-fit` |
+| Methodology review | None | Planner catches spatial CV issues before coding |
 | Session continuity | None | Summaries, work log, instincts |
 | Context efficiency | ~50K wasted on unused tools | <35K startup, 165K working |
 | Specialization | 1 general model | 13 specialized agents |
-| Documentation | Manual or forgotten | Auto-generated codemaps |
-| Learning | Starts fresh every session | Persistent instinct system |
+| Reproducibility | Hardcoded paths, no seeds | Verified by `/verify` pipeline |
 
 ---
 
@@ -412,45 +417,45 @@ The difference isn't just quality — it's **reproducibility**. The template pro
 
 ### For Students
 
-**Scenario: A sophomore takes on their first full-stack project.**
+**Scenario: A graduate student building their first spatial prediction model.**
 
-Without the template, they face a blank directory and an AI that will generate whatever they ask for — including bad habits they'll spend years unlearning. They hardcode database credentials because they don't know about environment variables. They write no tests because nobody required them. They commit once a week with messages like "update." They discover their authentication is insecure when a classmate finds the flaw during peer review.
+Without the template, they face a blank directory and an AI that will generate whatever they ask for — including methodological mistakes they won't catch until their committee defense. They hardcode file paths to `/home/student/data/` because they don't know about configuration management. They write no tests because "it's just research code." They commit once a week with messages like "update." They discover their cross-validation was statistically invalid when a committee member asks why they used random k-fold on spatially autocorrelated data.
 
 With the template:
-- Their first `/commit` is rejected because the message doesn't follow conventional commit format. They learn the convention immediately.
-- Their first attempt to write a route handler triggers the TDD guide: "Write a failing test first." They learn TDD not from a lecture, but from the tool refusing to let them skip it.
-- Their first database query is accompanied by the `python-django` skill's guidance on `select_related()`. They learn about N+1 queries before they ever create one.
-- When they introduce a SQL injection vulnerability, the security reviewer catches it within minutes — not weeks later when the project is deployed.
+- Their first `/commit` is rejected because the message doesn't follow conventional commit format. They learn the convention immediately — and their thesis advisor can later read the git log to understand the development timeline.
+- Their first attempt to write a variogram fitting function triggers the TDD guide: "Write a failing test first." They learn to define expected behavior *before* implementation — a discipline that prevents silent numerical errors from propagating through the pipeline.
+- Their first spatial operation is accompanied by proactive CRS checking (from learned instincts). They learn about coordinate reference systems before computing invalid distances.
+- When they use `pickle` to serialize a trained model (a security risk), the Python reviewer catches it and suggests `joblib` or safetensors instead.
 
-**The result isn't just a better project — it's a better developer.** The template's enforced workflows become muscle memory. Students who use it for a semester internalize TDD, conventional commits, security awareness, and code review practices that distinguish junior developers from senior ones.
+**The result isn't just a better pipeline — it's a better researcher.** The template's enforced workflows become muscle memory. Students who use it for a semester internalize TDD, version control discipline, reproducibility practices, and code review habits that distinguish reliable research from one-off scripts.
 
 **Specific capabilities students gain:**
 
 | Situation | What the Template Does | What the Student Learns |
 |-----------|----------------------|----------------------|
-| Starting a new feature | `/plan` creates phased approach, waits for approval | Planning before coding, scope management |
-| Writing any code | TDD enforces tests first | Test-driven development as a habit |
-| Committing code | Rules require conventional format | Professional commit practices, semantic versioning |
-| Completing a feature | `/verify` runs test + lint + type + security pipeline | Multi-stage quality gates |
-| Encountering an error | Five Whys debugging pattern (from reasoning rules) | Root cause analysis vs symptom fixing |
+| Starting a new analysis | `/plan` creates phased approach, waits for approval | Methodology design before coding, scope management |
+| Writing any code | TDD enforces tests first | Defining expected behavior before implementation |
+| Committing code | Rules require conventional format | Professional version control, traceable development |
+| Completing a pipeline stage | `/verify` runs test + lint + type + security pipeline | Multi-stage quality gates for research code |
+| Getting unexpected results | Five Whys debugging pattern (from reasoning rules) | Root cause analysis vs tweaking parameters until it "looks right" |
 | Feeling stuck | Proactive steering detects uncertainty, offers structured help | Breaking problems down, asking for help productively |
 | End of session | `/learn` extracts patterns, instincts persist | Reflection and knowledge management |
 
 ### For Research
 
-**Scenario: A graduate student building a machine learning pipeline for their thesis.**
+**Scenario: A graduate student building a geostatistical ML pipeline comparing kriging methods against deep learning for mineral concentration prediction.**
 
-Research code is notoriously difficult to reproduce. Hardcoded paths, missing random seeds, unversioned dependencies, and undocumented preprocessing steps mean that even the author can't reproduce their own results six months later.
+Research code in geostatistics and ML is notoriously difficult to reproduce. Hardcoded file paths to local shapefiles, missing random seeds in neural network training, unversioned GDAL/rasterio dependencies (where minor version differences change output), and undocumented preprocessing steps (how was the DEM resampled? which CRS was used for distance calculations?) mean that even the author can't reproduce their own results six months later — let alone a reviewer or future student extending the work.
 
 The template addresses this at the process level:
 
-1. **Every decision is recorded.** Conventional commits, work logs, and session summaries create an audit trail that documents not just *what* was built, but *why* each decision was made. When a reviewer asks "why did you use LSTM instead of Transformer?", the answer is in the work log — captured in the moment, not reconstructed from memory.
+1. **Every methodological decision is recorded.** Conventional commits, work logs, and session summaries create an audit trail that documents not just *what* was built, but *why* each decision was made. When a committee member asks "why did you use ordinary kriging instead of universal kriging with a trend surface?", the answer is in the work log — captured during the session where the decision was made, complete with the trade-offs considered, not reconstructed from memory months later.
 
-2. **Dependencies are tracked from day one.** The template's verification pipeline catches unversioned dependencies before they become a problem. `pip freeze > requirements.txt` isn't something the student has to remember — it's part of the workflow.
+2. **Dependencies are tracked from day one.** The template's verification pipeline catches unversioned dependencies before they become a problem. `pip freeze > requirements.txt` — including the exact versions of `rasterio`, `geopandas`, `pykrige`, `scikit-learn`, and `torch` — isn't something the student has to remember. It's part of the workflow. This prevents the "it worked on my machine" problem that plagues spatial computing where GDAL version differences can change raster output.
 
-3. **Multi-model perspectives reduce bias.** If a student asks one AI model "what architecture should I use for this NLP task?", they get one opinion shaped by that model's training. `/multi-plan` gives them three independent opinions, surfaces disagreements, and forces the student to reason about trade-offs rather than accepting the first suggestion.
+3. **Multi-model perspectives reduce methodological bias.** If a student asks one AI model "what interpolation method should I use for sparse borehole data?", they get one opinion shaped by that model's training data. `/multi-plan` gives them three independent opinions — perhaps kriging, random forest with spatial features, and Gaussian process regression — surfaces the trade-offs between them, and forces the student to reason about *why* one method is appropriate for their data rather than accepting the first suggestion.
 
-4. **The methodology section writes itself.** When every commit follows a convention, every development phase is tracked in Task Master, and every session generates a summary, the student has a complete record of their development process. The template doesn't just produce better code — it produces documentable process.
+4. **The methodology section writes itself.** When every commit follows a convention (`feat(variogram): Add spherical model auto-fitting with weighted least squares`), every development phase is tracked in Task Master, and every session generates a summary, the student has a complete record of their analytical pipeline development. The template doesn't just produce better code — it produces documentable, defensible methodology that can be directly referenced in a thesis or publication.
 
 ### For the Department
 
