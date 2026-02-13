@@ -60,7 +60,7 @@ These files should generally match the template:
 | File | Purpose |
 |------|---------|
 | `docs/rules/git-workflow.md` | Git commands and workflow |
-| `docs/rules/python-standards.md` | Python coding standards |
+| `docs/rules/python-standards.md` | Python coding standards (moved to `.claude/rules/python/coding-standards.md`) |
 | `docs/rules/self-improve.md` | Rule improvement guidelines |
 | `docs/rules/cursor-rules-format.md` | Rule formatting guide |
 

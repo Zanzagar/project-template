@@ -1,12 +1,13 @@
 ---
 paths:
   - "**/*.py"
+  - "**/*.pyi"
   - "src/**/*.py"
   - "tests/**/*.py"
   - "scripts/**/*.py"
 ---
 <!-- template-version: 2.0.0 -->
-<!-- template-file: .claude/rules/python-standards.md -->
+<!-- template-file: .claude/rules/python/coding-standards.md -->
 # Python Coding Standards
 
 ## Key Principles
@@ -340,6 +341,7 @@ pytest --cov=src --cov-report=term-missing
 # - Unit tests: 80%+ coverage
 # - Critical paths (auth, payments): 95%+ coverage
 # - Happy path + error cases for all public APIs
+
 ```
 
 ### What Makes a Good Test
@@ -348,6 +350,19 @@ pytest --cov=src --cov-report=term-missing
 3. **Fast**: Unit tests should run in milliseconds
 4. **Focused**: Tests one behavior per test function
 5. **Clear failure messages**: Easy to diagnose what broke
+
+## File Architecture
+
+### File Size Guidelines
+- **Target**: 100-300 lines per file
+- **Maximum**: 800 lines (hard limit - refactor if exceeded)
+- **Rationale**: 2000-line files cost ~50x more tokens due to retry failures (35% success rate vs 85% for 200-line files)
+
+### When to Split
+- File has >3 classes
+- File has >10 functions
+- File responsibilities are unclear
+- Imports section exceeds 30 lines
 
 ## Dependencies
 

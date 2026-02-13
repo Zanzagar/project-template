@@ -206,7 +206,7 @@ See `docs/HOOKS.md` for full documentation.
 Claude Code automatically loads behavior rules from `.claude/rules/`:
 - **claude-behavior.md** - Git commit enforcement, proactive behaviors, token-conscious documentation
 - **git-workflow.md** - Detailed git commands and recovery procedures
-- **python-standards.md** - Python coding conventions
+- **python/coding-standards.md** - Python coding conventions (loads only for .py files)
 - **reasoning-patterns.md** - Clarification, brainstorming, reflection, and debugging patterns
 - **workflow-guide.md** - Phase detection, tool selection, and human input triggers
 - **context-management.md** - Thinking modes, context rot prevention, session management

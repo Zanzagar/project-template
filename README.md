@@ -41,7 +41,7 @@ project-template/
 │       └── ...
 ├── docs/rules/                  # Reference docs (loaded when needed)
 │   ├── git-workflow.md
-│   └── python-standards.md
+│   └── python-standards.md      # → .claude/rules/python/coding-standards.md
 ├── scripts/
 │   └── sync-template.sh         # Pull template updates
 ├── src/                         # Source code

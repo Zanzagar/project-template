@@ -59,7 +59,7 @@ NC='\033[0m'
 STOCK_CLAUDE_RULES=(
     ".claude/rules/claude-behavior.md"
     ".claude/rules/git-workflow.md"
-    ".claude/rules/python-standards.md"
+    ".claude/rules/python/coding-standards.md"
     ".claude/rules/reasoning-patterns.md"
     ".claude/rules/workflow-guide.md"
     ".claude/rules/context-management.md"
@@ -69,7 +69,7 @@ STOCK_CLAUDE_RULES=(
 # Legacy location: docs/rules/ (kept for backward compatibility)
 STOCK_DOCS_RULES=(
     "docs/rules/git-workflow.md"
-    "docs/rules/python-standards.md"
+    "docs/rules/python-standards.md"  # legacy location, maps to .claude/rules/python/coding-standards.md
     "docs/rules/self-improve.md"
     "docs/MCP_SETUP.md"
 )
