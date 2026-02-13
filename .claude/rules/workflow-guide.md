@@ -158,6 +158,12 @@ START: What does the user need?
 │
 ├─► Review code? ────────────► /code-review, /security-audit
 │
+├─► Full feature cycle? ─────► /orchestrate feature
+│   ├─ Just review? ─────────► /orchestrate review
+│   └─ Just refactor? ───────► /orchestrate refactor
+│
+├─► Multi-model input? ──────► /multi-plan, /multi-execute
+│
 ├─► Ship code? ──────────────► /pr, /github-sync, /changelog
 │
 └─► Something else? ─────────► Ask for clarification

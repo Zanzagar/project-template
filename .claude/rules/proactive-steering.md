@@ -75,6 +75,9 @@ I notice we might be stuck. Let me help:
 | Ready to merge | /pr |
 | Need current library docs | Context7 (tier 3, use sparingly) |
 | Exploring unfamiliar code | Project index, then targeted reads |
+| Full feature cycle | Suggest `/orchestrate feature` |
+| "review this thoroughly" | `/orchestrate review` |
+| Multi-model planning needed | `/multi-plan` |
 
 ### 5. Manage Scope Proactively
 
@@ -171,6 +174,21 @@ Suggested next step: [specific action]
 
 Ready to continue, or take a break here?
 ```
+
+### Pattern: Full Feature Cycle
+
+When user requests end-to-end feature work:
+
+1. Detect scope — is this a complete feature, not just a quick fix?
+2. Suggest: "This looks like a full feature cycle. Want me to run `/orchestrate feature`?"
+3. If accepted, execute the agent pipeline
+4. Present aggregated report
+
+**Signals for orchestration:**
+- "Build this feature from scratch"
+- "Implement X end-to-end"
+- "Add full support for Y"
+- Multiple aspects mentioned (design + tests + security)
 
 ### Pattern: Session Wrap-Up
 
