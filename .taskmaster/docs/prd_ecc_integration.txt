@@ -1,0 +1,163 @@
+# PRD: ECC Context Engineering Integration
+
+## Overview
+Integrate best practices from the Everything Claude Code (ECC) repository into our project template. The goal is to absorb ECC's context-engineering discipline (token optimization, session persistence, strategic compaction, model tiering, agent architecture) into our existing workflow-enforcement framework (phase detection, Task Master, Superpowers, proactive steering) without discarding our strengths.
+
+This is NOT a replacement — it's a targeted integration of ECC's most impactful patterns into our existing template.
+
+## Background
+Analysis of the ECC repository (42K+ stars, Anthropic hackathon winner) revealed critical gaps in our template around context window management, session persistence, and agent architecture. Our template excels at workflow enforcement (phase detection, Task Master, Superpowers TDD, proactive steering) but is weak on resource efficiency and cross-session continuity.
+
+## Goals
+1. Reduce per-session token costs by 60-80% through optimization settings
+2. Add cross-session continuity via automatic session persistence
+3. Protect context during compaction events
+4. Enable mode-specific behavior loading (dev/review/research)
+5. Add purpose-built, model-tiered agent definitions
+6. Enforce MCP discipline (10/80 rule) to prevent context bloat
+7. Improve code review quality with confidence-filtered output
+8. Add file architecture guidance for token-efficient development
+
+## Non-Goals
+- Do NOT install ECC as a plugin (would add ~50k+ tokens overhead)
+- Do NOT discard our steering patterns, Task Master integration, or Superpowers
+- Do NOT rewrite hooks in Node.js (keep bash for Python-centric template)
+- Do NOT port all 13 ECC agents (only what fits Python-first scope)
+- Do NOT implement the full instinct-based continuous learning v2 system yet
+
+## Technical Requirements
+
+### P0: Token Optimization Settings Preset (Highest Impact, Lowest Effort)
+Create a new "optimized" settings preset in `.claude/settings-presets.json` with ECC's recommended token optimization settings:
+- Default model: sonnet (60% cost reduction vs opus)
+- MAX_THINKING_TOKENS: 10000 (down from 31,999 default, 70% reduction)
+- CLAUDE_AUTOCOMPACT_PCT_OVERRIDE: 50 (compact earlier at 50% instead of 95%)
+- CLAUDE_CODE_SUBAGENT_MODEL: haiku (80% cheaper subagents)
+
+Also update the `/settings` command to offer this preset and update `context-management.md` to document these settings and their rationale.
+
+### P0: MCP Discipline & Per-Project Disabling
+Enforce the "10/80 rule" (under 10 MCPs enabled, under 80 total tools) across the template:
+- Add `disabledMcpServers` documentation and examples to `docs/MCP_SETUP.md`
+- Create per-project-type MCP presets (e.g., "python-minimal": only task-master + context7)
+- Update `manage-mcps.sh` to warn when >10 MCPs are enabled or >80 tools active
+- Add a `/mcp-audit` or extend `/health` to check MCP token budget
+- Update `context-management.md` with the 10/80 rule guidance
+- Add token cost estimates per MCP server to the registry
+
+### P1: Session Persistence via SessionEnd Hook
+Implement automatic session summary generation:
+- Create a new `session-end.sh` hook that triggers on the Stop event
+- The hook should capture: files modified (from git diff), key decisions made, task progress, what was worked on
+- Save summaries to `.claude/sessions/` directory as timestamped markdown files
+- Each session gets its own file (not appending to a single file) to prevent context pollution
+- Format should include: session date, files changed, tasks completed, decisions made, next steps
+- Keep summaries concise (under 500 words) for efficient reload
+
+### P1: Session Reload in session-init.sh
+Update the existing `session-init.sh` hook to load previous session context:
+- On SessionStart, find the most recent session summary file in `.claude/sessions/`
+- Display a brief "Last session" summary to the user
+- Include: what was worked on, files changed, any pending next steps
+- Only load if the session file is less than 24 hours old (stale sessions less useful)
+- This gives cross-session continuity without manual work-log maintenance
+
+### P1: PreCompact State Preservation Hook
+Create a `pre-compact.sh` hook to save state before context compaction:
+- Trigger on the PreCompact event (if available) or implement as a strategic reminder
+- Save current working state: active task ID, files being modified, current phase, in-progress decisions
+- Write to `.claude/sessions/pre-compact-state.md` (overwritten each time)
+- Update `session-init.sh` to check for pre-compact state and offer to reload it
+- This prevents the "lost context after compaction" problem
+
+### P1: Dynamic Context Injection Modes
+Create mode-specific context files that can be injected via CLI flags:
+- Create `.claude/contexts/` directory with three mode files:
+  - `dev.md` (~20 lines): "Write code first, explain after." Prioritize Edit/Write/Bash tools. Focus on getting it working, then right, then clean.
+  - `review.md` (~20 lines): "Read thoroughly before commenting." Severity-prioritized checklist. Only report issues at >80% confidence.
+  - `research.md` (~20 lines): "Read widely before concluding." Don't write code until understanding is clear. Favor Read/Grep/Glob/WebSearch.
+- Document the alias pattern in CLAUDE.md or a docs file:
+  ```bash
+  alias claude-dev='claude --system-prompt "$(cat .claude/contexts/dev.md)"'
+  alias claude-review='claude --system-prompt "$(cat .claude/contexts/review.md)"'
+  alias claude-research='claude --system-prompt "$(cat .claude/contexts/research.md)"'
+  ```
+- These take advantage of system prompt having higher authority than user messages
+- Keep each context file under 25 lines to minimize token cost
+
+### P2: Language-Specific Rules Directory
+Reorganize `python-standards.md` into a language-conditional structure:
+- Create `.claude/rules/python/` directory
+- Move `python-standards.md` into `.claude/rules/python/coding-standards.md`
+- Add YAML frontmatter with `paths: ["**/*.py", "**/*.pyi"]` so it only loads for Python files
+- This saves ~2,600 tokens on sessions that don't involve Python files
+- Keep the remaining 6 common rules files in `.claude/rules/` as-is
+- Update CLAUDE.md to reflect the new structure
+
+### P2: Core Agent Definitions
+Create 4 purpose-built agent definitions in `.claude/agents/`:
+1. `planner.md` — Model: opus. Tools: Read, Grep, Glob (READ-ONLY). Purpose: Creates implementation plans, analyzes codebases, identifies risks and dependencies. Should produce structured plan documents. Complements Task Master (which tracks tasks) by providing technical planning depth.
+2. `code-reviewer.md` — Model: sonnet. Tools: Read, Grep, Glob (READ-ONLY). Purpose: Reviews code by severity (CRITICAL/HIGH/MEDIUM/LOW). Only reports issues at >80% confidence. Consolidates similar findings. Includes Python-specific patterns (PEP 8, type hints, mutable defaults, bare excepts).
+3. `security-reviewer.md` — Model: sonnet. Tools: Read, Grep, Glob, Bash. Purpose: OWASP Top 10 analysis, secret detection, input validation review. Includes common false positive awareness to reduce noise.
+4. `build-resolver.md` — Model: sonnet. Tools: Read, Write, Edit, Bash, Grep, Glob. Purpose: Minimal-diff error fixing. No architecture changes, no refactoring. Fix the build error and nothing else. Explicit DO and DON'T lists.
+
+Each agent should have YAML frontmatter with name, description, model, and tools fields. Agent definitions are loaded on-demand (zero startup cost).
+
+### P2: File Size Guidance in Standards
+Add file architecture guidance to `python-standards.md` (or the new `python/coding-standards.md`):
+- Target 100-300 lines per file
+- Maximum 800 lines (hard limit, refactor if exceeded)
+- Document the token cost rationale: 2000-line files cost ~50x more tokens due to retry failures (35% success rate vs 85% for 200-line files)
+- Add guidance on when to split: if a file has >3 classes or >10 functions, consider splitting
+- This is a code architecture concern, not just style
+
+### P3: Enhanced Code Review with Confidence Filtering
+Update the existing `/code-review` skill (`.claude/skills/code-review/SKILL.md`):
+- Add confidence-based filtering: only report issues at >80% confidence
+- Add severity categorization: CRITICAL, HIGH, MEDIUM, LOW
+- Consolidate similar findings (don't repeat the same pattern 5 times)
+- Skip pure style preferences (defer to linter)
+- Add Python-specific review patterns (mutable default args, bare except, type hint gaps)
+
+### P3: Strategic Compaction Guidance Update
+Update `context-management.md` with improved compaction guidance:
+- Document the `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=50` setting and why it's better than default 95%
+- Add a "when to compact" decision table:
+  - After research/exploration → YES (exploration context no longer needed)
+  - Mid-implementation → NO (you'll lose variable names and file paths)
+  - After milestone completion → YES (natural breakpoint)
+  - After debugging session → YES (debug context is noise for next task)
+  - Context usage >80% → CONSIDER (preventive compaction)
+- Document what survives compaction (CLAUDE.md, rules, git state, Task Master) vs what's lost (intermediate reasoning, file contents read, conversation flow)
+- Add guidance on frequency: every 50-75 tool invocations as a rough guide
+
+### P3: mgrep Investigation and Integration
+Research and potentially integrate the mgrep search tool:
+- Evaluate mgrep (github.com/mixedbread-ai/mgrep) for token efficiency
+- Benchmark: mgrep reportedly provides 50% token reduction vs traditional grep
+- If viable, add installation guidance to docs
+- Consider adding as a recommended plugin in the plugins registry
+- This is lower priority because it's an external dependency
+
+## Success Criteria
+1. Token optimization preset is available and documented
+2. Sessions automatically generate summaries and reload them on next start
+3. Pre-compaction state is preserved and recoverable
+4. Context modes (dev/review/research) work via CLI aliases
+5. 4 agent definitions exist and are invocable
+6. MCP discipline is enforced with warnings at health check time
+7. Python standards include file size guidance
+8. Code review skill has confidence filtering
+9. Context management docs reflect strategic compaction best practices
+10. Working context increases by ~10-30k tokens per session vs current baseline
+
+## Dependencies
+- Task Master MCP (already installed)
+- Superpowers plugin (referenced but not modified)
+- Claude Code v2.1+ (for hook event support)
+- No new external dependencies required (except optionally mgrep)
+
+## Risks
+- Hook complexity: too many hooks may add latency to tool calls. Mitigate by keeping hooks lightweight (<100ms execution time) and using Stop/SessionStart events over PreToolUse where possible.
+- Rules reorganization: moving python-standards.md could break existing installations. Mitigate with clear migration docs and the sync-template.sh script.
+- Settings preset confusion: users may not know which preset to choose. Mitigate by making "optimized" the recommended default and documenting trade-offs.

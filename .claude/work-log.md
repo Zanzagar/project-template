@@ -4,6 +4,128 @@ Lightweight session-by-session record of work performed. Append-only, not auto-l
 
 ---
 
+## 2026-02-13 - ECC Phase 2 Implementation (Complete)
+
+**Session focus:** Complete all 35 Phase 2 tasks (IDs 16-50) across two context windows
+
+**Actions performed:**
+- Tasks 16-17: AgentShield security documentation + /health integration
+- Tasks 18-25: 9 new agent definitions (13 total agents)
+- Tasks 26-30: 10 multi-language skills (13 total skills)
+- Tasks 31-34: Continuous Learning v2 system (instincts, authority hierarchy, management commands)
+- Tasks 35-39: Orchestration + multi-model collaboration commands
+- Tasks 40-48: 6 new slash commands + 4 language-specific coding standards
+- Tasks 49-50: CLAUDE.md and ECC_INTEGRATION.md documentation rollup
+
+**Key decisions:**
+- tdd-guide agent is advisory only — Superpowers remains the enforcer
+- Language rules use `paths:` frontmatter for zero startup overhead (loaded only when matching files edited)
+- Skills are on-demand (0 startup tokens), instincts are lightweight JSON (~50-200 tokens each)
+- Disabled 8 irrelevant MCPs (PayPal, WordPress, Canva, Magic, Playwright, Postgres, MongoDB, Figma) — reduced from ~134 tools to ~42 tools, saving ~20-25k startup tokens
+
+**MCP optimization:**
+- Before: 10 MCPs, ~134 tools, ~50k+ startup overhead
+- After: 2 MCPs (task-master-ai + context7), ~42 tools, ~25-30k startup overhead
+- User flagged this as violating ECC's own 10/80 rule — correct, and now fixed
+
+**Commits (8 across two sessions):**
+- `34dcf59` feat: Add AgentShield security docs and /health integration
+- `6d59c98` feat: Add 9 specialized agent definitions
+- `06df2f9` feat: Add 10 multi-language skills
+- `42d28da` feat: Add Continuous Learning v2 system
+- `632c63c` feat: Add orchestration and multi-model commands
+- `45fd144` feat: Add verification commands, quality eval, and multi-language coding rules
+- `e963c52` docs: Update CLAUDE.md and ECC_INTEGRATION.md for Phase 2 completion
+
+**Phase 2 totals:**
+- 35/35 tasks done
+- 13 agents, 13 skills, 5 language rules, 17 slash commands
+- Zero additional startup token overhead (all new features are on-demand)
+
+**Next:** Phase 2 complete. Full ECC integration done. Template ready for use.
+
+---
+
+## 2026-02-12 - ECC Integration Implementation (Complete)
+
+**Session focus:** Implement all 15 ECC integration tasks (continued from planning session)
+
+**Actions performed:**
+- Completed all 15 tasks (75 subtasks) across two context windows (autocompacted around task 11)
+- 15 commits total for this implementation phase
+
+**Key corrections during implementation:**
+- `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` → `CLAUDE_CODE_AUTOCOMPACT_PCT_OVERRIDE` (needs `CLAUDE_CODE_` prefix)
+- `--system-prompt` → `--append-system-prompt` (former replaces entire prompt, latter appends)
+
+**Changes summary:**
+- Token optimization: `optimized` preset with env vars for 60-80% cost reduction
+- MCP discipline: `audit_mcp_budget()` function, 10/80 rule enforcement, audit command
+- Session persistence: `session-end.sh` (Stop), `pre-compact.sh` (UserPromptSubmit), `session-init.sh` reload
+- Context management: compaction tables, survival matrix, monitoring heuristics
+- Context modes: `dev.md`, `review.md`, `research.md` with `--append-system-prompt` aliases
+- Python standards: moved to `python/coding-standards.md` with file architecture section
+- Agents: 4 definitions (planner, code-reviewer, security-reviewer, build-resolver)
+- Code review: confidence filtering (>80%), severity tiers, finding consolidation
+- MCP docs: 10/80 rule, `disabledMcpServers`, project-type presets
+- Health check: MCP budget audit integration with graceful degradation
+- Presets: session hooks added to safe, thorough, optimized presets
+- mgrep research: deferred as optional plugin (cloud dependency, cost concerns)
+- Documentation: ECC_INTEGRATION.md guide, updated CLAUDE.md, cross-references
+
+**Commits (15):**
+- `72c86c0` feat: Add 'optimized' token-efficiency settings preset
+- `9769d09` feat: Add MCP budget enforcement (10/80 rule)
+- `2d00e3c` feat: Add session persistence hook (session-end.sh)
+- `9a6a923` docs: Add token optimization settings and compaction guidance
+- `eaad149` feat: Add session reload and pre-compact detection
+- `158cf45` feat: Add dynamic context injection modes
+- `7fb7040` refactor: Move python-standards.md to python/coding-standards.md
+- `b268b66` feat: Add core agent definitions
+- `e4dc066` feat: Add confidence filtering to code review skill
+- `cc69e58` docs: Add 10/80 rule and MCP documentation
+- `1660cc7` feat: Add pre-compaction state preservation hook
+- `fd53a2d` feat: Add MCP budget audit to /health command
+- `a67b902` feat: Add session persistence hooks to presets
+- `cdf693e` docs: Add mgrep evaluation research
+- `acb473b` docs: Add ECC integration summary and update CLAUDE.md
+
+**Next:** ECC integration complete. Project template ready for use. Consider creating a PR if working on a branch.
+
+---
+
+## 2026-02-12 - ECC Integration Research & Planning
+
+**Session focus:** Research Everything Claude Code (ECC) repo, compare with our template, create implementation plan
+
+**Actions performed:**
+- Thoroughly researched github.com/affaan-m/everything-claude-code (42K+ stars, hackathon winner)
+- Compared ECC's context engineering vs our workflow enforcement approach
+- Identified critical gaps: token optimization, session persistence, agent architecture, MCP discipline
+- Identified our strengths: phase detection, Task Master integration, Superpowers TDD, proactive steering
+- Created comprehensive PRD at `.taskmaster/docs/prd_ecc_integration.txt`
+- Fixed corrupted global `task-master-ai` npm installation (rm -rf + reinstall)
+- Fixed Task Master config: `claude-code` provider uses simple model IDs (`opus`, `sonnet`, `haiku`), not versioned strings
+- Parsed PRD into 15 tasks with `task-master parse-prd` via CLI (MCP subprocess nesting doesn't work for parse-prd)
+- Expanded all 15 tasks into 75 subtasks (5 each)
+
+**Key decisions:**
+- NOT installing ECC as plugin (too many tokens). Cherry-picking best patterns instead.
+- Keeping our steering patterns, Task Master, and Superpowers (our differentiators)
+- Adding: token optimization presets, session persistence hooks, dynamic context modes, agent definitions, MCP 10/80 rule
+- Task Master config: `claude-code` provider with `opus`/`sonnet` model IDs (works with OAuth, no API key needed)
+
+**Config changes:**
+- `.taskmaster/config.json` — Fixed model IDs from `claude-opus-4-5-20250929` to `opus`
+- Global npm: reinstalled `task-master-ai@0.43.0` (was corrupted)
+
+**Next session:**
+- Run `task-master next` to get first task (likely Task 1: Token Optimization Settings Preset)
+- 8 tasks ready to start in parallel (no dependencies): 1, 3, 5, 8, 9, 10, 11, 14
+- Start with P0 tasks: 1 (settings preset), 3 (MCP discipline), 5 (session persistence)
+
+---
+
 ## 2026-01-13 - Template Review & Improvements
 
 **Session focus:** Comprehensive template review and gap fixes

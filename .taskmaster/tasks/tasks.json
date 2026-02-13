@@ -1,0 +1,502 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": "16",
+        "title": "Create AgentShield Security Documentation",
+        "description": "Create docs/SECURITY.md documenting AgentShield scanning capabilities including quick scan, auto-fix, and deep scan modes.",
+        "details": "Create comprehensive security documentation at docs/SECURITY.md covering:\n\n1. **AgentShield Overview**: What it scans (CLAUDE.md secrets, MCP permissions, hook injection vectors, agent misconfigs)\n\n2. **Scan Commands**:\n   - Quick scan: `npx ecc-agentshield scan`\n   - Auto-fix: `npx ecc-agentshield scan --fix`\n   - Deep scan: `npx ecc-agentshield scan --opus` (3 adversarial Claude agents)\n\n3. **When to Run**:\n   - Before committing .claude/ changes\n   - In CI pipelines\n   - After adding new MCPs or modifying hooks\n   - Before PR reviews touching config\n\n4. **CI Integration Example**:\n```yaml\n# .github/workflows/security.yml\njobs:\n  agentshield:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - run: npx ecc-agentshield scan\n```\n\n5. **Relationship to /security-audit**: Clarify that /security-audit handles code-level vulnerabilities (OWASP), while AgentShield handles config-level risks.",
+        "testStrategy": "1. Verify docs/SECURITY.md exists and contains all required sections\n2. Validate command examples are syntactically correct\n3. Check that CI example is valid YAML\n4. Ensure cross-references to /security-audit are accurate",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T05:51:09.950Z"
+      },
+      {
+        "id": "17",
+        "title": "Integrate AgentShield into /health Command",
+        "description": "Update the /health command to check AgentShield scan status and recommend running it when stale or never run.",
+        "details": "Modify .claude/commands/health.md to add AgentShield section:\n\n1. **Add Section 10: AgentShield Status**:\n```bash\n# Check for AgentShield marker file\nASHIELD_LAST_RUN=\"$PROJECT_DIR/.claude/agentshield-last-run\"\nif [ -f \"$ASHIELD_LAST_RUN\" ]; then\n    LAST_SCAN=$(cat \"$ASHIELD_LAST_RUN\")\n    SCAN_AGE=$(( ($(date +%s) - LAST_SCAN) / 86400 ))\n    # Recommend re-scan if >7 days old\nelse\n    echo \"AgentShield: Never run\"\nfi\n```\n\n2. **Health Table Entry**:\n```\n║ AgentShield         │ ⚠ Stale     │ Last scan: 14 days ago  ║\n```\n\n3. **Recommendations**:\n- If never run: \"Run `npx ecc-agentshield scan` for config security\"\n- If >7 days: \"Consider re-scanning with AgentShield\"\n\n4. **Update /security-audit**: Add note suggesting AgentShield for config scanning at end of report.",
+        "testStrategy": "1. Run /health in a project with no AgentShield history - verify warning appears\n2. Create .claude/agentshield-last-run with old timestamp - verify 'stale' status\n3. Test with recent timestamp - verify healthy status\n4. Verify /security-audit includes AgentShield suggestion",
+        "priority": "high",
+        "dependencies": [
+          "16"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T05:55:58.825Z"
+      },
+      {
+        "id": "18",
+        "title": "Create TDD-Guide Agent (Advisory)",
+        "description": "Create the tdd-guide.md agent that coaches users on writing effective failing tests, constrained to never write production code.",
+        "details": "Create .claude/agents/tdd-guide.md with:\n\n```yaml\n---\nname: tdd-guide\ndescription: Advisory TDD coaching - helps write effective failing tests. Superpowers enforces the cycle.\nmodel: sonnet\ntools: [Read, Write, Edit, Grep, Glob]\nconstraints:\n  - NEVER write production code - only tests and test guidance\n  - Superpowers enforces RED-GREEN-REFACTOR - this agent coaches the RED phase\n  - Cannot bypass or override Superpowers workflow\n---\n```\n\n**Agent Content**:\n1. **Role**: Help users write effective failing tests that Superpowers requires\n2. **Trigger**: When user struggles to write a test that Superpowers requires\n3. **Capabilities**:\n   - Test strategy selection (unit vs integration vs e2e)\n   - Mock/fixture guidance (when to mock, pytest fixtures)\n   - Edge case identification (boundary conditions, error paths)\n   - Assertion selection (appropriate matchers, clear failure messages)\n4. **CRITICAL CONSTRAINT** (in bold): \"This agent NEVER writes production code. Only test code and test guidance. Superpowers remains the enforcer of TDD discipline.\"\n5. **Example prompts**:\n   - \"Help me write a test for this authentication flow\"\n   - \"What edge cases should I test for this parser?\"\n   - \"How should I mock this external API?\"",
+        "testStrategy": "1. Verify agent file exists with correct frontmatter\n2. Check that 'never write production code' constraint is prominent\n3. Validate tools list includes Write/Edit for test files only\n4. Ensure Superpowers relationship is clearly documented",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T05:58:23.558Z"
+      },
+      {
+        "id": "19",
+        "title": "Create Architect Agent",
+        "description": "Create the architect.md agent for high-level system design, distinct from the implementation-focused planner agent.",
+        "details": "Create .claude/agents/architect.md:\n\n```yaml\n---\nname: architect\ndescription: High-level system design, component diagrams, technology selection\nmodel: opus\ntools: [Read, Grep, Glob]\nreadOnly: true\n---\n```\n\n**Agent Content**:\n1. **Role**: Strategic technical decisions, not implementation details\n2. **Distinct from planner**: Planner does implementation planning (step-by-step). Architect does system design (big picture).\n3. **Capabilities**:\n   - Scalability analysis (when to scale, what bottlenecks exist)\n   - API boundary design (service contracts, versioning strategy)\n   - Data flow modeling (where data lives, how it moves)\n   - Technology selection (framework comparisons, tradeoffs)\n   - Component diagrams (ASCII or Mermaid syntax)\n4. **Output Format**:\n   - Architecture Decision Records (ADR) style\n   - Diagrams where helpful\n   - Explicit tradeoffs section\n5. **When to use**: Before starting major features, when adding new services, during scaling discussions",
+        "testStrategy": "1. Verify agent definition has model: opus and readOnly: true\n2. Check that distinction from planner is documented\n3. Validate output format guidance is present\n4. Ensure tools are read-only (no Write/Edit)",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T05:58:23.563Z"
+      },
+      {
+        "id": "20",
+        "title": "Create Database Reviewer Agent",
+        "description": "Create the database-reviewer.md agent for SQL and database optimization review.",
+        "details": "Create .claude/agents/database-reviewer.md:\n\n```yaml\n---\nname: database-reviewer\ndescription: SQL/database optimization review - queries, indexes, migrations, schema design\nmodel: sonnet\ntools: [Read, Grep, Bash, Glob]\nreadOnly: true\n---\n```\n\n**Agent Content**:\n1. **Supported Databases**: PostgreSQL, SQLite, MongoDB patterns\n2. **Review Areas**:\n   - Query performance (EXPLAIN analysis, join optimization)\n   - Index suggestions (covering indexes, partial indexes)\n   - N+1 detection (ORM query patterns in Python/JS)\n   - Migration safety (zero-downtime migrations, rollback plans)\n   - Schema design (normalization, denormalization tradeoffs)\n3. **Output Format**:\n   - Severity-ordered findings like code-reviewer\n   - Include EXPLAIN output when relevant\n   - Suggest specific index CREATE statements\n4. **Bash Usage**: For running EXPLAIN, checking index stats, pg_stat_statements",
+        "testStrategy": "1. Verify agent supports PostgreSQL, SQLite, MongoDB\n2. Check N+1 detection is documented with ORM examples\n3. Validate output format matches code-reviewer pattern\n4. Ensure Bash tool is included for query analysis",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T05:58:23.570Z"
+      },
+      {
+        "id": "21",
+        "title": "Create Doc-Updater Agent",
+        "description": "Create the doc-updater.md agent for automatic documentation maintenance after code changes.",
+        "details": "Create .claude/agents/doc-updater.md:\n\n```yaml\n---\nname: doc-updater\ndescription: Documentation maintenance - README, docstrings, API docs, CHANGELOG\nmodel: haiku\ntools: [Read, Write, Edit, Grep, Glob]\n---\n```\n\n**Agent Content**:\n1. **Model: haiku** - Lightweight; docs don't need deep reasoning\n2. **Capabilities**:\n   - README.md updates (new features, changed APIs)\n   - Docstring maintenance (sync with code changes)\n   - API documentation (endpoint changes, parameter updates)\n   - CHANGELOG entries (conventional commit integration)\n3. **Trigger Patterns**:\n   - After implementing a feature\n   - When public API changes\n   - Before PR creation\n4. **Rules**:\n   - Preserve existing structure\n   - Don't add unnecessary content\n   - Match existing documentation style\n   - Only update what changed",
+        "testStrategy": "1. Verify model is haiku for efficiency\n2. Check that README/docstring/CHANGELOG patterns are documented\n3. Validate 'preserve existing structure' rule is present\n4. Ensure agent includes both Read and Write tools",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T05:58:23.575Z"
+      },
+      {
+        "id": "22",
+        "title": "Create Refactor-Cleaner Agent",
+        "description": "Create the refactor-cleaner.md agent for controlled refactoring with minimal blast radius.",
+        "details": "Create .claude/agents/refactor-cleaner.md:\n\n```yaml\n---\nname: refactor-cleaner\ndescription: Controlled refactoring with minimal blast radius - preserves tests, no behavior changes\nmodel: sonnet\ntools: [Read, Write, Edit, Grep, Glob]\n---\n```\n\n**Agent Content**:\n1. **Core Rules**:\n   - Preserve ALL existing tests (never delete or modify test assertions)\n   - No behavior changes (pure refactoring only)\n   - Extract-then-inline pattern (safer than direct modification)\n2. **Capabilities**:\n   - Dead code detection (unused functions, imports)\n   - Import cleanup (organize, remove unused)\n   - Naming consistency (variable/function naming patterns)\n   - Code deduplication (extract shared logic)\n   - Type annotation cleanup\n3. **Safety Measures**:\n   - Run tests before and after\n   - Commit after each atomic change\n   - Keep changes reviewable (small PRs)\n4. **Anti-patterns to avoid**:\n   - Changing public API signatures\n   - Modifying test behavior\n   - Adding new features during refactoring",
+        "testStrategy": "1. Verify 'preserve all tests' rule is prominent\n2. Check extract-then-inline pattern is documented\n3. Validate safety measures include test runs\n4. Ensure no-behavior-change constraint is clear",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T05:58:23.580Z"
+      },
+      {
+        "id": "23",
+        "title": "Create E2E-Runner Agent",
+        "description": "Create the e2e-runner.md agent for end-to-end test execution and debugging.",
+        "details": "Create .claude/agents/e2e-runner.md:\n\n```yaml\n---\nname: e2e-runner\ndescription: E2E test execution and debugging - Playwright, Cypress, Selenium support\nmodel: sonnet\ntools: [Read, Bash, Grep, Glob]\nreadOnly: false\n---\n```\n\n**Agent Content**:\n1. **Supported Frameworks**: Playwright, Cypress, Selenium\n2. **Capabilities**:\n   - Test execution with detailed output\n   - Flaky test diagnosis (retry patterns, timing issues)\n   - Screenshot analysis (when available as files)\n   - Network request debugging (HAR files, request logs)\n   - Selector debugging (element not found, stale elements)\n3. **Debugging Workflow**:\n   1. Run test in verbose mode\n   2. Analyze failure output\n   3. Check for timing/flakiness patterns\n   4. Examine network requests if applicable\n   5. Suggest fixes\n4. **Common Issues**:\n   - Race conditions (add waits, use proper assertions)\n   - Selector brittleness (use data-testid, ARIA roles)\n   - Environment dependencies (mock external services)",
+        "testStrategy": "1. Verify Playwright, Cypress, Selenium are all documented\n2. Check debugging workflow is step-by-step\n3. Validate flaky test diagnosis patterns exist\n4. Ensure Bash tool is included for test execution",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T05:58:23.588Z"
+      },
+      {
+        "id": "24",
+        "title": "Create Go-Reviewer and Go-Build-Resolver Agents",
+        "description": "Create Go-specific agents for code review and build error resolution.",
+        "details": "Create two agent files:\n\n**1. .claude/agents/go-reviewer.md**:\n```yaml\n---\nname: go-reviewer\ndescription: Go-specific code review - error handling, goroutines, interfaces, packages\nmodel: sonnet\ntools: [Read, Grep, Glob]\nreadOnly: true\n---\n```\n- Error handling patterns (checking errors, wrapping with %w)\n- Goroutine leaks (unbuffered channels, missing done signals)\n- Interface design (small interfaces, io.Reader patterns)\n- Package structure (internal/, cmd/, avoiding cyclic imports)\n- go vet/staticcheck pattern detection\n\n**2. .claude/agents/go-build-resolver.md**:\n```yaml\n---\nname: go-build-resolver\ndescription: Go build error resolution - modules, CGO, cross-compilation, linker\nmodel: sonnet\ntools: [Read, Write, Edit, Bash, Grep, Glob]\n---\n```\n- Module dependency issues (go mod tidy, replace directives)\n- CGO problems (missing libraries, cross-compile flags)\n- Cross-compilation (GOOS/GOARCH, static linking)\n- Linker errors (undefined symbols, version mismatches)",
+        "testStrategy": "1. Verify both agents exist with correct frontmatter\n2. Check go-reviewer is read-only\n3. Validate go-build-resolver has Write/Bash for fixes\n4. Ensure Go-specific patterns are documented",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T05:58:23.594Z"
+      },
+      {
+        "id": "25",
+        "title": "Create Python-Reviewer Agent",
+        "description": "Create the python-reviewer.md agent for deep Python-specific code review beyond general patterns.",
+        "details": "Create .claude/agents/python-reviewer.md:\n\n```yaml\n---\nname: python-reviewer\ndescription: Deep Python-specific review - async, metaclasses, descriptors, GIL, packaging\nmodel: sonnet\ntools: [Read, Grep, Glob]\nreadOnly: true\n---\n```\n\n**Agent Content**:\n1. **Beyond General Code Review** - This complements code-reviewer with Python-specific depth\n2. **Advanced Patterns**:\n   - async/await patterns (event loop management, asyncio.gather vs TaskGroup)\n   - Metaclass usage (when appropriate, simpler alternatives)\n   - Descriptor protocol (__get__, __set__, __delete__)\n   - GIL implications (multiprocessing vs threading decisions)\n3. **Packaging**:\n   - pyproject.toml best practices\n   - Virtual environment issues\n   - Dependency conflicts\n4. **Python-Specific Anti-patterns**:\n   - Late binding closures in loops\n   - Mutable default arguments (also in code-reviewer but deeper context)\n   - Import cycles\n   - Overuse of __all__",
+        "testStrategy": "1. Verify agent covers advanced Python patterns\n2. Check async/await guidance is present\n3. Validate packaging section exists\n4. Ensure distinction from general code-reviewer is clear",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T05:58:23.600Z"
+      },
+      {
+        "id": "26",
+        "title": "Create Python Testing and Django Skills",
+        "description": "Create python-testing and python-django skill directories with SKILL.md files.",
+        "details": "Create two skill files:\n\n**1. .claude/skills/python-testing/SKILL.md**:\n```yaml\n---\nname: python-testing\ndescription: pytest patterns, fixtures, parametrize, mocking, async testing, coverage\n---\n```\nContent:\n- pytest patterns (markers, conftest.py organization)\n- Fixture strategies (scope, factories, database fixtures)\n- parametrize patterns (test case generation)\n- Mock best practices (patch vs dependency injection)\n- Async testing (pytest-asyncio, event loop fixtures)\n- Coverage targets (realistic goals, branch coverage)\n\n**2. .claude/skills/python-django/SKILL.md**:\n```yaml\n---\nname: python-django\ndescription: Django patterns - ORM, middleware, signals, admin, DRF\n---\n```\nContent:\n- ORM optimization (select_related, prefetch_related, only/defer)\n- Middleware patterns (request/response processing)\n- Signals best practices (when to use, when to avoid)\n- Admin customization (ModelAdmin, inline, custom actions)\n- Django REST Framework patterns (serializers, viewsets, permissions)",
+        "testStrategy": "1. Verify both skill directories exist with SKILL.md\n2. Check pytest patterns are comprehensive\n3. Validate Django ORM optimization is documented\n4. Ensure DRF patterns are included",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T06:03:35.130Z"
+      },
+      {
+        "id": "27",
+        "title": "Create TypeScript and Frontend Skills",
+        "description": "Create typescript-patterns and frontend-patterns skill directories.",
+        "details": "Create two skill files:\n\n**1. .claude/skills/typescript-patterns/SKILL.md**:\n```yaml\n---\nname: typescript-patterns\ndescription: TypeScript strict mode, generics, utility types, discriminated unions, modules\n---\n```\nContent:\n- Strict mode configuration (strictNullChecks, noImplicitAny)\n- Generics patterns (constraints, inference, conditional types)\n- Utility types (Partial, Pick, Omit, Record, custom utilities)\n- Discriminated unions (type narrowing, exhaustive checks)\n- Module patterns (barrel exports, path aliases)\n\n**2. .claude/skills/frontend-patterns/SKILL.md**:\n```yaml\n---\nname: frontend-patterns\ndescription: React/Vue/Svelte patterns, state management, accessibility, performance\n---\n```\nContent:\n- React patterns (hooks, composition, error boundaries)\n- Vue patterns (composition API, composables)\n- Svelte patterns (stores, actions, transitions)\n- State management (when to lift, global vs local)\n- Accessibility (ARIA, keyboard navigation, focus management)\n- Performance (lazy loading, virtualization, memoization)",
+        "testStrategy": "1. Verify both skill directories exist\n2. Check TypeScript strict mode patterns are documented\n3. Validate React/Vue/Svelte are all covered\n4. Ensure accessibility section exists",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T06:03:35.135Z"
+      },
+      {
+        "id": "28",
+        "title": "Create Go and Java Skills",
+        "description": "Create golang-patterns, golang-testing, and java-springboot skill directories.",
+        "details": "Create three skill files:\n\n**1. .claude/skills/golang-patterns/SKILL.md**:\n- Go idioms (accept interfaces, return structs)\n- Error handling (wrapping, sentinel errors, custom types)\n- Concurrency patterns (worker pools, fan-out/fan-in, context)\n- Interface design (small interfaces, embedding)\n- Testing with table-driven tests\n\n**2. .claude/skills/golang-testing/SKILL.md**:\n- Table-driven tests pattern\n- Benchmarks (b.N loop, memory stats)\n- Fuzzing (go test -fuzz)\n- testify assertions\n- httptest for HTTP testing\n- Integration test organization\n\n**3. .claude/skills/java-springboot/SKILL.md**:\n- Spring Boot patterns (auto-configuration, profiles)\n- Dependency injection (@Autowired, constructor injection)\n- JPA/Hibernate patterns (entity mapping, lazy loading)\n- Security configuration (SecurityFilterChain, CORS)\n- Actuator endpoints (health, metrics)",
+        "testStrategy": "1. Verify all three skill directories exist\n2. Check Go concurrency patterns are documented\n3. Validate Java Spring Boot DI patterns exist\n4. Ensure table-driven test pattern is in golang-testing",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T06:03:35.142Z"
+      },
+      {
+        "id": "29",
+        "title": "Create E2E Testing and Django Security Skills",
+        "description": "Create e2e-testing and django-security skill directories.",
+        "details": "Create two skill files:\n\n**1. .claude/skills/e2e-testing/SKILL.md**:\n```yaml\n---\nname: e2e-testing\ndescription: Playwright/Cypress patterns, page objects, network interception, visual regression, CI\n---\n```\nContent:\n- Page object pattern (encapsulation, reusability)\n- Network interception (mocking APIs, waiting for requests)\n- Visual regression (screenshot comparison, thresholds)\n- CI integration (headless mode, parallel execution, artifacts)\n- Test data management (fixtures, factories, cleanup)\n\n**2. .claude/skills/django-security/SKILL.md**:\n```yaml\n---\nname: django-security\ndescription: Django-specific security - CSRF, XSS, SQL injection, auth, secrets\n---\n```\nContent:\n- CSRF protection (middleware, AJAX requests, exemptions)\n- XSS prevention (template auto-escaping, mark_safe usage)\n- SQL injection prevention (ORM usage, raw queries)\n- Authentication (Django auth, custom backends, sessions)\n- Permissions (object-level, custom permissions, DRF permissions)\n- Secrets management (django-environ, environment variables)",
+        "testStrategy": "1. Verify both skill directories exist\n2. Check page object pattern is documented\n3. Validate Django CSRF/XSS coverage\n4. Ensure secrets management section exists",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T06:03:35.147Z"
+      },
+      {
+        "id": "30",
+        "title": "Create Database Patterns Skill",
+        "description": "Create database-patterns skill directory with SQL optimization, indexing, and migration safety.",
+        "details": "Create .claude/skills/database-patterns/SKILL.md:\n\n```yaml\n---\nname: database-patterns\ndescription: SQL optimization, indexing, migration safety, N+1 prevention, connection pooling\n---\n```\n\n**Content**:\n1. **SQL Optimization**:\n   - EXPLAIN analysis (reading query plans)\n   - Join optimization (order, type selection)\n   - Subquery vs JOIN decisions\n\n2. **Indexing Strategies**:\n   - B-tree vs hash vs GIN/GiST\n   - Covering indexes (INCLUDE clause)\n   - Partial indexes (WHERE clause)\n   - Index maintenance (bloat, reindexing)\n\n3. **Migration Safety**:\n   - Zero-downtime migrations (add column, backfill, add constraint)\n   - Rollback strategies\n   - Large table migrations (batching)\n\n4. **N+1 Prevention**:\n   - Django: select_related, prefetch_related\n   - SQLAlchemy: joinedload, subqueryload\n   - Detection patterns\n\n5. **Connection Pooling**:\n   - PgBouncer configuration\n   - Django CONN_MAX_AGE\n   - SQLAlchemy pool settings",
+        "testStrategy": "1. Verify skill directory exists\n2. Check EXPLAIN analysis guidance is present\n3. Validate N+1 patterns for Django and SQLAlchemy\n4. Ensure migration safety section exists",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T06:03:35.152Z"
+      },
+      {
+        "id": "31",
+        "title": "Create Continuous Learning v2 Directory Structure",
+        "description": "Create .claude/instincts/ directory with README explaining the instinct-based learning system.",
+        "details": "Create directory structure for continuous learning:\n\n**1. Create .claude/instincts/README.md**:\n- Overview of instinct-based learning\n- Format specification: JSON with pattern, confidence, source, category\n- Confidence thresholds: <0.3 discard, 0.3-0.7 candidate, >0.7 active\n- Categories: coding-style, testing-strategy, debugging-approach, architecture-preference, tool-usage\n- Authority hierarchy: Rules (.claude/rules/) > Instincts > Defaults\n\n**2. Create .claude/instincts/.gitkeep** (directory marker)\n\n**3. Add to .gitignore**:\n```\n.claude/instincts/*.json\n```\n(Instincts are personal, not shared by default)\n\n**4. Create example instinct file** (.claude/instincts/example.json):\n```json\n{\n  \"pattern\": \"Always run tests before committing\",\n  \"confidence\": 0.85,\n  \"category\": \"tool-usage\",\n  \"source_sessions\": [\"2024-01-15\", \"2024-01-18\"],\n  \"last_reinforced\": \"2024-01-18\",\n  \"active\": true\n}\n```",
+        "testStrategy": "1. Verify .claude/instincts/ directory exists with README\n2. Check .gitignore includes instinct JSON files\n3. Validate example.json follows documented format\n4. Ensure authority hierarchy is clearly documented",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T06:05:47.552Z"
+      },
+      {
+        "id": "32",
+        "title": "Create Authority Hierarchy Rule",
+        "description": "Add a rule in .claude/rules/ establishing that rules take precedence over instincts.",
+        "details": "Create .claude/rules/authority-hierarchy.md:\n\n```yaml\n---\ntemplate-version: 2.0.0\ntemplate-file: .claude/rules/authority-hierarchy.md\n---\n```\n\n**Content**:\n# Authority Hierarchy\n\nWhen guidance conflicts, follow this precedence:\n\n1. **Rules** (.claude/rules/*.md) - Highest authority, project-defined behavior\n2. **Instincts** (.claude/instincts/*.json) - Learned patterns, supplementary\n3. **Defaults** - Built-in Claude behavior\n\n## Key Principles\n\n- Instincts **supplement** rules, they never **override** them\n- If an instinct contradicts a rule, follow the rule\n- Instincts are suggestions; rules are requirements\n- When in doubt, check rules first\n\n## Examples\n\n- Rule says \"commit frequently\" → Do it, even if instinct suggests batching\n- Instinct suggests \"use pytest-asyncio\" → Follow it (no conflicting rule)\n- Rule says \"80% confidence threshold\" → Enforce it, regardless of instinct patterns\n\n## Instinct Integration\n\nWhen referencing instincts:\n- Say \"also consider\" not \"must follow\"\n- Treat as learned preferences, not requirements\n- Allow user override without friction",
+        "testStrategy": "1. Verify rule file exists with correct frontmatter\n2. Check precedence order is clearly documented\n3. Validate examples are concrete and actionable\n4. Ensure 'supplement not override' principle is prominent",
+        "priority": "high",
+        "dependencies": [
+          "31"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T06:05:47.557Z"
+      },
+      {
+        "id": "33",
+        "title": "Create Continuous Learning Skill",
+        "description": "Create the continuous-learning-v2 skill defining pattern extraction, instinct evolution, and confidence management.",
+        "details": "Create .claude/skills/continuous-learning-v2/SKILL.md:\n\n```yaml\n---\nname: continuous-learning-v2\ndescription: Instinct-based pattern extraction, confidence scoring, skill evolution\n---\n```\n\n**Content**:\n\n1. **Pattern Extraction**:\n   - After completing significant tasks, identify recurring patterns\n   - Focus on: tool usage, coding style, testing approaches, debugging methods\n   - Require 2+ occurrences before creating instinct\n\n2. **Instinct Format**:\n   ```json\n   {\n     \"pattern\": \"description of learned behavior\",\n     \"confidence\": 0.0-1.0,\n     \"category\": \"coding-style|testing-strategy|debugging-approach|architecture-preference|tool-usage\",\n     \"source_sessions\": [\"session_ids\"],\n     \"last_reinforced\": \"ISO-date\",\n     \"active\": true|false\n   }\n   ```\n\n3. **Confidence Management**:\n   - <0.3: Discard (noise)\n   - 0.3-0.7: Candidate (needs reinforcement)\n   - >0.7: Active instinct (applied automatically)\n   - Reinforcement: +0.1 per positive use\n   - Decay: -0.05 per week unused\n\n4. **Skill Evolution**:\n   - When 3+ related instincts cluster, suggest creating a skill\n   - Use /evolve command to trigger clustering analysis",
+        "testStrategy": "1. Verify skill file exists with complete format spec\n2. Check confidence thresholds are documented\n3. Validate category list matches README\n4. Ensure reinforcement/decay rules are specified",
+        "priority": "high",
+        "dependencies": [
+          "31",
+          "32"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T06:05:47.563Z"
+      },
+      {
+        "id": "34",
+        "title": "Create Instinct Management Commands",
+        "description": "Create /instinct-status, /instinct-import, /instinct-export, and /evolve commands.",
+        "details": "Create four command files:\n\n**1. .claude/commands/instinct-status.md**:\n- List all instincts with confidence scores\n- Group by category\n- Show active vs candidate vs deprecated\n- Format: table with pattern, confidence, last_reinforced\n\n**2. .claude/commands/instinct-import.md**:\n- Import instincts from JSON file\n- Validate format before import\n- Merge with existing (higher confidence wins)\n- Usage: `/instinct-import path/to/instincts.json`\n\n**3. .claude/commands/instinct-export.md**:\n- Export instincts to shareable JSON\n- Filter by category or confidence threshold\n- Usage: `/instinct-export [--category=X] [--min-confidence=0.7]`\n\n**4. .claude/commands/evolve.md**:\n- Analyze instincts for clustering opportunities\n- Suggest new skills from related instincts\n- Interactive: user approves/rejects suggestions\n- Creates SKILL.md from approved clusters",
+        "testStrategy": "1. Verify all four command files exist\n2. Check /instinct-status shows table format\n3. Validate import/export handle JSON correctly\n4. Ensure /evolve describes clustering algorithm",
+        "priority": "medium",
+        "dependencies": [
+          "31",
+          "32",
+          "33"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T06:05:47.569Z"
+      },
+      {
+        "id": "35",
+        "title": "Create /orchestrate Command",
+        "description": "Create the /orchestrate command for multi-agent pipeline execution.",
+        "details": "Create .claude/commands/orchestrate.md:\n\n**Command Definition**:\n- Usage: `/orchestrate [pipeline-name]` or `/orchestrate agent1 agent2 agent3`\n\n**Default Pipelines**:\n1. `feature`: planner → tdd-guide → (implement) → code-reviewer → security-reviewer\n2. `review`: code-reviewer → security-reviewer → database-reviewer (if SQL detected)\n3. `refactor`: architect → refactor-cleaner → code-reviewer → (tests)\n\n**Custom Pipelines**:\n- Specify agent names in order: `/orchestrate architect planner code-reviewer`\n\n**Handoff Documents**:\n- Each agent produces structured output for the next\n- Format: Summary, Findings, Recommendations, Context for Next Agent\n\n**Final Report**:\n- Aggregated findings from all agents\n- Severity-ordered across entire pipeline\n- Conflicts/contradictions noted\n\n**Example**:\n```\n/orchestrate feature\n\nExecuting pipeline: planner → tdd-guide → code-reviewer → security-reviewer\n\n[1/4] Running planner...\n[2/4] Running tdd-guide...\n...\n\n═══ ORCHESTRATION REPORT ═══\n...\n```",
+        "testStrategy": "1. Verify command file exists with pipeline definitions\n2. Check default pipelines are documented\n3. Validate handoff document format is specified\n4. Ensure custom pipeline syntax is clear",
+        "priority": "high",
+        "dependencies": [
+          "18",
+          "19",
+          "20",
+          "21",
+          "22",
+          "23",
+          "24",
+          "25"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T06:09:24.928Z"
+      },
+      {
+        "id": "36",
+        "title": "Update Proactive Steering for Orchestration",
+        "description": "Update proactive-steering.md to mention /orchestrate when detecting full feature cycles.",
+        "details": "Modify .claude/rules/proactive-steering.md:\n\n1. **Add to Auto-Invoke Tools section**:\n```markdown\n| Context Signal | Auto-Invoke |\n|----------------|-------------|\n| Full feature cycle detected | Suggest /orchestrate |\n| \"implement this feature end-to-end\" | /orchestrate feature |\n| \"review this thoroughly\" | /orchestrate review |\n```\n\n2. **Add Orchestration Pattern** (new section):\n```markdown\n### Pattern: Full Feature Cycle\n\nWhen user requests a complete feature implementation:\n\n1. Detect scope (is this end-to-end work?)\n2. Suggest orchestration: \"This looks like a full feature. Want me to run /orchestrate feature?\"\n3. If accepted, execute pipeline\n4. Present aggregated report\n\n**Signals for orchestration:**\n- \"Build this feature\"\n- \"Implement X from scratch\"\n- \"Add full support for Y\"\n```\n\n3. **Update Tool Selection Decision Tree** in workflow-guide.md:\n- Add orchestration branch for multi-agent workflows",
+        "testStrategy": "1. Verify proactive-steering.md includes orchestration pattern\n2. Check auto-invoke table has orchestration entries\n3. Validate workflow-guide.md decision tree is updated\n4. Ensure feature cycle detection signals are documented",
+        "priority": "medium",
+        "dependencies": [
+          "35"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T06:09:24.934Z"
+      },
+      {
+        "id": "37",
+        "title": "Create /multi-plan Command",
+        "description": "Create the /multi-plan command for parallel planning with Claude, Gemini, and Codex.",
+        "details": "Create .claude/commands/multi-plan.md:\n\n**Command Definition**:\n- Usage: `/multi-plan <requirements>`\n- Sends requirements to multiple models in parallel\n\n**Model Roles**:\n- Claude: Primary analysis (architecture, security, testing strategy)\n- Gemini: Alternative perspective (different approaches, catches different issues)\n- Codex: Implementation-focused (practical code patterns, API usage)\n\n**Synthesis Step**:\n- Claude aggregates all perspectives\n- Notes conflicts between models\n- Produces unified plan\n\n**Output Format**:\n```markdown\n# Multi-Model Plan\n\n## Claude Analysis\n[Primary plan]\n\n## Gemini Perspective\n[Alternative viewpoints, additional concerns]\n\n## Codex Suggestions\n[Implementation details, code patterns]\n\n## Synthesis\n[Unified plan with conflicts noted]\n\n## Conflicts/Differences\n- [Area]: Claude says X, Gemini says Y\n```\n\n**API Requirements**:\n- Gemini: Google AI Studio API key (GOOGLE_AI_KEY)\n- Codex: OpenAI API key (OPENAI_API_KEY)\n- Graceful degradation: Skip missing models, note in output",
+        "testStrategy": "1. Verify command file exists with model roles\n2. Check synthesis step is documented\n3. Validate graceful degradation is specified\n4. Ensure output format shows conflicts",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T06:09:24.940Z"
+      },
+      {
+        "id": "38",
+        "title": "Create /multi-execute Command",
+        "description": "Create the /multi-execute command for parallel implementation with multiple models.",
+        "details": "Create .claude/commands/multi-execute.md:\n\n**Command Definition**:\n- Usage: `/multi-execute <task>`\n- Parallel implementation with different models\n\n**Division of Work**:\n- Claude: Core logic, complex algorithms\n- Gemini: Alternative implementations, edge case handling\n- Codex: Boilerplate generation, API integrations\n\n**Merge Step**:\n- Claude reviews all outputs\n- Selects best approaches per component\n- Synthesizes into cohesive implementation\n\n**Output Format**:\n```markdown\n# Multi-Model Execution\n\n## Implementation Components\n\n### Core Logic (Claude)\n[code]\n\n### Alternative Approach (Gemini)\n[code - if different/better]\n\n### Boilerplate (Codex)\n[code]\n\n## Merged Implementation\n[synthesized code]\n\n## Selection Rationale\n- Used Claude's approach for X because...\n- Incorporated Gemini's Y because...\n```\n\n**Graceful Degradation**:\n- Missing API keys: Note which model skipped\n- API errors: Retry once, then skip with note",
+        "testStrategy": "1. Verify command file exists with work division\n2. Check merge step is documented\n3. Validate graceful degradation handles missing keys\n4. Ensure selection rationale is in output",
+        "priority": "medium",
+        "dependencies": [
+          "37"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T06:09:24.946Z"
+      },
+      {
+        "id": "39",
+        "title": "Create Multi-Model Configuration Example",
+        "description": "Create .claude/examples/multi-model-config.json showing API key configuration for multi-model commands.",
+        "details": "Create .claude/examples/multi-model-config.json:\n\n```json\n{\n  \"description\": \"Multi-model API configuration example\",\n  \"note\": \"Add these to your .env file - never commit actual keys\",\n  \"required_env_vars\": {\n    \"GOOGLE_AI_KEY\": {\n      \"description\": \"Google AI Studio API key for Gemini\",\n      \"source\": \"https://makersuite.google.com/app/apikey\",\n      \"subscription\": \"$20/month Google AI plan or free tier\"\n    },\n    \"OPENAI_API_KEY\": {\n      \"description\": \"OpenAI API key for Codex/GPT\",\n      \"source\": \"https://platform.openai.com/api-keys\",\n      \"subscription\": \"$20/month ChatGPT Plus or API credits\"\n    }\n  },\n  \"example_env\": [\n    \"# .env (DO NOT COMMIT)\",\n    \"GOOGLE_AI_KEY=your_google_key_here\",\n    \"OPENAI_API_KEY=your_openai_key_here\"\n  ],\n  \"verification\": {\n    \"gemini\": \"curl -H 'Authorization: Bearer $GOOGLE_AI_KEY' https://generativelanguage.googleapis.com/v1/models\",\n    \"openai\": \"curl -H 'Authorization: Bearer $OPENAI_API_KEY' https://api.openai.com/v1/models\"\n  }\n}\n```\n\nAlso update protect-sensitive-files.sh to include these keys if not already.",
+        "testStrategy": "1. Verify config file exists with correct structure\n2. Check .env example is clear\n3. Validate verification commands are correct\n4. Ensure note about not committing keys is prominent",
+        "priority": "low",
+        "dependencies": [
+          "37",
+          "38"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T06:09:24.952Z"
+      },
+      {
+        "id": "40",
+        "title": "Create /verify Command",
+        "description": "Create the /verify command for structured verification pipeline (test + lint + type-check + security).",
+        "details": "Create .claude/commands/verify.md:\n\n**Command Definition**:\n- Usage: `/verify [scope]`\n- Scope: file, directory, or 'all' (default: changed files)\n\n**Pipeline Stages**:\n1. **Tests**: `pytest` (or detected test runner)\n2. **Lint**: `ruff check` (or detected linter)\n3. **Type Check**: `mypy` (or detected type checker)\n4. **Security**: `bandit -r` (or detected security scanner)\n\n**Output Format**:\n```\n╔════════════════════════════════════════════╗\n║           VERIFICATION REPORT              ║\n╠════════════════════════════════════════════╣\n║ Stage        │ Status  │ Details           ║\n╠──────────────┼─────────┼───────────────────╣\n║ Tests        │ ✓ Pass  │ 45 passed, 0 failed║\n║ Lint         │ ✗ Fail  │ 3 errors          ║\n║ Type Check   │ ✓ Pass  │                   ║\n║ Security     │ ⚠ Warn  │ 1 low severity    ║\n╠══════════════════════════════════════════════╣\n║ Overall: FAIL (fix lint errors)            ║\n╚════════════════════════════════════════════╝\n```\n\n**Relationship to /test**:\n- /test is quick (just pytest)\n- /verify is comprehensive (all checks)\n- Both respect same test configuration",
+        "testStrategy": "1. Verify command file exists with all stages\n2. Check output format is table-based\n3. Validate relationship to /test is documented\n4. Ensure graceful handling of missing tools",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T06:19:50.397Z"
+      },
+      {
+        "id": "41",
+        "title": "Create /eval Command",
+        "description": "Create the /eval command for quality metrics evaluation and tracking over time.",
+        "details": "Create .claude/commands/eval.md and .claude/evals/ directory:\n\n**Command Definition**:\n- Usage: `/eval [--save]`\n- Runs comprehensive quality analysis\n- Stores results in .claude/evals/ as timestamped JSON\n\n**Metrics Collected**:\n1. Test coverage (pytest-cov percentage)\n2. Lint score (errors/warnings per file)\n3. Type coverage (typed functions percentage)\n4. Cyclomatic complexity (average per function)\n\n**Output Format**:\n```\n╔═══════════════════════════════════════════╗\n║          EVALUATION RESULTS               ║\n╠═══════════════════════════════════════════╣\n║ Metric            │ Current │ Previous    ║\n╠───────────────────┼─────────┼─────────────╣\n║ Test Coverage     │ 78%     │ 75% (+3%)   ║\n║ Lint Score        │ 0.2/file│ 0.5 (+60%)  ║\n║ Type Coverage     │ 65%     │ 60% (+5%)   ║\n║ Avg Complexity    │ 4.2     │ 4.5 (+7%)   ║\n╚═══════════════════════════════════════════╝\n```\n\n**Storage Format** (.claude/evals/eval_TIMESTAMP.json):\n```json\n{\n  \"timestamp\": \"2024-01-15T10:30:00Z\",\n  \"metrics\": {\n    \"test_coverage\": 78,\n    \"lint_score\": 0.2,\n    \"type_coverage\": 65,\n    \"avg_complexity\": 4.2\n  },\n  \"files_analyzed\": 42\n}\n```\n\n**Integration with /health**:\n- Show recent eval results in health check\n- Warn if no eval in last 7 days",
+        "testStrategy": "1. Verify command file and evals directory exist\n2. Check metrics are comprehensive\n3. Validate JSON storage format\n4. Ensure trend comparison is shown",
+        "priority": "medium",
+        "dependencies": [
+          "40"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T06:19:50.919Z"
+      },
+      {
+        "id": "42",
+        "title": "Create /skill-create Command",
+        "description": "Create the /skill-create command to auto-generate SKILL.md files from git commit history.",
+        "details": "Create .claude/commands/skill-create.md:\n\n**Command Definition**:\n- Usage: `/skill-create [--days=30]`\n- Analyzes git commit history for patterns\n- Proposes new skills based on detected patterns\n\n**Analysis Process**:\n1. Read recent commits (default: 30 days)\n2. Categorize by conventional commit type (feat, fix, test, etc.)\n3. Identify recurring patterns:\n   - Files frequently changed together\n   - Common commit message themes\n   - Repeated fix patterns\n4. Cluster related patterns\n5. Propose skill from each cluster\n\n**Output Format**:\n```\n📊 Analyzing 45 commits from last 30 days...\n\nDetected patterns:\n\n1. API Error Handling (12 commits)\n   Files: src/api/*.py\n   Pattern: \"fix: handle ... error\"\n   Suggested skill: api-error-handling\n\n2. Database Migrations (8 commits)\n   Files: migrations/*.py\n   Pattern: \"feat: add migration for ...\"\n   Suggested skill: migration-patterns\n\nCreate skills? [1] [2] [all] [none]\n```\n\n**Skill Generation**:\n- Creates .claude/skills/{name}/SKILL.md\n- Extracts content from related commits and code\n- User reviews and edits before final save",
+        "testStrategy": "1. Verify command file exists with analysis process\n2. Check pattern detection is documented\n3. Validate skill generation creates SKILL.md\n4. Ensure user review step is included",
+        "priority": "low",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T06:19:51.611Z"
+      },
+      {
+        "id": "43",
+        "title": "Create /update-codemaps Command",
+        "description": "Create the /update-codemaps command to generate human-readable architecture docs in docs/CODEMAPS/.",
+        "details": "Create .claude/commands/update-codemaps.md and docs/CODEMAPS/ directory:\n\n**Command Definition**:\n- Usage: `/update-codemaps [scope]`\n- Generates human-readable architecture documentation\n- Complements project-index.sh (machine-readable JSON)\n\n**Generated Files**:\n\n1. **docs/CODEMAPS/imports.md**:\n   - Import/dependency graph per module\n   - External dependencies highlighted\n   - Circular dependency warnings\n\n2. **docs/CODEMAPS/exports.md**:\n   - Public API surface per module\n   - Functions, classes, constants exported\n   - Deprecation notices\n\n3. **docs/CODEMAPS/architecture.md**:\n   - High-level module relationships\n   - ASCII or Mermaid diagrams\n   - Layer boundaries (if detectable)\n\n**Example Output** (imports.md):\n```markdown\n# Import Map\n\n## src/api/\n- **auth.py** → utils, models.user, services.jwt\n- **endpoints.py** → auth, models, schemas\n\n## External Dependencies\n- fastapi (api/*)\n- sqlalchemy (models/*)\n- pydantic (schemas/*)\n```\n\n**Relationship to project-index.sh**:\n- project-index.sh: JSON for Claude/tools\n- update-codemaps: Markdown for humans",
+        "testStrategy": "1. Verify command file and CODEMAPS directory exist\n2. Check imports.md/exports.md/architecture.md formats\n3. Validate relationship to project-index.sh is clear\n4. Ensure Mermaid diagram support is mentioned",
+        "priority": "low",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T06:19:52.393Z"
+      },
+      {
+        "id": "44",
+        "title": "Create /checkpoint Command",
+        "description": "Create the /checkpoint command for manual session state saves beyond automatic session-end.",
+        "details": "Create .claude/commands/checkpoint.md:\n\n**Command Definition**:\n- Usage: `/checkpoint [name]`\n- Manual session state save to .claude/sessions/\n- Supplements automatic session-end.sh saves\n\n**When to Use**:\n- Before risky operations\n- At significant milestones\n- When you want to preserve current reasoning\n- Before switching contexts within a session\n\n**Output File** (.claude/sessions/checkpoint-TIMESTAMP.md):\n```markdown\n# Checkpoint: [name]\nTimestamp: 2024-01-15T14:30:00Z\n\n## Current Context\n- Task: [current task ID and title]\n- Branch: [git branch]\n- Recent commits: [last 3]\n\n## Active Reasoning\n[Summary of current thinking/approach]\n\n## Files in Focus\n[Recently read/modified files]\n\n## Next Steps\n[Planned actions]\n\n---\n*Manual checkpoint via /checkpoint*\n```\n\n**Integration**:\n- session-init.sh detects checkpoints alongside automatic summaries\n- Shows in \"Last Session\" section if <24h old\n- Named checkpoints easier to find than timestamped ones",
+        "testStrategy": "1. Verify command file exists\n2. Check output format includes context, reasoning, files\n3. Validate session-init.sh integration is documented\n4. Ensure timestamp format is consistent with session-end.sh",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T06:19:52.852Z"
+      },
+      {
+        "id": "45",
+        "title": "Create TypeScript Language Rules",
+        "description": "Create .claude/rules/typescript/coding-standards.md with TypeScript-specific conventions.",
+        "details": "Create .claude/rules/typescript/coding-standards.md:\n\n```yaml\n---\ntemplate-version: 2.0.0\ntemplate-file: .claude/rules/typescript/coding-standards.md\npaths: [\"**/*.ts\", \"**/*.tsx\"]\n---\n```\n\n**Content**:\n\n# TypeScript Coding Standards\n\n## Strict Mode Requirements\n- Always enable strict mode in tsconfig.json\n- No `any` without explicit justification comment\n- Enable strictNullChecks, noImplicitAny, strictFunctionTypes\n\n## Type Patterns\n- Prefer interfaces for object shapes\n- Use type for unions, intersections, mapped types\n- Avoid excessive generics (YAGNI applies)\n- Use branded types for IDs: `type UserId = string & { _brand: 'UserId' }`\n\n## Null Handling\n- Use optional chaining (?.) over explicit null checks\n- Use nullish coalescing (??) over || for defaults\n- Prefer undefined over null for optional values\n\n## Imports\n- Use type imports for type-only imports: `import type { X }`\n- Organize: external, internal, relative, types\n\n## React-Specific (if applicable)\n- Use FC sparingly (prefer explicit return types)\n- Props interfaces named ComponentNameProps\n- Custom hooks return explicit types",
+        "testStrategy": "1. Verify file exists with paths frontmatter\n2. Check strict mode requirements are documented\n3. Validate type patterns are comprehensive\n4. Ensure React-specific section exists",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T06:19:53.500Z"
+      },
+      {
+        "id": "46",
+        "title": "Create Go and Java Language Rules",
+        "description": "Create .claude/rules/golang/ and .claude/rules/java/ with language-specific conventions.",
+        "details": "Create two rule files:\n\n**1. .claude/rules/golang/coding-standards.md**:\n```yaml\n---\npaths: [\"**/*.go\"]\n---\n```\n- Error handling: Always check errors, wrap with %w\n- Naming: MixedCaps, not underscores; short receiver names\n- Package design: One package per directory, meaningful names\n- Interfaces: Accept interfaces, return structs\n- Goroutines: Always have exit conditions, use context\n- Testing: Table-driven tests, testify optional\n\n**2. .claude/rules/java/coding-standards.md**:\n```yaml\n---\npaths: [\"**/*.java\"]\n---\n```\n- Naming: Classes PascalCase, methods camelCase, constants UPPER_SNAKE\n- Spring patterns: Constructor injection over field injection\n- Null handling: Use Optional for nullable returns\n- Collections: Prefer List.of(), Map.of() for immutables\n- Exceptions: Checked for recoverable, unchecked for bugs\n- Lombok: Acceptable for DTOs, avoid for complex classes",
+        "testStrategy": "1. Verify both rule files exist with correct paths\n2. Check Go error handling patterns are documented\n3. Validate Java Spring patterns are included\n4. Ensure paths frontmatter matches file extensions",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T06:19:54.197Z"
+      },
+      {
+        "id": "47",
+        "title": "Create Frontend Component Rules",
+        "description": "Create .claude/rules/frontend/component-standards.md for React/Vue/Svelte conventions.",
+        "details": "Create .claude/rules/frontend/component-standards.md:\n\n```yaml\n---\ntemplate-version: 2.0.0\ntemplate-file: .claude/rules/frontend/component-standards.md\npaths: [\"**/*.jsx\", \"**/*.tsx\", \"**/*.vue\", \"**/*.svelte\"]\n---\n```\n\n**Content**:\n\n# Frontend Component Standards\n\n## Universal Principles\n- Single responsibility per component\n- Props down, events up\n- Prefer composition over inheritance\n- Keep components under 200 lines\n\n## React\n- Functional components with hooks\n- Custom hooks for shared logic (useX naming)\n- Memoize expensive computations (useMemo, useCallback)\n- Error boundaries for crash isolation\n\n## Vue\n- Composition API for new components\n- Composables for shared logic (useX naming)\n- Avoid excessive watchers\n- Use v-memo for list optimizations\n\n## Svelte\n- Use stores for shared state\n- Actions for reusable behavior\n- Transitions for UX polish\n- Keep reactivity simple ($: statements)\n\n## Accessibility\n- Semantic HTML first (button not div)\n- ARIA only when semantic HTML insufficient\n- Keyboard navigation for all interactive elements\n- Focus management on navigation",
+        "testStrategy": "1. Verify file exists with correct paths frontmatter\n2. Check React/Vue/Svelte sections are all present\n3. Validate accessibility section exists\n4. Ensure single responsibility principle is documented",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T06:19:54.878Z"
+      },
+      {
+        "id": "48",
+        "title": "Update /update-docs and Documentation Automation",
+        "description": "Create /update-docs command that triggers doc-updater agent on recently changed files.",
+        "details": "Create .claude/commands/update-docs.md:\n\n**Command Definition**:\n- Usage: `/update-docs [scope]`\n- Scope: 'recent' (default), 'all', or specific file/directory\n- Triggers doc-updater agent\n\n**Workflow**:\n1. Identify changed files (git diff or explicit scope)\n2. Filter to code files (exclude docs, configs)\n3. Spawn doc-updater agent with file list\n4. Agent updates:\n   - README.md (if public API changed)\n   - Docstrings (if functions changed)\n   - CHANGELOG (if new features/fixes)\n\n**Output**:\n```\n📝 Documentation Update\n\nFiles analyzed: 5\nDocs updated: 2\n\nChanges:\n- README.md: Updated API section\n- src/auth.py: Added docstrings to 3 functions\n\nNo CHANGELOG entry needed (no feat/fix commits)\n```\n\n**Integration**:\n- Can be run manually or as pre-PR step\n- Suggested by proactive-steering before /pr\n- Lightweight (haiku model via doc-updater agent)",
+        "testStrategy": "1. Verify command file exists with workflow\n2. Check scope options are documented\n3. Validate output format shows changes\n4. Ensure integration with /pr is mentioned",
+        "priority": "low",
+        "dependencies": [
+          "21"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T06:19:55.433Z"
+      },
+      {
+        "id": "49",
+        "title": "Update CLAUDE.md with Phase 2 Features",
+        "description": "Update CLAUDE.md to document new Phase 2 commands, agents, and skills.",
+        "details": "Update CLAUDE.md with comprehensive Phase 2 documentation:\n\n**1. Update Agents Section**:\nAdd table entries for all 9 new agents:\n- architect (opus, read-only)\n- tdd-guide (sonnet, advisory)\n- database-reviewer (sonnet, SQL focus)\n- doc-updater (haiku, lightweight)\n- refactor-cleaner (sonnet, controlled refactoring)\n- e2e-runner (sonnet, Playwright/Cypress)\n- go-reviewer (sonnet, Go-specific)\n- go-build-resolver (sonnet, Go builds)\n- python-reviewer (sonnet, Python-specific)\n\n**2. Update Slash Commands Table**:\nAdd new commands:\n- /orchestrate - Multi-agent pipeline execution\n- /multi-plan - Parallel planning with Claude/Gemini/Codex\n- /multi-execute - Parallel implementation\n- /verify - Test + lint + type-check + security\n- /eval - Quality metrics tracking\n- /checkpoint - Manual session save\n- /instinct-status, /instinct-import, /instinct-export, /evolve - Instinct management\n- /skill-create - Auto-generate skills\n- /update-codemaps - Architecture docs\n- /update-docs - Documentation sync\n\n**3. Add Continuous Learning Section**:\n- Instinct system overview\n- Authority hierarchy (rules > instincts)\n- Commands for management\n\n**4. Add Multi-Model Section**:\n- API key requirements\n- How /multi-plan and /multi-execute work\n- Graceful degradation\n\n**5. Update Reference Docs**:\n- Add docs/SECURITY.md (AgentShield)",
+        "testStrategy": "1. Verify all new agents are in agents table\n2. Check all new commands are in commands table\n3. Validate continuous learning section exists\n4. Ensure multi-model section documents API keys",
+        "priority": "high",
+        "dependencies": [
+          "16",
+          "17",
+          "18",
+          "19",
+          "20",
+          "21",
+          "22",
+          "23",
+          "24",
+          "25",
+          "26",
+          "27",
+          "28",
+          "29",
+          "30",
+          "31",
+          "32",
+          "33",
+          "34",
+          "35",
+          "36",
+          "37",
+          "38",
+          "39",
+          "40",
+          "41",
+          "42",
+          "43",
+          "44",
+          "45",
+          "46",
+          "47",
+          "48"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T06:22:18.259Z"
+      },
+      {
+        "id": "50",
+        "title": "Update ECC_INTEGRATION.md for Phase 2",
+        "description": "Update docs/ECC_INTEGRATION.md with Phase 2 features and migration notes.",
+        "details": "Update docs/ECC_INTEGRATION.md:\n\n**1. Update \"What Was Integrated\" Table**:\nAdd Phase 2 features:\n- Continuous learning v2 | ECC instinct patterns | .claude/instincts/\n- Multi-agent orchestration | ECC pipeline patterns | /orchestrate\n- Multi-model collaboration | ECC multi-model patterns | /multi-plan, /multi-execute\n- AgentShield | ECC security scanning | docs/SECURITY.md\n- 9 new agents | ECC agent library | .claude/agents/\n- 10 new skills | ECC skill library | .claude/skills/\n- Language-specific rules | ECC polyglot patterns | .claude/rules/{lang}/\n\n**2. Add Phase 2 Quick Start**:\n- Continuous learning: /instinct-status, /evolve\n- Orchestration: /orchestrate feature\n- Multi-model: Configure API keys, /multi-plan\n- Security: npx ecc-agentshield scan\n\n**3. Update Migration Notes**:\n- New directories: .claude/instincts/, .claude/evals/, docs/CODEMAPS/\n- New files: 9 agents, 10 skills, 4 language rules\n- New gitignore entries: .claude/instincts/*.json, .claude/evals/*.json\n- API key setup for multi-model\n\n**4. Update Token Overhead Table**:\n- Note that skills are on-demand (not auto-loaded)\n- Instincts are lightweight JSON\n- AgentShield is external (npx, no token cost)",
+        "testStrategy": "1. Verify Phase 2 features are in integration table\n2. Check migration notes are comprehensive\n3. Validate token overhead notes are accurate\n4. Ensure API key setup is documented",
+        "priority": "medium",
+        "dependencies": [
+          "49"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-13T06:22:18.991Z"
+      }
+    ],
+    "metadata": {
+      "version": "1.0.0",
+      "lastModified": "2026-02-13T06:22:18.991Z",
+      "taskCount": 35,
+      "completedCount": 35,
+      "tags": [
+        "master"
+      ]
+    }
+  }
+}

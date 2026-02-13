@@ -1,0 +1,222 @@
+# PRD: ECC Phase 2 — Full Integration
+
+## Overview
+Complete the integration of Everything Claude Code (ECC) into our project template. Phase 1 cherry-picked the highest-value context engineering patterns (15 tasks, all complete). Phase 2 integrates the remaining components: continuous learning v2, multi-agent orchestration, AgentShield security, multi-model collaboration, language-specific skills, and remaining agents/commands.
+
+The goal is feature parity with ECC while preserving our template's strengths (Task Master, Superpowers TDD enforcement, proactive steering, hook-based automation).
+
+## Background
+Phase 1 integrated ~22% of ECC components (~70% by value): token optimization, session persistence, context modes, MCP discipline, 4 agents, code review enhancement. Phase 2 covers the remaining ~78% of components, prioritized by value.
+
+User context:
+- Multi-project use: Python (primary), plus projects like "gita nagari" and "rideshare rescue" requiring polyglot support
+- Available AI subscriptions: Claude (primary), Gemini ($20/month), Codex ($20/month)
+- Superpowers plugin installed and required — coexistence, not replacement
+
+## Goals
+1. Integrate ECC's continuous learning v2 (instinct-based auto-learning)
+2. Add multi-agent orchestration (`/orchestrate` command)
+3. Add multi-model collaboration (`/multi-plan`, `/multi-execute` with Gemini + Codex)
+4. Integrate AgentShield security scanning
+5. Add all language-specific agents and skills (Python, Go, TypeScript, Java, frontend)
+6. Add remaining commands (/verify, /eval, /skill-create, /update-codemaps)
+7. Resolve all contradictions between ECC and existing template patterns
+
+## Non-Goals
+- Do NOT remove or weaken Superpowers enforcement
+- Do NOT replace Task Master with any ECC planning system
+- Do NOT install ECC as a monolithic plugin (continue selective integration)
+- Do NOT add PM2 process management (niche, can be added per-project)
+
+## Conflict Resolution Strategy
+
+For each contradiction, the PRD specifies a resolution. Implementation tasks should follow these decisions.
+
+### DECISION: Superpowers + TDD-Guide Coexistence
+- **Resolution: Layer them.** Superpowers remains the enforcer (always on). tdd-guide becomes an advisory agent (on-demand coaching).
+- **Implementation**: tdd-guide agent definition MUST include constraint: "NEVER write production code, only tests and test guidance. Superpowers enforces the RED-GREEN-REFACTOR cycle — your role is helping users write effective failing tests."
+- **Trigger**: When user struggles to write a test that Superpowers requires, invoke tdd-guide.
+
+### DECISION: Static Rules + Continuous Learning Coexistence
+- **Resolution: Instincts supplement rules, never override them.**
+- **Implementation**: `.claude/rules/` files have highest authority. Instincts (from continuous learning v2) are loaded as lower-priority suggestions. If an instinct contradicts a rule, the rule wins.
+- **Practical**: Instincts go in `.claude/instincts/` directory. Rules reference instincts as "also consider" not "must follow."
+- **Safety**: Add a rule in `.claude/rules/` that explicitly states instinct authority hierarchy.
+
+### DECISION: Automatic Sessions + Manual Checkpoints
+- **Resolution: Both.** Automatic session-end/session-init hooks remain the default. Add `/checkpoint` as an on-demand manual supplement for users who want to save state at specific moments (not just session boundaries).
+- **Implementation**: `/checkpoint` writes to same `.claude/sessions/` directory. session-init.sh detects both automatic and manual checkpoints.
+
+### DECISION: Proactive Steering + Orchestration
+- **Resolution: Both.** proactive-steering.md continues guiding individual interactions. `/orchestrate` adds automated multi-agent pipelines for full feature cycles.
+- **Implementation**: `/orchestrate` uses the agents defined in `.claude/agents/`. proactive-steering.md should mention `/orchestrate` as an option when it detects a full feature cycle in progress.
+
+### DECISION: /test + /verify + /eval
+- **Resolution: Complement.** `/test` runs pytest (quick). `/verify` runs structured verification (test + lint + type-check + security). `/eval` runs evaluation harness for quality metrics.
+- **Implementation**: `/verify` is a superset of `/test`. `/eval` is for measuring improvement over time.
+
+## Technical Requirements
+
+### P0: AgentShield Security Integration
+Add AgentShield documentation and integration to the template:
+1. Create `docs/SECURITY.md` documenting:
+   - What AgentShield scans (CLAUDE.md secrets, MCP permissions, hook injection vectors, agent misconfigs)
+   - Quick scan: `npx ecc-agentshield scan`
+   - Auto-fix: `npx ecc-agentshield scan --fix`
+   - Deep scan: `npx ecc-agentshield scan --opus` (3 adversarial Claude agents)
+   - When to run (before committing .claude/ changes, in CI, after adding new MCPs)
+2. Update `/health` command to check if AgentShield has been run recently and recommend it
+3. Add AgentShield to recommended CI workflow in docs
+4. Add a `/security-audit` enhancement that suggests AgentShield for config-level scanning
+
+### P0: Remaining Agents (9 agents)
+Create agent definitions in `.claude/agents/` for all remaining ECC agents, adapted for our template:
+
+1. `architect.md` — Model: opus. Tools: Read-only. Purpose: High-level system design, component diagrams, technology selection. Distinct from planner (which does implementation planning). Includes: scalability analysis, API boundary design, data flow modeling.
+
+2. `tdd-guide.md` — Model: sonnet. Tools: Read, Write (tests only). Purpose: Advisory TDD coaching. Helps users write effective failing tests. CONSTRAINT: Must never write production code (Superpowers enforces the cycle, tdd-guide coaches the test-writing). Includes: test strategy selection, mock/fixture guidance, edge case identification.
+
+3. `database-reviewer.md` — Model: sonnet. Tools: Read, Grep, Bash. Purpose: SQL/database optimization review. Covers: query performance, index suggestions, N+1 detection, migration safety, schema design. Supports PostgreSQL, SQLite, MongoDB patterns.
+
+4. `doc-updater.md` — Model: haiku. Tools: Read, Write, Grep. Purpose: Documentation maintenance. Updates README, docstrings, API docs, CHANGELOG. Runs after code changes to keep docs in sync. Model: haiku (lightweight, docs don't need deep reasoning).
+
+5. `refactor-cleaner.md` — Model: sonnet. Tools: Read, Write, Edit, Grep. Purpose: Controlled refactoring with minimal blast radius. Rules: preserve all existing tests, no behavior changes, extract-then-inline pattern. Includes: dead code detection, import cleanup, naming consistency.
+
+6. `e2e-runner.md` — Model: sonnet. Tools: Read, Bash, Grep. Purpose: End-to-end test execution and debugging. Supports: Playwright, Cypress, Selenium. Includes: flaky test diagnosis, screenshot analysis, network request debugging.
+
+7. `go-reviewer.md` — Model: sonnet. Tools: Read, Grep. Purpose: Go-specific code review. Covers: error handling patterns, goroutine leaks, interface design, package structure, go vet/staticcheck patterns.
+
+8. `go-build-resolver.md` — Model: sonnet. Tools: Read, Write, Edit, Bash. Purpose: Go build error resolution. Covers: module dependency issues, CGO problems, cross-compilation, linker errors.
+
+9. `python-reviewer.md` — Model: sonnet. Tools: Read, Grep. Purpose: Deep Python-specific review beyond general code-reviewer. Covers: async/await patterns, metaclass usage, descriptor protocol, GIL implications, packaging (pyproject.toml), virtual environment issues.
+
+### P0: Multi-Language Skills
+Create language-specific skill directories in `.claude/skills/`:
+
+1. `python-testing/SKILL.md` — pytest patterns, fixture strategies, parametrize, mock best practices, async testing, coverage targets
+2. `python-django/SKILL.md` — Django patterns, ORM optimization, middleware, signals, admin customization, DRF patterns
+3. `typescript-patterns/SKILL.md` — TypeScript strict mode, generics, utility types, discriminated unions, module patterns
+4. `golang-patterns/SKILL.md` — Go idioms, error handling, concurrency patterns, interface design, testing with table-driven tests
+5. `golang-testing/SKILL.md` — Go test patterns, benchmarks, fuzzing, testify, httptest, integration tests
+6. `java-springboot/SKILL.md` — Spring Boot patterns, dependency injection, JPA/Hibernate, security config, actuator
+7. `frontend-patterns/SKILL.md` — React/Vue/Svelte patterns, state management, component design, accessibility, performance
+8. `e2e-testing/SKILL.md` — Playwright/Cypress patterns, page objects, network interception, visual regression, CI integration
+9. `django-security/SKILL.md` — Django-specific security: CSRF, XSS prevention, SQL injection, authentication, permissions, secrets management
+10. `database-patterns/SKILL.md` — SQL optimization, indexing strategies, migration safety, N+1 prevention, connection pooling
+
+### P1: Continuous Learning v2 System
+Integrate ECC's instinct-based continuous learning system:
+
+1. Create `.claude/instincts/` directory with `README.md` explaining the system
+2. Create `.claude/skills/continuous-learning-v2/SKILL.md` that defines:
+   - Pattern extraction: After completing tasks, Claude identifies recurring patterns
+   - Instinct format: JSON with pattern, confidence score (0-1), source sessions, category
+   - Confidence thresholds: <0.3 = discard, 0.3-0.7 = candidate, >0.7 = active instinct
+   - Categories: coding-style, testing-strategy, debugging-approach, architecture-preference, tool-usage
+3. Create `/instinct-status` command showing learned patterns with confidence scores
+4. Create `/instinct-import` command to import shared instinct libraries
+5. Create `/instinct-export` command to export instincts as shareable JSON
+6. Create `/evolve` command that clusters related instincts into new skills
+7. Add authority hierarchy rule to `.claude/rules/`: "Rules in .claude/rules/ take precedence over instincts. Instincts supplement rules, never override them."
+8. Add instinct extraction hook: after significant work sessions, prompt Claude to identify patterns worth learning
+9. Create `.gitignore` entry for `.claude/instincts/*.json` (personal, not shared by default)
+
+### P1: Multi-Agent Orchestration
+Create the `/orchestrate` command and supporting infrastructure:
+
+1. Create `.claude/commands/orchestrate.md` defining:
+   - Sequential agent pipeline: user specifies agents in order
+   - Handoff documents: each agent produces structured output consumed by the next
+   - Default pipelines:
+     - `feature`: planner → tdd-guide → (implement) → code-reviewer → security-reviewer
+     - `review`: code-reviewer → security-reviewer → database-reviewer (if SQL detected)
+     - `refactor`: architect → refactor-cleaner → code-reviewer → (tests)
+   - Custom pipelines: user can specify arbitrary agent chains
+   - Final report: aggregated findings from all agents
+2. Update `proactive-steering.md` to mention `/orchestrate` when detecting full feature cycles
+3. Update `workflow-guide.md` tool selection decision tree to include orchestration option
+
+### P1: Multi-Model Collaboration
+Create `/multi-plan` and `/multi-execute` commands using Gemini and Codex alongside Claude:
+
+1. Create `.claude/commands/multi-plan.md` defining:
+   - Sends requirements to multiple models in parallel
+   - Claude: primary analysis (architecture, security, testing strategy)
+   - Gemini: alternative perspective (may catch different issues, different code style)
+   - Codex: implementation-focused analysis (practical code patterns, API usage)
+   - Synthesis step: Claude aggregates all perspectives into unified plan
+   - Output: plan document with per-model contributions and conflicts noted
+2. Create `.claude/commands/multi-execute.md` defining:
+   - Parallel implementation with different models
+   - Claude handles core logic; Gemini/Codex handle boilerplate or alternative implementations
+   - Merge step: Claude reviews all outputs, selects best approaches, synthesizes
+3. Document API key requirements:
+   - Gemini: Google AI Studio API key (from $20/month subscription)
+   - Codex: OpenAI API key (from $20/month subscription)
+   - Store in `.env` (protected by protect-sensitive-files.sh hook)
+4. Create `.claude/examples/multi-model-config.json` showing API key configuration
+5. Add graceful degradation: if a model's API key is missing, skip that model and note it
+
+### P2: Remaining Commands
+Create command definitions for remaining ECC commands:
+
+1. `/verify` — Structured verification pipeline: run tests → lint → type-check → security scan → report. Superset of `/test`. Returns pass/fail per stage with details.
+2. `/eval` — Evaluation harness for quality metrics. Tracks code quality over time. Stores results in `.claude/evals/` as timestamped JSON. Metrics: test coverage, lint score, type coverage, cyclomatic complexity.
+3. `/skill-create` — Analyzes git commit history to auto-generate SKILL.md files. Detects patterns in recent commits and proposes skills. User reviews and accepts/rejects.
+4. `/update-codemaps` — Generates human-readable architecture docs in `docs/CODEMAPS/`. Includes: import/export maps, dependency graphs, module boundaries. Complements project-index.sh (which generates machine-readable JSON).
+5. `/checkpoint` — Manual session state checkpoint. Writes current context, active task, reasoning to `.claude/sessions/checkpoint-TIMESTAMP.md`. Detected by session-init.sh alongside automatic summaries.
+
+### P2: Language-Specific Rules
+Create conditional rule files for each supported language:
+
+1. `.claude/rules/typescript/coding-standards.md` — TypeScript conventions, strict mode, type narrowing. YAML frontmatter: `paths: ["**/*.ts", "**/*.tsx"]`
+2. `.claude/rules/golang/coding-standards.md` — Go conventions, error handling, package design. YAML frontmatter: `paths: ["**/*.go"]`
+3. `.claude/rules/java/coding-standards.md` — Java conventions, Spring patterns. YAML frontmatter: `paths: ["**/*.java"]`
+4. `.claude/rules/frontend/component-standards.md` — React/Vue/Svelte patterns. YAML frontmatter: `paths: ["**/*.jsx", "**/*.tsx", "**/*.vue", "**/*.svelte"]`
+
+### P3: Codemaps and Documentation Automation
+Enhance project documentation capabilities:
+
+1. Create `.claude/hooks/update-codemaps.sh` that generates `docs/CODEMAPS/` directory with:
+   - `imports.md` — Import/dependency graph per module
+   - `exports.md` — Public API surface per module
+   - `architecture.md` — High-level module relationships
+2. Update project-index.sh to generate both JSON (machine-readable) and markdown (human-readable) output
+3. Add `/update-docs` command that triggers doc-updater agent on recently changed files
+
+### P3: Verification and Evaluation Infrastructure
+Build the verification and evaluation pipeline:
+
+1. Create `.claude/evals/` directory for evaluation results
+2. Create evaluation schema: JSON format for storing quality metrics over time
+3. Create `/eval` command that runs comprehensive quality analysis and stores results
+4. Create a simple dashboard format (markdown table) showing quality trends
+5. Integrate with `/health` to show recent eval results
+
+## Success Criteria
+1. All 13 ECC agents available in `.claude/agents/`
+2. Language-specific skills for Python, Go, TypeScript, Java, frontend
+3. Continuous learning v2 operational with instinct extraction and evolution
+4. `/orchestrate` chains agents in configurable pipelines
+5. `/multi-plan` and `/multi-execute` work with Gemini and Codex
+6. AgentShield documented and integrated into `/health`
+7. All language-specific rules conditionally loaded
+8. `/verify`, `/eval`, `/skill-create`, `/update-codemaps`, `/checkpoint` commands working
+9. No regression in existing template functionality
+10. Superpowers enforcement preserved throughout
+11. Authority hierarchy: rules > instincts > defaults
+
+## Dependencies
+- Phase 1 ECC integration (complete — 15/15 tasks done)
+- Superpowers plugin (installed, not modified)
+- Task Master MCP (installed)
+- Gemini API access ($20/month subscription)
+- Codex API access ($20/month subscription)
+- Node.js (for npx ecc-agentshield)
+
+## Risks
+1. **Token overhead from skills**: 10 new skills × ~500 tokens each = ~5k tokens if all loaded. Mitigate: skills are on-demand, not auto-loaded.
+2. **Continuous learning quality**: Auto-extracted instincts may be noisy. Mitigate: confidence thresholds + rule authority hierarchy.
+3. **Multi-model API costs**: Gemini + Codex API calls add cost. Mitigate: graceful degradation, opt-in only.
+4. **Orchestration complexity**: Chained agents may produce long conversations. Mitigate: structured handoff documents keep each agent focused.
+5. **Language skill accuracy**: We may not have deep expertise in all languages. Mitigate: use Context7 to verify patterns before writing skills.
