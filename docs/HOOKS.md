@@ -18,7 +18,7 @@ Hooks are shell scripts that run automatically during Claude Code's workflow, en
 
 ## Available Hook Scripts
 
-This template includes six ready-to-use hooks in `.claude/hooks/`:
+This template includes eight ready-to-use hooks in `.claude/hooks/`:
 
 ### pre-commit-check.sh
 **Event:** PreToolUse (matcher: "Bash")
@@ -51,14 +51,41 @@ Blocks edits to:
 - Private keys (`*.pem`, `*.key`, `id_rsa`)
 - Protected directories (`.git`, `node_modules`, `__pycache__`)
 
+### session-end.sh
+**Event:** Stop
+**Purpose:** Generates detailed session summary for cross-session continuity
+
+Captures on session end:
+- Git branch, recent commits, modified files, diff stats
+- Task Master progress (in-progress and pending tasks)
+- Writes to `.claude/sessions/session-summary-YYYYMMDD-HHMMSS.md`
+
+Only fires on `end_turn` stop reason (not on tool errors or interrupts).
+
 ### session-summary.sh
 **Event:** Stop
-**Purpose:** Logs session activity for later review
+**Purpose:** Lightweight session activity logging
 
 Creates entries in `.claude/logs/sessions.log` with:
 - Timestamp
 - Stop reason
 - Git changes summary
+
+*Note: `session-end.sh` is the recommended replacement. It provides richer context for session reload.*
+
+### pre-compact.sh
+**Event:** UserPromptSubmit (auto) or manual
+**Purpose:** Saves working state before context compaction
+
+Preserves:
+- Active Task Master task
+- Current branch and uncommitted changes
+- Placeholder for manual context notes
+
+**Auto-trigger:** Fires when user message matches `/compact` or compact-related keywords.
+**Manual trigger:** `./claude/hooks/pre-compact.sh`
+
+Saved state is detected by `session-init.sh` on next session start.
 
 ### session-init.sh
 **Event:** SessionStart
@@ -237,9 +264,10 @@ Use `/settings` to quickly configure common hook combinations:
 | Preset | Hooks Enabled |
 |--------|--------------|
 | `fast` | None |
-| `thorough` | Pre-commit check |
-| `safe` | Pre-commit + file protection |
+| `thorough` | Pre-commit check, session-init, session-end |
+| `safe` | Pre-commit + file protection, session-init, session-end |
 | `autoformat` | Post-edit formatting |
+| `optimized` | Session-init, pre-compact, session-end |
 
 See `.claude/settings-presets.json` for full configurations.
 
