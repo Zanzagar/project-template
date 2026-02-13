@@ -15,10 +15,11 @@ The template was developed through systematic analysis and integration of best p
 
 **By the numbers:**
 - 13 specialized AI agents
-- 32 skills (domain-specific knowledge modules)
+- 33 skills (domain-specific knowledge modules)
 - 46 slash commands
 - 17 behavior rules (7 core + 5 language-specific + 5 workflow)
 - 15 automation hooks
+- 5 project-type presets for one-command scaffolding
 - Multi-model collaboration (Claude + Gemini + Codex)
 - Continuous learning system with cross-session memory
 
@@ -53,7 +54,7 @@ Here's what they don't realize happened:
 | **Memory** | Every session starts from zero. The AI forgets your architecture, conventions, and past decisions. | Persistent session summaries, work logs, instinct system, and CLAUDE.md carry context across sessions indefinitely. |
 | **Discipline** | The AI writes whatever you ask for, including insecure code, untested features, and broken commits. | TDD enforcement (Superpowers deletes untested code), security gates, conventional commit rules, and verification pipelines make bad practices harder than good ones. |
 | **Resources** | 50K+ tokens consumed by unused tools at startup. Quality degrades silently mid-session with no recovery. | Token-conscious design (35K startup, 165K working). Strategic compaction, tiered documentation lookups, and on-demand skill loading maximize working context. |
-| **Context** | Generic "textbook" code that doesn't fit the project's patterns, framework idioms, or architectural decisions. | 17 behavior rules, 32 domain skills, and language-specific coding standards teach the AI your project's conventions. |
+| **Context** | Generic "textbook" code that doesn't fit the project's patterns, framework idioms, or architectural decisions. | 17 behavior rules, 33 domain skills, and language-specific coding standards teach the AI your project's conventions. |
 | **Specialization** | One general-purpose model handles security review, architecture planning, test generation, and documentation with equal (shallow) depth. | 13 purpose-built agents with appropriate model tiers, tool access, and domain training produce categorically deeper results in each specialty. |
 
 ### What a well-configured template provides
@@ -80,15 +81,21 @@ project-template/
 ├── .claude/
 │   ├── agents/          # 13 specialized sub-agents
 │   ├── commands/        # 46 slash commands (user-invocable)
-│   ├── skills/          # 32 domain knowledge modules (on-demand)
+│   ├── skills/          # 33 domain knowledge modules (on-demand)
 │   ├── rules/           # 17 behavior rules (auto-loaded)
 │   ├── hooks/           # 15 automation hooks
+│   ├── presets/         # Project-type preset definitions (JSON)
 │   ├── instincts/       # Continuous learning patterns (JSON)
 │   ├── contexts/        # Session mode injection (dev/review/research)
 │   ├── sessions/        # Session persistence and summaries
 │   └── work-log.md      # Cross-session decision ledger
 ├── .taskmaster/         # Task Master integration (AI task management)
+├── scripts/
+│   ├── setup-preset.sh  # One-command project scaffolding
+│   ├── manage-mcps.sh   # MCP server management
+│   └── manage-plugins.sh # Plugin management
 ├── docs/
+│   ├── TEMPLATE_OVERVIEW.md
 │   ├── ECC_INTEGRATION.md
 │   ├── SECURITY.md
 │   ├── MCP_SETUP.md
@@ -109,7 +116,8 @@ A critical but often overlooked aspect of LLM-assisted development is **context 
 | Core behavior rules | ~5K | Always (startup) |
 | CLAUDE.md | ~2K | Always (startup) |
 | **Startup overhead** | **~35K** | **Before any work** |
-| Skills (32 total) | 0 | On-demand only |
+| Skills (33 total) | 0 | On-demand only |
+| Presets (5 project types) | 0 | On-demand only |
 | Slash commands | 0 | On-demand only |
 | Language rules | 0 | Only when matching files edited |
 | **Working context** | **~165K** | **Available for actual work** |
@@ -170,7 +178,7 @@ Commands are user-invocable workflows triggered by typing `/command-name`. They 
 **Infrastructure:**
 `/setup`, `/settings`, `/plugins`, `/mcps`, `/commit`, `/pr`, `/checkpoint`, `/sessions`
 
-### 3. Skills (32 domain knowledge modules)
+### 3. Skills (33 domain knowledge modules)
 
 Skills are **on-demand reference material** that Claude loads only when relevant. They cost zero tokens at startup but provide deep domain knowledge when activated:
 
@@ -178,7 +186,7 @@ Skills are **on-demand reference material** that Claude loads only when relevant
 
 **Frontend:** frontend-patterns, typescript-patterns, e2e-testing
 
-**Python Ecosystem:** python-testing, python-django, django-security
+**Python Ecosystem:** python-testing, python-django, python-data-science, django-security
 
 **Go Ecosystem:** golang-patterns, golang-testing
 
@@ -431,7 +439,7 @@ With the template:
 
 **The result isn't just a better pipeline — it's a better researcher.** The template's enforced workflows become muscle memory. Students who use it for a semester internalize TDD, version control discipline, reproducibility practices, and code review habits that distinguish reliable research from one-off scripts.
 
-Beyond enforcement, the template provides **domain expertise on demand.** Need to configure a PostgreSQL spatial database? The `postgresql-patterns` skill knows about GiST indexing for geometry columns, PostGIS query optimization, and migration safety. Need Python testing patterns? The `python-testing` skill provides pytest fixtures, parametrization, and mocking strategies. The 32 skills act as an always-available senior engineer across every domain the student might encounter — without requiring the student to know the right questions to ask.
+Beyond enforcement, the template provides **domain expertise on demand.** Need to configure a PostgreSQL spatial database? The `postgresql-patterns` skill knows about GiST indexing for geometry columns, PostGIS query optimization, and migration safety. Need Python testing patterns? The `python-testing` skill provides pytest fixtures, parametrization, and mocking strategies. The 33 skills act as an always-available senior engineer across every domain the student might encounter — without requiring the student to know the right questions to ask.
 
 Critically, **quality scales with the project.** A thesis codebase that grows to 10,000+ lines maintains the same quality standards as the first 100 lines, because the template's enforcement doesn't fatigue. The TDD guide is just as strict on line 10,000 as on line 1. The security reviewer doesn't get tired of scanning. This is where AI-assisted development fundamentally differs from manual discipline — the template never has a bad day.
 
@@ -518,7 +526,7 @@ The template's development followed a deliberate research-first methodology: stu
 
 **Key implementation decisions:**
 - **Language-specific rules use `paths:` frontmatter** so they load only when matching files are edited. A Python developer never pays the token cost for Go rules. This was our innovation — ECC loads all language rules at startup.
-- **Skills are on-demand** (loaded when Claude detects relevance), not startup-loaded. This means 32 skills contribute exactly 0 tokens to startup overhead. ECC handles this similarly.
+- **Skills are on-demand** (loaded when Claude detects relevance), not startup-loaded. This means 33 skills contribute exactly 0 tokens to startup overhead. ECC handles this similarly.
 - **The instinct system uses confidence scoring** (0.0-1.0) with automatic decay. Unused patterns lose 0.05 confidence per week and are removed when they reach 0. This prevents knowledge rot — outdated patterns fade naturally instead of persisting forever.
 
 **Delivery:** 50 tasks, 250 subtasks total across both phases. All implemented through Claude Code itself — the template was built using the template's own workflow enforcement, which served as both a development tool and a stress test.
@@ -573,6 +581,49 @@ Hooks are shell scripts that execute automatically in response to Claude Code ev
 | **TypeScript Check** | PostToolUse (Edit) | After editing `.ts` / `.tsx` files, runs `tsc --noEmit` on the changed file to catch type errors immediately. | Type errors caught at edit time take 5 seconds to fix. Type errors discovered 30 minutes later during a build take 5 minutes to fix. Immediate feedback dramatically reduces debugging time. |
 | **Dev Server Blocker** | PreToolUse (Bash) | Blocks `npm run dev`, `pnpm dev`, and similar commands unless running inside tmux. Suggests the tmux command instead. | Dev servers run indefinitely and capture the terminal. Inside tmux, you can detach and reattach. Outside tmux, killing the terminal kills the server — and any unsaved session state with it. |
 
+#### v3.0 Phase 1: Project-Type Presets (Completed)
+
+The first step beyond ECC feature parity: **one-command project scaffolding.** Previously, adopting the template required manually selecting which skills and rules were relevant, creating directory structures, and editing CLAUDE.md. Presets automate all of this.
+
+**What was built:**
+
+| Component | Description |
+|-----------|-------------|
+| `.claude/presets/project-presets.json` | Registry of 5 project-type presets with tech stacks, directory structures, dev commands, patterns, and package lists |
+| `scripts/setup-preset.sh` | Bash script with `--dry-run`, `--force`, and `--name` options. Uses `awk` for surgical CLAUDE.md section replacement. |
+| `.claude/skills/python-data-science/SKILL.md` | New skill: NumPy, pandas, scikit-learn, matplotlib, Jupyter, spatial/geostatistics patterns |
+| `.claude/commands/setup.md` | Extended with `/setup preset <name>` subcommand |
+| `.claude/hooks/session-init.sh` | Displays active preset name in session startup output |
+
+**Available presets:**
+
+| Preset | Stack | Skills Activated |
+|--------|-------|-----------------|
+| `python-fastapi` | FastAPI + SQLAlchemy + PostgreSQL | python-patterns, api-design, database-patterns, postgresql-patterns |
+| `node-nextjs` | Next.js 14+ + React + TypeScript + Prisma | typescript-patterns, frontend-patterns, e2e-testing |
+| `go-api` | Go stdlib + PostgreSQL + sqlc | golang-patterns, golang-testing, api-design, postgresql-patterns |
+| `java-spring` | Spring Boot 3.2+ + JPA + PostgreSQL + Flyway | java-springboot, spring-boot-security, spring-boot-tdd, jpa-patterns |
+| `python-data-science` | pandas + scikit-learn + Jupyter + matplotlib | python-patterns, python-testing, database-patterns |
+
+**What each preset does:**
+1. Creates the full directory structure with `.gitkeep` files
+2. Rewrites CLAUDE.md sections (Tech Stack, Structure, Development Commands, Patterns) using `awk`-based section replacement
+3. Writes `.claude/project-state.json` with preset metadata and tech stack
+4. Appends preset-specific entries to `.gitignore`
+5. Includes safety checks: blocks overwriting already-customized CLAUDE.md without `--force`
+
+**Usage:**
+```bash
+# Interactive: preview first, then apply
+./scripts/setup-preset.sh python-fastapi --dry-run
+./scripts/setup-preset.sh python-fastapi --name "My API Project"
+
+# Via slash command
+/setup preset python-fastapi
+```
+
+**Why this matters for adoption:** A student can now clone the template, run one command, and have a fully configured project with the right directory structure, dev commands, linting configuration, and skill activation for their stack. The 30-minute manual setup becomes a 30-second command.
+
 ### Future Roadmap (v3.0+)
 
 #### Phase 1: Journel Server Deployment
@@ -587,38 +638,7 @@ The template moves from a WSL development environment to Journel (departmental L
 | **Shared instinct repository** | Currently, instincts live in each developer's `.claude/instincts/`. For team use, instincts should be shareable. | Create a shared instinct directory on Journel. Use `/instinct-export` and `/instinct-import` to sync patterns between team members. |
 | **Git configuration** | Journel may have different git credentials, SSH keys, and remote access. | Configure git with SSH key for GitHub access. Verify `git push` works from Journel to the template repository. |
 
-#### Phase 2: Project-Type Presets
-
-Currently, the template requires manual selection of which skills and rules are relevant. Presets automate this:
-
-```
-/setup preset python-fastapi
-  → Activates: python-patterns, api-design, database-patterns, postgresql-patterns
-  → Configures: pytest, ruff, mypy in /verify pipeline
-  → Creates: src/api/, src/models/, tests/ directory structure
-  → Installs: fastapi, uvicorn, pydantic, sqlalchemy, alembic
-
-/setup preset node-nextjs
-  → Activates: typescript-patterns, frontend-patterns, e2e-testing
-  → Configures: jest/vitest, eslint, tsc in /verify pipeline
-  → Creates: app/, components/, lib/ directory structure (Next.js App Router)
-  → Installs: next, react, typescript, playwright
-
-/setup preset go-api
-  → Activates: golang-patterns, golang-testing, api-design, postgresql-patterns
-  → Configures: go test, golangci-lint, go vet in /verify pipeline
-  → Creates: cmd/, internal/, pkg/ directory structure
-  → Installs: go mod init, wire, sqlc
-
-/setup preset java-spring
-  → Activates: java-springboot, spring-boot-security, spring-boot-tdd, jpa-patterns
-  → Configures: mvn test, spotbugs, checkstyle in /verify pipeline
-  → Creates: standard Maven/Gradle project structure
-```
-
-Each preset is a JSON file mapping project type to skills, rules, directory structure, and verification pipeline configuration. Students run one command and get a fully configured project.
-
-#### Phase 3: Team Collaboration Features
+#### Phase 2: Team Collaboration Features
 
 | Feature | Description | Value |
 |---------|-------------|-------|
@@ -627,7 +647,7 @@ Each preset is a JSON file mapping project type to skills, rules, directory stru
 | **Team review aggregation** | Combine `/code-review` findings across team members to build a shared understanding of codebase quality. | Faculty can see aggregated quality metrics across all student projects without reviewing each one individually. |
 | **Instinct conflict resolution** | When two developers' instincts contradict, surface the conflict and let the team decide which pattern wins. | Prevents "my Claude says X, your Claude says Y" disagreements by making learned patterns explicit and reviewable. |
 
-#### Phase 4: CI/CD Integration
+#### Phase 3: CI/CD Integration
 
 The template's `/verify` pipeline currently runs locally. CI/CD integration runs it automatically on every push:
 
@@ -661,7 +681,7 @@ jobs:
 
 This means the same quality gates enforced locally by the template are also enforced in CI — no code merges to main without passing all stages.
 
-#### Phase 5: Metrics Dashboard
+#### Phase 4: Metrics Dashboard
 
 Track development quality and velocity over time:
 
@@ -676,7 +696,7 @@ Track development quality and velocity over time:
 
 This data enables faculty to assess not just *what* students built, but *how* they built it — measuring process quality alongside output quality.
 
-#### Phase 6: Academic Workflow Mode
+#### Phase 5: Academic Workflow Mode
 
 Specialized rules and workflows for research-oriented development:
 
@@ -689,7 +709,7 @@ Specialized rules and workflows for research-oriented development:
 | **Data pipeline validation** | Skills for validating data pipelines: schema checks, null handling, data drift detection, train/test leakage prevention. |
 | **Thesis/paper integration** | `/update-docs` gains a mode for updating LaTeX or Markdown thesis chapters when the underlying code changes, keeping implementation descriptions in sync with actual code. |
 
-#### Phase 7: Custom Agent Creation Framework
+#### Phase 6: Custom Agent Creation Framework
 
 Allow students and faculty to define project-specific agents without modifying the template core:
 
@@ -733,4 +753,4 @@ Any student using this template starts their project with the workflow enforceme
 ---
 
 *Built with Claude Code (Anthropic) | Informed by Everything Claude Code (45K+ stars)*
-*Template version 2.2.0 | 13 agents, 32 skills, 46 commands, 17 rules, 15 hooks*
+*Template version 2.2.0 | 13 agents, 33 skills, 46 commands, 17 rules, 15 hooks | 5 project-type presets*

@@ -4,6 +4,19 @@ All notable changes to this project template are documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added - Project-Type Presets (v3.0 Phase 1)
+- **project-presets.json** - Registry of 5 project-type presets: `python-fastapi`, `node-nextjs`, `go-api`, `java-spring`, `python-data-science`
+- **setup-preset.sh** - Bash script for one-command project scaffolding with `--dry-run`, `--force`, `--name` options
+- **python-data-science skill** - NumPy, pandas, scikit-learn, matplotlib, Jupyter, spatial/geostatistics patterns (33 skills total)
+- `/setup preset <name>` subcommand for slash-command access to presets
+- Active preset display in `session-init.sh` startup output
+
+### Changed
+- Updated TEMPLATE_OVERVIEW.md: moved presets from "Future Roadmap" to "Completed", updated counts (33 skills, 5 presets)
+- Updated CHANGELOG.md with unreleased section
+
 ## [2.2.0] - 2026-02-13
 
 ECC feature parity release: 12 domain skills and 6 automation hooks close remaining gaps identified in the ECC comparison audit. Template now has full coverage across Python, Java/Spring, Django, PostgreSQL, C++, and workflow automation.
