@@ -111,6 +111,58 @@ Start a fresh session when you observe **symptoms**, not arbitrary thresholds:
 
 **Don't reset preemptively** - if Claude is performing well, continue working regardless of token count.
 
+## Token Optimization Settings
+
+These settings reduce token consumption by 60-80%. Apply via `/settings optimized` or set individually as environment variables.
+
+| Setting | Default | Optimized | Savings | Impact |
+|---------|---------|-----------|---------|--------|
+| `MAX_THINKING_TOKENS` | 31,999 | 10,000 | ~70% | Caps extended thinking — faster but shallower reasoning |
+| `CLAUDE_CODE_AUTOCOMPACT_PCT_OVERRIDE` | ~95% | 50% | N/A | Compacts earlier — preserves working room proactively |
+| `CLAUDE_CODE_SUBAGENT_MODEL` | (inherits) | haiku | ~80% | Cheaper sub-agents for research/exploration tasks |
+| Default model | opus | sonnet | ~60% | Maintains quality for typical development work |
+
+### When to Compact (Decision Table)
+
+Use this when deciding whether to trigger compaction or start fresh:
+
+| Situation | Compact? | Rationale |
+|-----------|----------|-----------|
+| After research/exploration | YES | Exploration context no longer needed for implementation |
+| Mid-implementation | NO | Preserves variable names, file paths, implementation state |
+| After milestone completion | YES | Natural breakpoint, fresh slate for next feature |
+| After debugging session | YES | Debug context is noise for the next task |
+| Context usage >80% | CONSIDER | Preventive compaction before quality degrades |
+| >50 tool calls + quality symptoms | CONSIDER | Proactive maintenance before degradation |
+
+### What Survives Compaction
+
+Understanding what persists helps you decide when compaction is safe.
+
+**Always available (survives compaction):**
+- CLAUDE.md, auto-loaded rules, and MCP tool definitions
+- Git state and repository information
+- Task Master tasks and current task context
+- Files on disk (can be re-read)
+- Session-persisted summaries (`.claude/sessions/`)
+
+**Lost during compaction (must be re-established):**
+- Intermediate reasoning and decision chains
+- Previously read file contents (must re-read)
+- Conversation flow and earlier exchanges
+- In-progress variable names mentioned only in conversation
+- Exploration findings not persisted to files
+
+**Rule of thumb:** If context is important, persist it before compaction triggers. Use Task Master notes, `docs/decisions/`, code comments, or `.claude/work-log.md`.
+
+### Monitoring Context Health
+
+After approximately **50-75 tool invocations** in a single session, consider whether compaction would benefit your workflow. This is a rough heuristic, not a hard rule — quality symptoms matter more than counts.
+
+If you notice symptoms from the quality degradation checklist (forgetting, contradicting, declining output) AND you're past 50 tool invocations, compaction or a fresh session is likely beneficial.
+
+Setting `CLAUDE_CODE_AUTOCOMPACT_PCT_OVERRIDE=50` makes automatic compaction proactive, reducing the need for manual monitoring. With this setting, context is compacted at 50% capacity instead of waiting until 95%.
+
 ## Session Management Best Practices
 
 ### Persist Context Appropriately
@@ -205,6 +257,19 @@ Context feeling sluggish?
 └─► Complex task ahead?
     ├─ Well-defined? → think hard, proceed
     └─ Exploratory? → ultrathink, then decompose
+
+Token optimization:
+├─► Using default settings?
+│   └─ Consider: /settings optimized for 60-80% cost reduction
+│
+├─► Should I compact now?
+│   ├─ After research/debug/milestone → YES
+│   ├─ Mid-implementation → NO
+│   └─ >50 tool calls + quality symptoms → CONSIDER
+│
+└─► What survives compaction?
+    ├─ Rules, CLAUDE.md, git state, Task Master → YES
+    └─ Conversation history, read file contents → NO (re-read)
 
 Key insight: If important context is in files (not just conversation),
 fresh sessions can reload what matters. Use Task Master notes and
