@@ -1,6 +1,6 @@
 Save a manual checkpoint of current session state for recovery or context switching.
 
-Usage: `/checkpoint [label]`
+Usage: `/checkpoint [create|verify|list] [label]`
 
 Arguments: $ARGUMENTS
 
@@ -83,3 +83,34 @@ This ensures alphabetical sorting equals chronological sorting in `.claude/sessi
 - "This is a good stopping point" → `/checkpoint milestone-auth-complete`
 - "Switching to a different task" → `/checkpoint pausing-task-7`
 - "Context getting heavy, need fresh session" → `/checkpoint pre-refresh`
+
+## Verify Against Checkpoint
+
+`/checkpoint verify <label>`
+
+Compare current state against a named checkpoint:
+
+1. Find the checkpoint file matching the label
+2. Compare:
+   - Files added/modified/deleted since checkpoint
+   - Test pass rate now vs then (run `/verify quick`)
+   - Git commits since checkpoint
+3. Report:
+
+```
+CHECKPOINT COMPARISON: milestone-auth-complete
+===============================================
+Since checkpoint (2h 15m ago):
+  Files changed:  +3 added, 2 modified, 0 deleted
+  Commits:        4 new commits
+  Tests:          42 passed (was 38) — +4 new tests
+  Build:          PASS
+
+Verdict: PROGRESSING (no regressions detected)
+```
+
+## List Checkpoints
+
+`/checkpoint list`
+
+Show all checkpoints with name, timestamp, age, and git SHA.

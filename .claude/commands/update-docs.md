@@ -14,7 +14,18 @@ Arguments: $ARGUMENTS
 
 ## Workflow
 
-### 1. Identify Changed Files
+### 1. Identify Sources of Truth
+
+| Source | Generates |
+|--------|-----------|
+| Code changes (git diff) | Docstring and API doc updates |
+| `pyproject.toml` / `package.json` | Available commands reference |
+| `.env.example` | Environment variable documentation |
+| Route files / OpenAPI spec | API endpoint reference |
+| `Dockerfile` / `docker-compose.yml` | Infrastructure setup docs |
+
+### 2. Identify Changed Files
+
 ```bash
 # Recent (default)
 git diff --name-only HEAD
@@ -25,14 +36,18 @@ git diff --name-only --cached
 # Keep: *.py, *.ts, *.js, *.go, *.java, *.rs, etc.
 ```
 
-### 2. Analyze What Changed
+### 3. Analyze What Changed
+
 For each changed file, detect:
 - New/modified public functions or classes → docstring updates needed
 - New/modified API endpoints → README/API docs update needed
 - New features or fixes → CHANGELOG entry needed
 - New dependencies → installation docs update needed
+- New environment variables → .env documentation update needed
+- New scripts/commands → commands reference update needed
 
-### 3. Spawn doc-updater Agent
+### 4. Spawn doc-updater Agent
+
 Delegate documentation work to the `doc-updater` agent (haiku model for lightweight operation):
 
 **Agent updates:**
@@ -41,25 +56,36 @@ Delegate documentation work to the `doc-updater` agent (haiku model for lightwei
 - **API docs** — If endpoints were added/modified
 - **CHANGELOG** — If new features or bug fixes detected
 
-### 4. Report Changes
+### 5. Staleness Check
+
+Find documentation files not modified in 90+ days, cross-reference with recent source changes, and flag potentially stale docs for manual review.
+
+### 6. Report Changes
 
 ```markdown
-# Documentation Update Report
-
-## Files Analyzed
-- `src/auth/tokens.py` (modified)
-- `src/api/routes.py` (new endpoints)
-
-## Updates Made
-| File | Update | Reason |
-|------|--------|--------|
-| `src/auth/tokens.py` | Added docstring to `create_token()` | New function |
-| `README.md` | Updated API section | New `/auth/refresh` endpoint |
-| `CHANGELOG.md` | Added entry under "Added" | New auth refresh feature |
-
-## Skipped
-- `src/config.py` — No public API changes detected
+Documentation Update
+──────────────────────────────
+Updated:  src/auth/tokens.py (docstrings for 3 functions)
+Updated:  README.md (API section — new /auth/refresh endpoint)
+Updated:  CHANGELOG.md (entry under "Added")
+Flagged:  docs/DEPLOY.md (142 days stale)
+Skipped:  src/config.py (no public API changes)
+──────────────────────────────
 ```
+
+### Generated Content Markers
+
+When updating generated sections of documentation, wrap them with markers:
+
+```markdown
+<!-- AUTO-GENERATED: START -->
+| Command | Description |
+|---------|-------------|
+| `pytest` | Run test suite |
+<!-- AUTO-GENERATED: END -->
+```
+
+This preserves hand-written prose while allowing safe regeneration of generated sections.
 
 ## Integration with /pr
 

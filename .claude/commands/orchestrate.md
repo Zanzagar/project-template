@@ -16,6 +16,12 @@ planner → tdd-guide → [implement] → code-reviewer → security-reviewer
 ```
 Full feature cycle: plan it, write tests, implement, review.
 
+### bugfix
+```
+planner → tdd-guide → [implement fix] → code-reviewer
+```
+Bug investigation and fix: understand the problem, write regression test, fix, review.
+
 ### review
 ```
 code-reviewer → security-reviewer → database-reviewer (if SQL detected)
@@ -27,6 +33,12 @@ Comprehensive review: code quality, security, then database if relevant.
 architect → refactor-cleaner → code-reviewer → [run tests]
 ```
 Safe refactoring: design the target, refactor, verify with review and tests.
+
+### security
+```
+security-reviewer → code-reviewer → architect
+```
+Security-focused: find vulnerabilities, assess code quality, evaluate architecture.
 
 ## Custom Pipelines
 
@@ -98,6 +110,23 @@ Conflicts Between Agents:
   (none — or list where agents disagreed)
 ╚══════════════════════════════════════════════════════════╝
 ```
+
+## Parallel Execution
+
+For independent checks, run agents in parallel rather than sequentially:
+
+```
+### Sequential (default)
+planner → tdd-guide → code-reviewer → security-reviewer
+
+### Parallel phase (when agents don't depend on each other)
+planner → tdd-guide → [implement] → ┬─ code-reviewer    ──┐
+                                     └─ security-reviewer ──┤→ Merge Results
+                                                            │
+                                        database-reviewer ──┘
+```
+
+Use parallel execution when agents are doing independent reviews of the same code. The final report merges all parallel outputs.
 
 ## Notes
 

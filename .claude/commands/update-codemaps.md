@@ -1,4 +1,4 @@
-Generate human-readable architecture documentation in `docs/CODEMAPS/`.
+Generate token-lean architecture documentation in `docs/CODEMAPS/`.
 
 Usage: `/update-codemaps [scope]`
 
@@ -6,77 +6,65 @@ Arguments: $ARGUMENTS
 
 ## Scope Options
 
-- `all` (default): Generate all three codemap files
-- `imports`: Only import/dependency graph
-- `exports`: Only public API surface
-- `architecture`: Only high-level architecture
+- `all` (default): Generate all codemap files
+- `architecture`: System diagram and boundaries only
+- `backend`: API routes and service mapping only
+- `frontend`: Component hierarchy only
+- `data`: Database schema and relationships only
+- `dependencies`: External service and library mapping only
 
-## Generated Files
+## Step 1: Scan Project Structure
 
-### 1. `docs/CODEMAPS/imports.md` — Dependency Graph
+1. Identify project type (monorepo, single app, library, microservice)
+2. Find all source directories (`src/`, `lib/`, `app/`, `packages/`)
+3. Map entry points (`main.py`, `index.ts`, `main.go`, `cmd/`)
+4. Respect `.gitignore` for exclusions
+
+## Step 2: Generate Codemaps
+
+Create or update files in `docs/CODEMAPS/`:
+
+| File | Contents |
+|------|----------|
+| `architecture.md` | High-level system diagram, service boundaries, data flow |
+| `backend.md` | API routes, middleware chain, service-to-repository mapping |
+| `frontend.md` | Page tree, component hierarchy, state management flow |
+| `data.md` | Database tables, relationships, migration history |
+| `dependencies.md` | External services, third-party integrations, shared libraries |
+
+### Token-Lean Format
+
+Codemaps are optimized for AI context consumption — minimal prose, maximum information density:
 
 ```markdown
-# Import Map
+<!-- Generated: 2026-02-13 | Files scanned: 142 | Token estimate: ~800 -->
 
-## Module: src/auth/
-### Internal Dependencies
-- `src/auth/tokens.py` → `src/config.py` (settings)
-- `src/auth/middleware.py` → `src/auth/tokens.py` (token validation)
+# Backend Architecture
 
-### External Dependencies
-- `jwt` (PyJWT 2.8+)
-- `bcrypt` (3.2+)
+## Routes
+POST /api/users → UserController.create → UserService.create → UserRepo.insert
+GET  /api/users/:id → UserController.get → UserService.findById → UserRepo.findById
+DELETE /api/users/:id → UserController.delete → UserService.remove → UserRepo.delete
 
-### Circular Dependency Warnings
-⚠ None detected
+## Key Files
+src/services/user.py    (business logic, 120 lines)
+src/repos/user.py       (database access, 80 lines)
+src/api/user_routes.py  (endpoint handlers, 95 lines)
 
----
-
-## Module: src/api/
-### Internal Dependencies
-- `src/api/routes.py` → `src/auth/middleware.py` (auth decorator)
-- `src/api/routes.py` → `src/services/` (business logic)
-
-### External Dependencies
-- `fastapi` (0.100+)
-- `pydantic` (2.0+)
+## Dependencies
+- PostgreSQL (primary data store)
+- Redis (session cache, rate limiting)
+- Stripe (payment processing)
 ```
 
-### 2. `docs/CODEMAPS/exports.md` — Public API Surface
+### Architecture Diagram Example
 
 ```markdown
-# Public API Surface
+<!-- Generated: 2026-02-13 | Files scanned: 142 | Token estimate: ~600 -->
 
-## Module: src/auth/
-### Functions
-- `create_token(user_id: str, expiry: int) -> str` — Generate JWT token
-- `verify_token(token: str) -> dict` — Validate and decode token
-
-### Classes
-- `AuthMiddleware` — FastAPI middleware for route protection
-
-### Constants
-- `TOKEN_EXPIRY_DEFAULT = 3600`
-
-### Deprecation Notices
-- ~~`old_verify()` — Use `verify_token()` instead (removed in v2.0)~~
-
----
-
-## Module: src/api/
-### Endpoints
-- `POST /auth/login` → `src/api/auth_routes.py:login`
-- `GET /users/{id}` → `src/api/user_routes.py:get_user`
-```
-
-### 3. `docs/CODEMAPS/architecture.md` — System Architecture
-
-```markdown
 # Architecture Overview
 
-## Layer Diagram
-
-```
+## System Diagram
 ┌─────────────────────────────────┐
 │           API Layer             │  src/api/
 │  (Routes, Middleware, Schemas)  │
@@ -84,52 +72,97 @@ Arguments: $ARGUMENTS
 │         Service Layer           │  src/services/
 │     (Business Logic, Rules)     │
 ├─────────────────────────────────┤
-│        Repository Layer         │  src/repositories/
+│        Repository Layer         │  src/repos/
 │   (Data Access, ORM Queries)    │
 ├─────────────────────────────────┤
 │         Infrastructure          │  src/config/, src/db/
 │  (Config, DB, External APIs)    │
 └─────────────────────────────────┘
-```
-
-## Module Relationships
-
-```mermaid
-graph TD
-    A[API Routes] --> B[Auth Middleware]
-    A --> C[Services]
-    C --> D[Repositories]
-    D --> E[Database]
-    B --> F[Token Utils]
-```
 
 ## Key Boundaries
 - API layer NEVER accesses repositories directly
-- Services are framework-agnostic (no FastAPI imports)
+- Services are framework-agnostic (no FastAPI/Django imports)
 - All DB access goes through repository layer
 ```
 
-## Process
+### Data Schema Example
 
-1. **Scan** codebase for source files (respecting .gitignore)
-2. **Parse** imports/exports from each file
-3. **Build** dependency graph
-4. **Detect** circular dependencies and layer violations
-5. **Generate** Markdown files with Mermaid diagrams
-6. **Report** any architectural concerns found
+```markdown
+<!-- Generated: 2026-02-13 | Tables: 12 | Token estimate: ~400 -->
+
+# Data Schema
+
+## Tables
+users         (id, email, password_hash, created_at)
+orders        (id, user_id FK→users, total, status, created_at)
+order_items   (id, order_id FK→orders, product_id FK→products, qty, price)
+products      (id, name, price, stock, category_id FK→categories)
+
+## Relationships
+users 1──* orders 1──* order_items *──1 products
+
+## Recent Migrations
+0042_add_user_preferences.py  (2026-02-10)
+0043_add_order_tracking.py    (2026-02-12)
+```
+
+## Step 3: Diff Detection
+
+If previous codemaps exist:
+
+1. Calculate diff percentage against existing files
+2. If changes > 30%: show diff and request user approval before overwriting
+3. If changes <= 30%: update in place
+4. Log changes to `.reports/codemap-diff.txt`
+
+## Step 4: Add Freshness Metadata
+
+Every codemap file gets a metadata header:
+
+```markdown
+<!-- Generated: YYYY-MM-DD | Files scanned: N | Token estimate: ~N -->
+```
+
+This lets Claude (and humans) quickly assess staleness.
+
+## Step 5: Staleness Report
+
+After generation, report:
+- Files added/removed/modified since last scan
+- New dependencies detected
+- Architecture changes (new routes, services, etc.)
+- Codemaps not updated in 90+ days (staleness warning)
+
+```
+Codemap Update Summary
+──────────────────────
+Updated:  docs/CODEMAPS/backend.md (5 new routes)
+Updated:  docs/CODEMAPS/data.md (2 new tables)
+Skipped:  docs/CODEMAPS/frontend.md (no changes)
+Flagged:  docs/CODEMAPS/dependencies.md (94 days stale)
+──────────────────────
+```
+
+## Design Principles
+
+- **Token-lean**: File paths and function signatures, not full code blocks
+- **Information-dense**: One line per route, one line per table
+- **Keep each codemap under 1000 tokens** for efficient context loading
+- **ASCII diagrams** over verbose descriptions
+- **Mermaid** for complex relationships (renders in GitHub/VS Code)
 
 ## Relationship to project-index.sh
 
 | Tool | Format | Purpose | When to Use |
 |------|--------|---------|-------------|
-| `project-index.sh` | JSON | Machine-readable, for sub-agents | Auto (hook) |
-| `/update-codemaps` | Markdown | Human-readable, for developers | Manual |
+| `project-index.sh` | JSON | Machine-readable for sub-agents | Auto (hook) |
+| `/update-codemaps` | Markdown | Human-readable for developers | Manual |
 
-The project index is lightweight and auto-generated. Codemaps are richer, human-friendly, and manually triggered.
+The project index is lightweight and auto-generated. Codemaps are richer, human-friendly, and manually triggered when architecture changes.
 
 ## When to Use
 
 - After significant architectural changes
 - When onboarding new team members
 - Before architecture review meetings
-- Monthly maintenance alongside `/eval`
+- Monthly maintenance alongside `/eval metrics`
