@@ -63,6 +63,10 @@ LAST_SESSION=""
 LAST_SESSION_AGE=""
 
 [ -f "$STATE_FILE" ] && HAS_STATE_FILE=true
+ACTIVE_PRESET=""
+if [ "$HAS_STATE_FILE" = true ] && command -v jq &> /dev/null; then
+    ACTIVE_PRESET=$(jq -r '.preset // empty' "$STATE_FILE" 2>/dev/null)
+fi
 [ -f "$MCP_CONFIG" ] && HAS_MCP_CONFIG=true
 [ -d "$TASKMASTER_DIR" ] && HAS_TASKMASTER=true
 [ -d "$PROJECT_DIR/src" ] && HAS_SRC=true
@@ -347,6 +351,13 @@ case $SCENARIO in
 
         if [ -n "$CURRENT_BRANCH" ]; then
             echo "🌿 Branch: $CURRENT_BRANCH"
+        fi
+
+        if [ -n "$ACTIVE_PRESET" ]; then
+            echo "📦 Preset: $ACTIVE_PRESET"
+        fi
+
+        if [ -n "$CURRENT_BRANCH" ] || [ -n "$ACTIVE_PRESET" ]; then
             echo ""
         fi
 

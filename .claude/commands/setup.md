@@ -6,6 +6,41 @@ Guided setup for new projects or integrating the template into existing projects
 
 Run this command when starting a new project or adopting the template into an existing codebase.
 
+### Preset Mode (Fast Path)
+
+If the user runs `/setup preset <name>`, skip the interactive wizard and apply a project-type preset directly.
+
+**Available presets:** `python-fastapi`, `node-nextjs`, `go-api`, `java-spring`, `python-data-science`
+
+#### If `/setup preset` (no name):
+List available presets by running:
+```bash
+./scripts/setup-preset.sh --list
+```
+
+#### If `/setup preset <name>`:
+1. Ask the user for a **project name** (default: current directory name)
+2. Show a preview of what will be created:
+   ```bash
+   ./scripts/setup-preset.sh <name> --dry-run
+   ```
+3. After user confirms, apply the preset:
+   ```bash
+   ./scripts/setup-preset.sh <name> --name "<project-name>"
+   ```
+4. Initialize Taskmaster if not already done:
+   ```bash
+   task-master init
+   ```
+5. Show the summary and suggest next steps (create PRD, generate tasks)
+
+**Note:** Presets are also available directly from the CLI:
+```bash
+./scripts/setup-preset.sh <preset-name> [--dry-run] [--force] [--name <name>]
+```
+
+---
+
 ### Step 1: Detect Project State
 
 Check what already exists:
@@ -43,6 +78,18 @@ Use AskUserQuestion to gather:
 3. **Tech stack** - Python/JavaScript/Go/Rust/Other
 4. **Project type** - Backend API / Frontend / Full-stack / CLI / Library / Data/ML
 5. **Database needs** - PostgreSQL / MongoDB / SQLite / None
+
+**Preset suggestion:** After gathering project type and tech stack, check if a preset matches:
+
+| Project Type + Stack | Suggested Preset |
+|---------------------|------------------|
+| Backend API + Python + FastAPI | `python-fastapi` |
+| Full-stack + JavaScript/TypeScript + Next.js | `node-nextjs` |
+| Backend API + Go | `go-api` |
+| Backend API + Java + Spring | `java-spring` |
+| Data/ML + Python | `python-data-science` |
+
+If a preset matches, suggest: "A preset is available for this stack. Run `/setup preset <name>` for one-command setup, or continue with manual configuration?"
 
 ### Step 4: Execute Setup
 
