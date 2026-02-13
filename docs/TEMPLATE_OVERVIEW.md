@@ -409,6 +409,8 @@ The difference isn't just quality — it's **reproducibility**. The template pro
 | Session continuity | None | Summaries, work log, instincts |
 | Context efficiency | ~50K wasted on unused tools | <35K startup, 165K working |
 | Specialization | 1 general model | 13 specialized agents |
+| Documentation | Manual or forgotten | Auto-generated codemaps, session summaries |
+| Learning | Starts fresh every session | Persistent instinct system, cross-session memory |
 | Reproducibility | Hardcoded paths, no seeds | Verified by `/verify` pipeline |
 
 ---
@@ -428,6 +430,10 @@ With the template:
 - When they use `pickle` to serialize a trained model (a security risk), the Python reviewer catches it and suggests `joblib` or safetensors instead.
 
 **The result isn't just a better pipeline — it's a better researcher.** The template's enforced workflows become muscle memory. Students who use it for a semester internalize TDD, version control discipline, reproducibility practices, and code review habits that distinguish reliable research from one-off scripts.
+
+Beyond enforcement, the template provides **domain expertise on demand.** Need to configure a PostgreSQL spatial database? The `postgresql-patterns` skill knows about GiST indexing for geometry columns, PostGIS query optimization, and migration safety. Need Python testing patterns? The `python-testing` skill provides pytest fixtures, parametrization, and mocking strategies. The 32 skills act as an always-available senior engineer across every domain the student might encounter — without requiring the student to know the right questions to ask.
+
+Critically, **quality scales with the project.** A thesis codebase that grows to 10,000+ lines maintains the same quality standards as the first 100 lines, because the template's enforcement doesn't fatigue. The TDD guide is just as strict on line 10,000 as on line 1. The security reviewer doesn't get tired of scanning. This is where AI-assisted development fundamentally differs from manual discipline — the template never has a bad day.
 
 **Specific capabilities students gain:**
 
@@ -457,6 +463,8 @@ The template addresses this at the process level:
 
 4. **The methodology section writes itself.** When every commit follows a convention (`feat(variogram): Add spherical model auto-fitting with weighted least squares`), every development phase is tracked in Task Master, and every session generates a summary, the student has a complete record of their analytical pipeline development. The template doesn't just produce better code — it produces documentable, defensible methodology that can be directly referenced in a thesis or publication.
 
+5. **Collaboration becomes meaningful.** When two researchers in the same group both use the template, they follow the same development process — the same commit conventions, the same testing discipline, the same code review standards. This makes peer review between group members productive rather than superficial, because both parties understand the workflow. Instincts can be exported and imported (`/instinct-export`, `/instinct-import`), so when one group member discovers that `pykrige` requires a specific variogram binning strategy for sparse data, the entire group benefits in their next session. The template transforms a collection of individual researchers into a group with shared engineering practices and shared institutional knowledge.
+
 ### For the Department
 
 **Scenario: A professor overseeing 30 capstone projects with 4-person teams.**
@@ -477,7 +485,9 @@ The template changes this:
 
 3. **The AI becomes a force multiplier for faculty guidance.** A professor can't sit with every team during every coding session. But the template can. It catches the same mistakes the professor would catch — hardcoded credentials, untested code, broken commits — and addresses them in real time. The professor's limited time can then focus on higher-level guidance: architecture decisions, research direction, and career mentorship.
 
-4. **Grading becomes more meaningful.** Instead of evaluating only the final output (does the app work?), the professor can evaluate the process (was the app built well?). The template's audit trail — commits, task completion, code review findings, test coverage — provides evidence of engineering discipline that a working demo alone cannot show.
+4. **The template itself is a teaching tool.** The rules and skills encode best practices that students absorb through use — not through lectures. The authority hierarchy (Rules > Instincts > Defaults) teaches software engineering governance: some constraints are non-negotiable (rules), some are learned suggestions (instincts), and some are baseline defaults. This mirrors real-world engineering organizations where certain practices are mandated by policy, others are team conventions, and others are individual preferences. Students who internalize this hierarchy understand governance — a concept that's difficult to teach abstractly but natural to learn through a system that enforces it.
+
+5. **Grading becomes more meaningful.** Instead of evaluating only the final output (does the app work?), the professor can evaluate the process (was the app built well?). The template's audit trail — commits, task completion, code review findings, test coverage — provides evidence of engineering discipline that a working demo alone cannot show.
 
 ---
 
