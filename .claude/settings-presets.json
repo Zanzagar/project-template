@@ -88,6 +88,27 @@
         ]
       },
       "use_case": "Teams with strict formatting rules, open source contributions"
+    },
+    "optimized": {
+      "name": "Optimized Mode",
+      "description": "Token-efficient settings for maximum context longevity. Reduces cost 60-80% by using lighter models for sub-agents, capping thinking tokens, and compacting context earlier.",
+      "settings": {
+        "autoAcceptEdits": true,
+        "outputStyle": "Concise",
+        "model": "sonnet"
+      },
+      "env": {
+        "MAX_THINKING_TOKENS": "10000",
+        "CLAUDE_CODE_AUTOCOMPACT_PCT_OVERRIDE": "50",
+        "CLAUDE_CODE_SUBAGENT_MODEL": "haiku"
+      },
+      "env_docs": {
+        "MAX_THINKING_TOKENS": "Caps extended thinking budget (default: 31999). Lower = faster + cheaper, but shallower reasoning.",
+        "CLAUDE_CODE_AUTOCOMPACT_PCT_OVERRIDE": "Context compaction trigger point as % of capacity (default: ~95). Set to 50 to compact earlier, preserving working room but losing older context sooner.",
+        "CLAUDE_CODE_SUBAGENT_MODEL": "Model for Task tool sub-agents (default: inherits parent). Using 'haiku' saves significant tokens on research/exploration tasks."
+      },
+      "hooks": {},
+      "use_case": "Cost-conscious development, long sessions, token budget management"
     }
   }
 }
