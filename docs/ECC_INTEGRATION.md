@@ -21,7 +21,7 @@ Features integrated from [Everything Claude Code](https://github.com/anthropics/
 | **Phase 2** | | |
 | AgentShield security scanning | ECC config security | `docs/SECURITY.md`, `/health` integration |
 | 9 additional agents | ECC agent library | `.claude/agents/` (13 total) |
-| 10 multi-language skills | ECC skill library | `.claude/skills/` (13 total) |
+| 10 multi-language skills | ECC skill library | `.claude/skills/` (20 total after Phase 2) |
 | Continuous learning v2 | ECC instinct patterns | `.claude/instincts/`, `/evolve` |
 | Authority hierarchy | ECC rule precedence | `.claude/rules/authority-hierarchy.md` |
 | Multi-agent orchestration | ECC pipeline patterns | `/orchestrate` command |
@@ -36,6 +36,9 @@ Features integrated from [Everything Claude Code](https://github.com/anthropics/
 | Go rules | ECC polyglot patterns | `.claude/rules/golang/coding-standards.md` |
 | Java rules | ECC polyglot patterns | `.claude/rules/java/coding-standards.md` |
 | Frontend component rules | ECC polyglot patterns | `.claude/rules/frontend/component-standards.md` |
+| **Phase 2.2** | | |
+| 12 domain skills | ECC skill parity | `.claude/skills/` (32 total) |
+| 6 automation hooks | ECC hook patterns | `.claude/hooks/` (15 total) |
 
 ## Quick Start
 
@@ -162,12 +165,12 @@ See `docs/SECURITY.md` for details.
 |-----------|--------|--------|
 | Core rules (7 files) | ~5k | Every session (auto-loaded) |
 | Language rules (5 files) | 0 at startup | Only when matching files edited |
-| Skills (13 skills) | 0 at startup | Only when invoked via `/skill-name` |
+| Skills (32 skills) | 0 at startup | Only when invoked via `/skill-name` |
 | Instincts (JSON) | ~50-200 each | Only when continuous-learning skill active |
 | Agents | 0 at startup | Only when spawned via Task tool |
 | AgentShield | 0 | External tool (npx), no context cost |
 
-**Key insight**: Phase 2 adds significant capability without increasing startup overhead. Skills, agents, instincts, and language rules are all on-demand.
+**Key insight**: Phases 2-2.2 add significant capability (32 skills, 15 hooks, 13 agents) without increasing startup overhead. Skills, agents, instincts, and language rules are all on-demand.
 
 ## Migration Notes
 

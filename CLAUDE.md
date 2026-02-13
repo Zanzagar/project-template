@@ -256,6 +256,8 @@ Available hooks:
 - **post-edit-format.sh** - Auto-formats files after edits
 - **protect-sensitive-files.sh** - Blocks edits to .env, keys, etc.
 - **project-index.sh** - Maintains lightweight JSON index of codebase structure
+- **suggest-compact.sh** - Advisory compaction suggestions at 50/75/100 tool calls
+- **session-summary.sh** - Generates session summary snapshots
 - **doc-file-blocker.sh** - Prevents LLM from creating random .md files outside docs/
 - **console-log-audit.sh** - Warns about debug statements (print, console.log) after edits
 - **pattern-extraction.sh** - Auto-extracts instinct candidates from session git history

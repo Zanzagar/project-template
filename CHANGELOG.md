@@ -4,6 +4,42 @@ All notable changes to this project template are documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.2.0] - 2026-02-13
+
+ECC feature parity release: 12 domain skills and 6 automation hooks close remaining gaps identified in the ECC comparison audit. Template now has full coverage across Python, Java/Spring, Django, PostgreSQL, C++, and workflow automation.
+
+### Added - Skills (12 new, 32 total)
+
+**Core Workflow:**
+- **tdd-workflow** - RED-GREEN-REFACTOR cycle patterns, coverage thresholds by code type, mocking strategies, AAA templates for pytest/Jest/Go
+- **verification-loop** - 6-phase verification system (build → types → lint → test → security → diff), continuous verification mode
+- **python-patterns** - Framework-agnostic Python idioms: type hints (3.9+), context managers, decorators, `__slots__`, async/await, pyproject.toml
+- **security-scan** - AgentShield configuration auditing: CLAUDE.md secrets, hook injection, MCP misconfigs, agent tool access
+- **eval-harness** - Eval-driven development (EDD) framework with pass@k/pass^k metrics, code-based and model-based graders
+
+**Framework-Specific:**
+- **postgresql-patterns** - EXPLAIN ANALYZE, indexing strategies (B-tree/GIN/GiST/BRIN), PostGIS spatial queries, JSONB, partitioning, vacuum tuning
+- **django-tdd** - pytest-django, TestCase hierarchy, factory_boy, DRF APIClient, model/view/middleware testing
+- **django-verification** - Django system checks, `--deploy` findings, migration safety, template/URL validation
+- **spring-boot-security** - SecurityFilterChain (Spring 6+), JWT/OAuth2, CORS, CSRF, method-level security
+- **spring-boot-tdd** - JUnit 5 + Mockito, @WebMvcTest/@DataJpaTest slice testing, TestContainers
+- **jpa-patterns** - Entity mapping, lazy loading, N+1 prevention (@EntityGraph, JOIN FETCH), JPQL optimization, second-level cache
+- **cpp-testing** - Google Test/Catch2, parameterized tests, GMock, AddressSanitizer, benchmark testing, CMake integration
+
+### Added - Hooks (6 new, 15 total)
+- **doc-file-blocker.sh** (PreToolUse: Write) - Blocks .md/.txt creation outside allowed locations
+- **console-log-audit.sh** (PostToolUse: Edit) - Warns about debug statements across Python/JS/TS/Go/Java/Ruby
+- **pattern-extraction.sh** (Stop) - Auto-extracts instinct candidates from session git history
+- **build-analysis.sh** (PostToolUse: Bash) - Advisory analysis of build command output
+- **typescript-check.sh** (PostToolUse: Edit) - Runs tsc --noEmit after editing .ts/.tsx files
+- **dev-server-blocker.sh** (PreToolUse: Bash) - Blocks dev servers outside tmux
+
+### Changed
+- Updated settings-example.json with all new hook registrations
+- Updated CLAUDE.md hooks list (now 15 hooks)
+- Updated ECC_INTEGRATION.md with Phase 2.2 additions and corrected skill counts
+- Updated TEMPLATE_OVERVIEW.md: version header, architecture tree, moved v2.2.0 from "In Progress" to "Completed"
+
 ## [2.1.0] - 2026-02-13
 
 Gap-filling release: side-by-side comparison of every command against ECC's source code, with honest assessment of which implementation is better. Upgraded where ECC wins, kept ours where we're stronger.

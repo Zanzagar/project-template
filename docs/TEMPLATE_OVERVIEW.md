@@ -2,7 +2,7 @@
 
 **Author:** Corey Hoydic
 **Date:** February 13, 2026
-**Version:** 2.1.0
+**Version:** 2.2.0
 **Repository:** github.com/Zanzagar/project-template
 
 ---
@@ -82,7 +82,7 @@ project-template/
 │   ├── commands/        # 46 slash commands (user-invocable)
 │   ├── skills/          # 32 domain knowledge modules (on-demand)
 │   ├── rules/           # 17 behavior rules (auto-loaded)
-│   ├── hooks/           # 9 automation scripts
+│   ├── hooks/           # 15 automation hooks
 │   ├── instincts/       # Continuous learning patterns (JSON)
 │   ├── contexts/        # Session mode injection (dev/review/research)
 │   ├── sessions/        # Session persistence and summaries
@@ -493,7 +493,7 @@ The template changes this:
 
 ## Development Timeline
 
-### Completed (v2.0.0 — v2.1.0)
+### Completed (v2.0.0 — v2.2.0)
 
 The template's development followed a deliberate research-first methodology: study the best existing implementations, understand their design decisions, then build something that combines their strengths with our unique requirements.
 
@@ -537,9 +537,9 @@ The template's development followed a deliberate research-first methodology: stu
 5. **Added 6 new skills** covering gaps in Docker, API design, deployment, database migrations, backend patterns, and iterative retrieval
 6. **Added 12 agent-invoking commands** (`/plan`, `/tdd`, `/code-review`, `/e2e`, `/build-fix`, `/refactor-clean`, `/go-review`, `/python-review`, `/go-build`, `/go-test`, `/test-coverage`, `/learn`) — the biggest UX gap, as we had all 13 agents but no user-facing commands to invoke most of them
 
-### In Progress (v2.2.0 — to resume on Journel)
+#### Phase 2.2: ECC Feature Parity Completion (v2.2.0)
 
-This release completes ECC feature parity by adding the remaining skills, automation hooks, and documentation rollup. All items below have been scoped and gap-analyzed against ECC's source code. Implementation resumes on the departmental Journel server.
+This release completed ECC feature parity by adding the remaining domain skills, automation hooks, and documentation updates. All items were gap-analyzed against ECC's source code and implemented.
 
 #### 12 Domain Skills
 
@@ -572,13 +572,6 @@ Hooks are shell scripts that execute automatically in response to Claude Code ev
 | **Build Analysis** | PostToolUse (Bash) | After build commands (`npm run build`, `cargo build`, `go build`), runs a background analysis of build output without blocking the developer. | Provides proactive feedback about build health. Runs asynchronously so it doesn't slow down the workflow — results appear as advisory messages. |
 | **TypeScript Check** | PostToolUse (Edit) | After editing `.ts` / `.tsx` files, runs `tsc --noEmit` on the changed file to catch type errors immediately. | Type errors caught at edit time take 5 seconds to fix. Type errors discovered 30 minutes later during a build take 5 minutes to fix. Immediate feedback dramatically reduces debugging time. |
 | **Dev Server Blocker** | PreToolUse (Bash) | Blocks `npm run dev`, `pnpm dev`, and similar commands unless running inside tmux. Suggests the tmux command instead. | Dev servers run indefinitely and capture the terminal. Inside tmux, you can detach and reattach. Outside tmux, killing the terminal kills the server — and any unsaved session state with it. |
-
-#### Documentation Rollup
-
-- Update CLAUDE.md slash commands table from 34 to 46 entries
-- Update component inventory counts across CLAUDE.md, ECC_INTEGRATION.md, and TEMPLATE_OVERVIEW.md
-- Add CHANGELOG v2.2.0 entry documenting all new skills, hooks, and final ECC coverage metrics
-- Update MCP_SETUP.md if any tool count changes
 
 ### Future Roadmap (v3.0+)
 
