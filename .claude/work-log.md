@@ -4,6 +4,63 @@ Lightweight session-by-session record of work performed. Append-only, not auto-l
 
 ---
 
+## 2026-02-13 - v2.1.0 Gap-Filling & ECC Quality Comparison
+
+**Actions:**
+- Ran quantitative comparison: template vs ECC (13 agents, 37 skills, 31 commands, 23 rules)
+- Our raw coverage: ~62%, effective coverage: ~82% (accounting for functional equivalents)
+- Created 6 new skills: docker-patterns, api-design, deployment-patterns, database-migrations, backend-patterns, iterative-retrieval
+- Created suggest-compact.sh hook (advisory compaction at 50/75/100 tool calls)
+- Created /sessions command (session history viewer with cleanup)
+- Fetched ECC source code for 8 overlapping commands, did side-by-side comparison
+- Rewrote /eval (ECC's feature-eval model with pass@k/pass^k is fundamentally superior)
+- Rewrote /update-codemaps (ECC's token-lean format with freshness metadata is better)
+- Merged improvements into /orchestrate (added bugfix + security pipelines, parallel execution)
+- Merged improvements into /checkpoint (added verify + list subcommands)
+- Merged improvements into /update-docs (added multi-source, staleness, AUTO-GENERATED markers)
+- Kept our /verify, /code-review, /skill-create (ours are stronger)
+- Updated CHANGELOG.md with v2.1.0 section
+
+**Decisions:**
+- ECC's pass@k (capability) and pass^k (regression) eval model replaces our metrics-only approach; metrics preserved as `/eval metrics` subcommand
+- Token-lean codemap format with `<!-- Generated: ... -->` headers is strictly better than our verbose format
+- Our /verify is more polyglot (Python/JS/Go auto-detect) with security stage and SKIP-not-FAIL — kept
+- Our /code-review confidence filtering (>80%) and severity tiers are more actionable — kept
+- Iterative retrieval (Survey → Reconnaissance → Deep Read) is an ECC novel pattern worth having
+
+**Commits:**
+- `f59aa51` feat: Add 6 skills, suggest-compact hook, and /sessions command
+- `86818a0` refactor: Upgrade 5 commands with ECC best practices
+- (pending) docs: Update CHANGELOG and work log for v2.1.0
+
+**Template inventory after v2.1.0:**
+- 13 agents, 20 skills, 34 commands, 12 core + 5 language rules, 9 hooks
+
+**Next:** Commit, tag v2.1.0, push. Template gap-filling complete.
+
+---
+
+## 2026-02-13 - v2.0.0 Release & Health Check
+
+**Actions:**
+- Ran comprehensive `/health` check — 9 healthy, 2 warnings (AgentShield never run, hooks inactive), 2 N/A
+- Confirmed MCP optimization: 3/10 MCPs, ~47/80 tools (down from 10 MCPs, ~134 tools)
+- Verified all 35 Phase 2 tasks complete (50/50 total across both phases)
+- Created CHANGELOG.md documenting Phase 1 + Phase 2 features
+- Created annotated `v2.0.0` tag and pushed to origin
+
+**Decisions:**
+- CLAUDE.md `[PROJECT_NAME]` placeholder is intentional (this is the template repo)
+- mypy not installed — type checking is N/A for the template itself
+- v2.0.0 chosen for semver (major capability expansion, not a patch)
+
+**Commits:**
+- `0b0dd39` docs: Add CHANGELOG for v2.0.0 release
+
+**Next:** Consider smoke-testing template by cloning into a fresh project, or start actual development.
+
+---
+
 ## 2026-02-13 - ECC Phase 2 Implementation (Complete)
 
 **Session focus:** Complete all 35 Phase 2 tasks (IDs 16-50) across two context windows

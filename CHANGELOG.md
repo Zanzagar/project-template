@@ -4,6 +4,35 @@ All notable changes to this project template are documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.1.0] - 2026-02-13
+
+Gap-filling release: side-by-side comparison of every command against ECC's source code, with honest assessment of which implementation is better. Upgraded where ECC wins, kept ours where we're stronger.
+
+### Added - Skills (6 new, 20 total)
+- **docker-patterns** - Multi-stage builds, Compose, container security, networking
+- **api-design** - REST patterns, versioning, pagination, error handling, OpenAPI
+- **deployment-patterns** - CI/CD pipelines, blue-green, canary, rollback strategies
+- **database-migrations** - Alembic, Django, Prisma, Drizzle, zero-downtime patterns
+- **backend-patterns** - Caching, message queues, circuit breakers, resilience
+- **iterative-retrieval** - Progressive context refinement (ECC novel pattern)
+
+### Added - Infrastructure
+- **suggest-compact.sh** hook - Advisory compaction suggestions at 50/75/100 tool calls
+- **/sessions** command - Session history viewer with age tracking and cleanup
+
+### Changed - Commands (upgraded from ECC comparison)
+- **/eval** - Replaced metrics-only approach with ECC's feature-eval model (pass@k capability evals + pass^k regression evals); kept metrics as `/eval metrics` subcommand
+- **/update-codemaps** - Replaced with ECC's token-lean format: freshness metadata, diff detection (30% threshold), staleness warnings, backend/frontend/data/dependencies structure
+- **/orchestrate** - Added `bugfix` and `security` pipelines from ECC + parallel execution concept
+- **/checkpoint** - Added `verify` subcommand from ECC for comparing against named checkpoints
+- **/update-docs** - Added multi-source approach (package.json, .env, routes), staleness detection, and AUTO-GENERATED markers from ECC
+
+### Kept (ours better than ECC)
+- **/verify** - More polyglot (Python/JS/Go auto-detection), has security stage, SKIP-not-FAIL degradation
+- **/code-review** - More actionable with >80% confidence filtering and severity tiers
+- **/skill-create** - Clearer confidence thresholds and clustering pipeline
+- **/checkpoint** content format - Richer context with task, reasoning, and session integration
+
 ## [2.0.0] - 2026-02-13
 
 Major release integrating patterns from [Everything Claude Code](https://github.com/affaan-m/everything-claude-code) (42K+ stars) while preserving the template's unique workflow enforcement approach.
