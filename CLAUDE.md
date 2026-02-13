@@ -178,6 +178,38 @@ alias claude-research='claude --append-system-prompt "$(cat .claude/contexts/res
 
 Add aliases to `~/.bashrc` or `~/.zshrc`. Default `claude` (no alias) uses the project's normal settings.
 
+## Token Optimization
+
+For cost-conscious development or long sessions, use the optimized preset:
+
+```bash
+/settings optimized
+```
+
+This reduces costs 60-80% by capping thinking tokens, compacting context earlier, and using lighter sub-agent models. See `docs/ECC_INTEGRATION.md` for details.
+
+## Session Persistence
+
+Sessions automatically save summaries on exit (when `session-end.sh` hook is enabled):
+- Writes to `.claude/sessions/session-summary-*.md`
+- `session-init.sh` detects and displays summaries from the last 24 hours
+- `pre-compact.sh` preserves state before context compaction
+
+Enable via `/settings safe`, `/settings thorough`, or `/settings optimized`.
+
+## Agents
+
+Specialized sub-agent definitions in `.claude/agents/`:
+- **planner.md** - Architecture planning (opus, read-only)
+- **code-reviewer.md** - Code review (sonnet, >80% confidence, severity tiers)
+- **security-reviewer.md** - Security audit (sonnet, OWASP Top 10)
+- **build-resolver.md** - Build/CI fixes (sonnet, minimal-diff)
+
+## MCP Discipline
+
+Follow the 10/80 rule: max 10 MCP servers, 80 tools. Run `./scripts/manage-mcps.sh audit` to check.
+See `docs/MCP_SETUP.md` for configuration by project type.
+
 ## Hooks (Optional)
 
 Automate validation and formatting with hooks. See `.claude/hooks/README.md` for details.
@@ -192,11 +224,12 @@ cp .claude/hooks/settings-example.json .claude/settings.local.json
 ```
 
 Available hooks:
-- **session-init.sh** - Detects project phase (ideation/planning/building/shipping), loads context, suggests next steps
+- **session-init.sh** - Detects project phase, loads context, reloads session summaries
+- **session-end.sh** - Generates detailed session summary for cross-session continuity
+- **pre-compact.sh** - Saves working state before context compaction
 - **pre-commit-check.sh** - Validates code before git commits
 - **post-edit-format.sh** - Auto-formats files after edits
 - **protect-sensitive-files.sh** - Blocks edits to .env, keys, etc.
-- **session-summary.sh** - Logs session activity
 - **project-index.sh** - Maintains lightweight JSON index of codebase structure
 
 See `docs/HOOKS.md` for full documentation.
@@ -218,6 +251,7 @@ These rules are synced from the template and can be updated independently of thi
 
 When needed, consult:
 - `.claude/rules/` - Auto-loaded behavior rules
+- `docs/ECC_INTEGRATION.md` - ECC integration features, token optimization, session persistence
 - `docs/MCP_SETUP.md` - MCP server configuration (Task Master, Context7, GitHub)
 - `docs/PLUGINS.md` - Plugin installation and management (includes Superpowers)
 - `docs/HOOKS.md` - Automation hooks setup and customization

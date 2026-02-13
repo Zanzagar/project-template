@@ -177,6 +177,8 @@ Don't rely on conversation history for important context—but don't bloat CLAUD
 | Architectural decisions | `docs/decisions/*.md` | On demand |
 | Current task learnings | Task Master subtask notes | When working task |
 | Session discoveries | Update task description | With task |
+| Session summaries | `.claude/sessions/` | Auto on SessionStart (via `session-init.sh`) |
+| Pre-compaction state | `.claude/sessions/pre-compact-state.md` | Auto on SessionStart |
 | Code rationale | Code comments | With file |
 
 ```

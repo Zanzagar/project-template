@@ -197,6 +197,8 @@ At the end of significant sessions, append to `.claude/work-log.md`:
 
 This creates a lightweight ledger of work beyond git commits—capturing research, decisions, and context that would otherwise be lost.
 
+**Automated session persistence:** If `session-end.sh` hook is enabled, detailed summaries are saved automatically to `.claude/sessions/` on Stop events. The `session-init.sh` hook detects these on next startup and displays recent summaries (<24h). This reduces the need for manual work-log entries but doesn't replace them for capturing *decisions* and *reasoning*.
+
 ## Quality Guardrails
 
 ### Don't Over-Commit
