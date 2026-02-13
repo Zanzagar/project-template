@@ -19,6 +19,7 @@ Hooks are shell scripts that run automatically at specific points in Claude's wo
 | `protect-sensitive-files.sh` | PreToolUse (Edit\|Write) | Blocks edits to .env, keys, etc. |
 | `session-summary.sh` | Stop | Logs session activity (lightweight) |
 | `session-end.sh` | Stop | Generates detailed session summary for cross-session continuity |
+| `pre-compact.sh` | Manual/UserPromptSubmit | Saves working state before context compaction |
 
 ## How to Enable Hooks
 
