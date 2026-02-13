@@ -237,6 +237,7 @@ Sub-agents (via Task tool) get fresh context windows. Use them for:
 3. **Use project index**: Reference structure, not full content
 4. **Tier documentation lookups**: Existing knowledge → WebFetch → Context7
 5. **Clear completed context**: Start fresh after major milestones
+6. **Follow the 10/80 rule**: Max 10 MCPs, 80 tools enabled (see `docs/MCP_SETUP.md`)
 
 ## Quick Reference
 

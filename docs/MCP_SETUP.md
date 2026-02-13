@@ -462,6 +462,51 @@ Each MCP server consumes context tokens for its tool definitions. These costs ar
 
 4. **Essential MCPs only**: `task-master-ai` + `context7` = ~8k tokens
 
+### The 10/80 Rule
+
+Keep your MCP configuration within these limits for healthy context budgets:
+
+| Limit | Value | Rationale |
+|-------|-------|-----------|
+| Max MCPs enabled | **10** | Each server adds tool definitions at startup |
+| Max total tools | **80** | Tool schemas consume ~200-500 tokens each |
+
+**Why this matters:** MCP tool definitions are loaded into every API call, consuming 25-30k tokens before you even start working. Exceeding 80 tools can push overhead past 20% of your context window, causing quality degradation (forgotten instructions, repeated approaches).
+
+**Check your budget:**
+```bash
+./scripts/manage-mcps.sh audit    # Full budget report with visual bars
+./scripts/manage-mcps.sh tokens   # Token overhead + budget summary
+```
+
+### Per-Project Disabling with disabledMcpServers
+
+Disable globally-installed MCPs at the project level using `.mcp.json`:
+
+```json
+{
+  "mcpServers": {},
+  "disabledMcpServers": ["paypal", "wpcom-mcp", "canva-dev", "magic"]
+}
+```
+
+This is **declarative** (checked into git, shared with team) vs `claude mcp disable --scope project` which is **imperative** (local only). Use `.mcp.json` when the team should agree on which MCPs a project needs.
+
+See `.claude/examples/mcp-config-example.json` for a complete example.
+
+### Recommended Configurations by Project Type
+
+| Project Type | MCPs | Tools | Token Cost |
+|-------------|------|-------|------------|
+| Python minimal | task-master, context7 | 47 | ~4,300 |
+| Python backend | + github, postgres | 62 | ~7,500 |
+| Full-stack | + playwright | 82 | ~10,800 |
+| E-commerce | + paypal | 90 | ~11,500 |
+| Content/CMS | + wpcom-mcp | 74 | ~8,800 |
+| Data engineering | + postgres, mongodb | 77 | ~9,100 |
+
+Apply via: `./scripts/manage-mcps.sh preset <name>`
+
 ## Security Notes
 
 - Never commit `~/.claude/mcp.json` to version control
