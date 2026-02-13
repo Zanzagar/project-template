@@ -57,6 +57,10 @@ CURRENT_BRANCH=""
 CURRENT_TASK=""
 INSTALLED_VERSION=""
 MISSING_COMPONENTS=()
+SESSIONS_DIR="$PROJECT_DIR/.claude/sessions"
+SESSION_AGE_HOURS=24
+LAST_SESSION=""
+LAST_SESSION_AGE=""
 
 [ -f "$STATE_FILE" ] && HAS_STATE_FILE=true
 [ -f "$MCP_CONFIG" ] && HAS_MCP_CONFIG=true
@@ -104,6 +108,19 @@ if [ "$HAS_TASKMASTER" = true ] && command -v task-master &> /dev/null; then
     TASK_COUNT=$(cd "$PROJECT_DIR" && task-master list 2>/dev/null | grep -c "^[0-9]" || echo "0")
     IN_PROGRESS_COUNT=$(cd "$PROJECT_DIR" && task-master list --status in-progress 2>/dev/null | grep -c "^[0-9]" || echo "0")
     DONE_COUNT=$(cd "$PROJECT_DIR" && task-master list --status done 2>/dev/null | grep -c "^[0-9]" || echo "0")
+fi
+
+# Session continuity - find most recent session summary
+if [ -d "$SESSIONS_DIR" ]; then
+    LAST_SESSION=$(ls -t "$SESSIONS_DIR"/session_*.md 2>/dev/null | head -1)
+    if [ -n "$LAST_SESSION" ]; then
+        # Cross-platform file age: GNU stat (-c) with BSD fallback (-f)
+        SESSION_TIME=$(stat -c %Y "$LAST_SESSION" 2>/dev/null || stat -f %m "$LAST_SESSION" 2>/dev/null || echo "0")
+        CURRENT_TIME=$(date +%s)
+        if [ "$SESSION_TIME" -gt 0 ] 2>/dev/null; then
+            LAST_SESSION_AGE=$(( (CURRENT_TIME - SESSION_TIME) / 3600 ))
+        fi
+    fi
 fi
 
 # Detect project phase based on signals
@@ -330,6 +347,24 @@ case $SCENARIO in
 
         if [ -n "$CURRENT_BRANCH" ]; then
             echo "🌿 Branch: $CURRENT_BRANCH"
+            echo ""
+        fi
+
+        # Session continuity: show last session if recent
+        if [ -n "$LAST_SESSION" ] && [ -n "$LAST_SESSION_AGE" ] && [ "$LAST_SESSION_AGE" -lt "$SESSION_AGE_HOURS" ] 2>/dev/null; then
+            echo "📋 Last Session (${LAST_SESSION_AGE}h ago):"
+            # Extract key sections concisely
+            MODIFIED=$(grep -A5 "## Files Modified" "$LAST_SESSION" 2>/dev/null | tail -n +2 | head -5 | sed 's/^/   /')
+            TASKS=$(grep -A5 "## Task Progress" "$LAST_SESSION" 2>/dev/null | tail -n +2 | head -3 | sed 's/^/   /')
+            [ -n "$MODIFIED" ] && echo "$MODIFIED"
+            [ -n "$TASKS" ] && echo "$TASKS"
+            echo ""
+        fi
+
+        # Pre-compact state detection
+        PRE_COMPACT_FILE="$SESSIONS_DIR/pre-compact-state.md"
+        if [ -f "$PRE_COMPACT_FILE" ]; then
+            echo "⚠️  Pre-compaction state saved. Review: $PRE_COMPACT_FILE"
             echo ""
         fi
         ;;

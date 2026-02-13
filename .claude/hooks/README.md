@@ -13,7 +13,7 @@ Hooks are shell scripts that run automatically at specific points in Claude's wo
 
 | Script | Event | Purpose |
 |--------|-------|---------|
-| `session-init.sh` | SessionStart | Prompts MCP selection if not configured |
+| `session-init.sh` | SessionStart | Project state detection, session reload (<24h), phase guidance |
 | `pre-commit-check.sh` | PreToolUse (Bash) | Validates code before git commits |
 | `post-edit-format.sh` | PostToolUse (Edit\|Write) | Auto-formats files after edits |
 | `protect-sensitive-files.sh` | PreToolUse (Edit\|Write) | Blocks edits to .env, keys, etc. |
