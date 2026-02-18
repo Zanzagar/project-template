@@ -15,8 +15,8 @@ The template was developed through systematic analysis and integration of best p
 
 **By the numbers:**
 - 13 specialized AI agents
-- 33 skills (domain-specific knowledge modules)
-- 46 slash commands
+- 35 skills (domain-specific knowledge modules)
+- 49 slash commands
 - 17 behavior rules (7 core + 5 language-specific + 5 workflow)
 - 15 automation hooks
 - 5 project-type presets for one-command scaffolding
@@ -526,7 +526,7 @@ The template's development followed a deliberate research-first methodology: stu
 
 **Key implementation decisions:**
 - **Language-specific rules use `paths:` frontmatter** so they load only when matching files are edited. A Python developer never pays the token cost for Go rules. This was our innovation — ECC loads all language rules at startup.
-- **Skills are on-demand** (loaded when Claude detects relevance), not startup-loaded. This means 33 skills contribute exactly 0 tokens to startup overhead. ECC handles this similarly.
+- **Skills are on-demand** (loaded when Claude detects relevance), not startup-loaded. This means 35 skills contribute exactly 0 tokens to startup overhead. ECC handles this similarly.
 - **The instinct system uses confidence scoring** (0.0-1.0) with automatic decay. Unused patterns lose 0.05 confidence per week and are removed when they reach 0. This prevents knowledge rot — outdated patterns fade naturally instead of persisting forever.
 
 **Delivery:** 50 tasks, 250 subtasks total across both phases. All implemented through Claude Code itself — the template was built using the template's own workflow enforcement, which served as both a development tool and a stress test.
@@ -753,4 +753,4 @@ Any student using this template starts their project with the workflow enforceme
 ---
 
 *Built with Claude Code (Anthropic) | Informed by Everything Claude Code (45K+ stars)*
-*Template version 2.2.0 | 13 agents, 33 skills, 46 commands, 17 rules, 15 hooks | 5 project-type presets*
+*Template version 2.2.0 | 13 agents, 35 skills, 49 commands, 17 rules, 15 hooks | 5 project-type presets*
