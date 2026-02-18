@@ -487,15 +487,411 @@
         "status": "done",
         "subtasks": [],
         "updatedAt": "2026-02-13T06:22:18.991Z"
+      },
+      {
+        "id": "51",
+        "title": "Create /multi-backend command",
+        "description": "Adapt ECC's multi-backend command to our template. Backend-focused development workflow (Research → Ideation → Plan → Execute → Optimize → Review) with codeagent-wrapper for Codex-led backend work.",
+        "details": "Fetch ECC source from affaan-m/everything-claude-code/commands/multi-backend.md. Adapt file paths and naming to our .claude/commands/ structure. Keep codeagent-wrapper approach and role prompt references. Preserve 6-phase workflow structure.",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": [],
+        "updatedAt": "2026-02-18T21:58:28.150Z"
+      },
+      {
+        "id": "52",
+        "title": "Create /multi-frontend command",
+        "description": "Adapt ECC's multi-frontend command to our template. Frontend-focused development workflow with Gemini-led UI/UX work via codeagent-wrapper.",
+        "details": "Fetch ECC source from affaan-m/everything-claude-code/commands/multi-frontend.md. Adapt file paths and naming to our .claude/commands/ structure. Keep Gemini-led approach with codeagent-wrapper.",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": [],
+        "updatedAt": "2026-02-18T21:59:11.146Z"
+      },
+      {
+        "id": "53",
+        "title": "Create /multi-workflow command",
+        "description": "Adapt ECC's multi-workflow command. Meta-orchestration coordinating backend (Codex) + frontend (Gemini) + Claude for full-stack collaborative development.",
+        "details": "Fetch ECC source from affaan-m/everything-claude-code/commands/multi-workflow.md. Combined 6-phase workflow with parallel model calls, session reuse, and quality gates.",
+        "testStrategy": "",
+        "status": "cancelled",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": [],
+        "updatedAt": "2026-02-18T21:59:35.567Z"
+      },
+      {
+        "id": "54",
+        "title": "Create strategic-compact skill",
+        "description": "Adopt ECC's strategic-compact skill. Tactical compaction patterns with suggest-compact.sh hook script adapted from ECC's bash version.",
+        "details": "Fetch ECC source from affaan-m/everything-claude-code/skills/strategic-compact/. Contains SKILL.md and suggest-compact.sh. Adapts our existing suggest-compact.sh hook with ECC's skill documentation for compaction decision guide.",
+        "testStrategy": "",
+        "status": "cancelled",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": [],
+        "updatedAt": "2026-02-18T21:59:41.021Z"
+      },
+      {
+        "id": "55",
+        "title": "Create django-patterns skill",
+        "description": "Adopt ECC's django-patterns skill. Comprehensive Django development patterns covering ORM, DRF, caching, signals, middleware, service layer.",
+        "details": "Fetch ECC source from affaan-m/everything-claude-code/skills/django-patterns/SKILL.md. Fills gap in our Django coverage (we have security/tdd/verification but not general patterns). Default to ECC's implementation.",
+        "testStrategy": "",
+        "status": "cancelled",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": [],
+        "updatedAt": "2026-02-18T21:59:46.889Z"
       }
     ],
     "metadata": {
       "version": "1.0.0",
-      "lastModified": "2026-02-13T06:22:18.991Z",
-      "taskCount": 35,
-      "completedCount": 35,
+      "lastModified": "2026-02-18T21:59:46.890Z",
+      "taskCount": 40,
+      "completedCount": 37,
       "tags": [
         "master"
+      ]
+    }
+  },
+  "ecc-gap-p1": {
+    "tasks": [
+      {
+        "id": "1",
+        "title": "Verify multi-backend and multi-frontend commands exist",
+        "description": "Confirm that the /multi-backend and /multi-frontend commands were successfully committed and match ECC's implementation patterns. These are marked as ALREADY IMPLEMENTED in the PRD.",
+        "details": "Read and verify the existing implementations at:\n- `.claude/commands/multi-backend.md` - Backend-focused workflow with Codex as authority\n- `.claude/commands/multi-frontend.md` - Frontend-focused workflow with Gemini as authority\n\nVerification checklist:\n1. Usage syntax uses /multi-backend and /multi-frontend (not /backend, /frontend)\n2. codeagent-wrapper call syntax is preserved from ECC\n3. Role prompt paths reference ~/.claude/.ccg/prompts/\n4. 6-phase workflow structure (Research → Ideation → Plan → Execute → Optimize → Review) intact\n5. Session reuse (CODEX_SESSION / GEMINI_SESSION) documented\n6. Model specification correct (Codex default, Gemini with gemini-3-pro-preview)\n\nPseudo-code for verification:\n```bash\n# Check files exist\ntest -f .claude/commands/multi-backend.md && echo \"multi-backend: OK\"\ntest -f .claude/commands/multi-frontend.md && echo \"multi-frontend: OK\"\n\n# Verify key content\ngrep -q \"codeagent-wrapper\" .claude/commands/multi-backend.md\ngrep -q \"codeagent-wrapper\" .claude/commands/multi-frontend.md\n```",
+        "testStrategy": "1. File existence check for both command files\n2. Content validation: grep for codeagent-wrapper syntax\n3. Verify 6-phase labels are present ([Mode: Research], [Mode: Ideation], etc.)\n4. Confirm session reuse documentation (resume <SESSION_ID>)",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": "2",
+        "title": "Create /multi-workflow command",
+        "description": "Implement the meta-orchestration command that coordinates Codex (backend) + Gemini (frontend) + Claude (orchestrator) for full-stack collaborative development with parallel model execution.",
+        "details": "Create `.claude/commands/multi-workflow.md` based on ECC's multi-workflow.md source.\n\nKey implementation details:\n\n1. **Phase structure** (6 phases like multi-backend/multi-frontend):\n   - Research: Gather context from codebase, identify backend vs frontend scope\n   - Ideation: Parallel calls to Codex (backend analysis) + Gemini (frontend analysis)\n   - Plan: Synthesize both perspectives into unified plan\n   - Execute: Parallel implementation with work division\n   - Optimize: Parallel reviews from both models\n   - Review: Claude synthesizes final quality check\n\n2. **Parallel execution pattern**:\n```markdown\n### Parallel Model Calls\n\nUse `run_in_background: true` for parallel calls:\n\nBash({\n  command: \"~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--backend codex - \\\"$PWD\\\" <<'EOF'\n  ...\n  EOF\",\n  run_in_background: true,\n  timeout: 3600000,\n  description: \"Codex backend analysis\"\n})\n\nBash({\n  command: \"~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--backend gemini --gemini-model gemini-3-pro-preview - \\\"$PWD\\\" <<'EOF'\n  ...\n  EOF\",\n  run_in_background: true,\n  timeout: 3600000,\n  description: \"Gemini frontend analysis\"\n})\n\n# Wait for both with TaskOutput\nTaskOutput({ task_id: \"<codex_task_id>\", block: true, timeout: 600000 })\nTaskOutput({ task_id: \"<gemini_task_id>\", block: true, timeout: 600000 })\n```\n\n3. **Work division criteria**:\n   - Backend (Codex): API endpoints, database, business logic, authentication\n   - Frontend (Gemini): Components, styles, UX, accessibility, responsiveness\n   - Claude: Integration points, shared types/interfaces, orchestration\n\n4. **Plan storage**: Save to `.claude/plan/multi-workflow-TIMESTAMP.md`\n\n5. **Quality gates**: Requirement completeness scoring at each phase (>=7 to proceed)",
+        "testStrategy": "1. File exists at `.claude/commands/multi-workflow.md`\n2. Contains parallel execution pattern with run_in_background\n3. TaskOutput waiting syntax with 600000ms timeout documented\n4. 6-phase workflow labels present\n5. Work division criteria for backend vs frontend documented\n6. Plan save location specified",
+        "priority": "high",
+        "dependencies": [
+          "1"
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create multi-workflow.md file with header and role specification",
+            "description": "Create the base `.claude/commands/multi-workflow.md` file with proper header structure, usage documentation, and role specification establishing Claude as the Full-Stack Orchestrator coordinating Codex (backend authority) + Gemini (frontend authority).",
+            "dependencies": [],
+            "details": "Create the file at `.claude/commands/multi-workflow.md` with:\n1. Header: `# Multi-Workflow - Full-Stack Multi-Model Development`\n2. Description: Full-stack workflow (Research → Ideation → Plan → Execute → Optimize → Review), with parallel Codex + Gemini execution\n3. Usage section: `/multi-workflow <full-stack task description>`\n4. Context section: Full-stack task: $ARGUMENTS, Codex-led backend, Gemini-led frontend, Claude orchestrator\n5. Your Role section defining Claude as Full-Stack Orchestrator with:\n   - **Codex** – Backend authority (API, database, business logic)\n   - **Gemini** – Frontend authority (components, styles, UX)\n   - **Claude (self)** – Orchestration, integration points, shared types, final delivery",
+            "status": "pending",
+            "testStrategy": "Verify file exists at `.claude/commands/multi-workflow.md`, contains proper header, usage syntax with $ARGUMENTS, and three-model role specification with clear authority domains.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "Add Multi-Model Call Specification section with parallel execution pattern",
+            "description": "Add the Multi-Model Call Specification section documenting the codeagent-wrapper call syntax for both Codex and Gemini backends, including the parallel execution pattern using `run_in_background: true` and TaskOutput waiting.",
+            "dependencies": [
+              1
+            ],
+            "details": "Add section following existing patterns from multi-backend.md/multi-frontend.md but with PARALLEL execution:\n\n1. **Call Syntax for Codex** (new session and resume patterns)\n2. **Call Syntax for Gemini** with `--backend gemini --gemini-model gemini-3-pro-preview`\n3. **Parallel Call Pattern**:\n```\nBash({\n  command: \"~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--backend codex - \\\"$PWD\\\" <<'EOF'\\n...\\nEOF\",\n  run_in_background: true,\n  timeout: 3600000,\n  description: \"Codex backend analysis\"\n})\n\nBash({\n  command: \"~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--backend gemini --gemini-model gemini-3-pro-preview - \\\"$PWD\\\" <<'EOF'\\n...\\nEOF\",\n  run_in_background: true,\n  timeout: 3600000,\n  description: \"Gemini frontend analysis\"\n})\n\n# Wait for both with TaskOutput\nTaskOutput({ task_id: \"<codex_task_id>\", block: true, timeout: 600000 })\nTaskOutput({ task_id: \"<gemini_task_id>\", block: true, timeout: 600000 })\n```\n4. Role prompts table for both Codex and Gemini (analyzer, architect, reviewer paths)\n5. Session reuse documentation for `CODEX_SESSION` and `GEMINI_SESSION`",
+            "status": "pending",
+            "testStrategy": "Verify parallel execution pattern includes run_in_background: true for both Codex and Gemini calls, TaskOutput waiting with 600000ms timeout is documented, and session resume syntax for both backends is present.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 3,
+            "title": "Implement 6-phase workflow with work division criteria",
+            "description": "Add the Communication Guidelines and Core Workflow sections implementing all 6 phases (Research → Ideation → Plan → Execute → Optimize → Review) with clear work division criteria between backend (Codex), frontend (Gemini), and integration (Claude).",
+            "dependencies": [
+              2
+            ],
+            "details": "Add sections:\n\n**Communication Guidelines**: Mode labels, strict sequence, AskUserQuestion usage\n\n**Core Workflow**:\n\n**Phase 0: Prompt Enhancement** - Optional ace-tool MCP integration\n\n**Phase 1: Research** `[Mode: Research]`\n- Gather context, identify backend vs frontend scope\n- Code retrieval (if ace-tool available)\n- Requirement completeness score (>=7 to proceed)\n\n**Phase 2: Ideation** `[Mode: Ideation]`\n- PARALLEL calls to Codex (backend analysis) + Gemini (frontend analysis)\n- Save `CODEX_SESSION` and `GEMINI_SESSION`\n- Synthesize both perspectives, present combined solutions\n\n**Phase 3: Planning** `[Mode: Plan]`\n- Resume both sessions with user's selected solution\n- Claude synthesizes unified plan with work division:\n  - **Backend (Codex)**: API endpoints, database, business logic, authentication\n  - **Frontend (Gemini)**: Components, styles, UX, accessibility, responsiveness\n  - **Claude**: Integration points, shared types/interfaces, orchestration\n- Save plan to `.claude/plan/multi-workflow-TIMESTAMP.md`\n\n**Phase 4: Implementation** `[Mode: Execute]`\n- Follow approved plan with work division\n- Backend first, then frontend, then integration\n\n**Phase 5: Optimization** `[Mode: Optimize]`\n- PARALLEL reviews from Codex (backend code) + Gemini (frontend code)\n- Integrate feedback after user confirmation\n\n**Phase 6: Quality Review** `[Mode: Review]`\n- Claude synthesizes final quality check\n- Verify backend-frontend integration\n- Report issues and recommendations",
+            "status": "pending",
+            "testStrategy": "Verify all 6 phases have mode labels, Phase 2 and Phase 5 show parallel model calls, work division criteria clearly separates backend/frontend/integration domains, and plan save location uses `.claude/plan/multi-workflow-TIMESTAMP.md` format.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 4,
+            "title": "Add Key Rules and quality gates section",
+            "description": "Add the Key Rules section establishing trust hierarchies for each domain, filesystem access restrictions, and quality gates with requirement completeness scoring (>=7 to proceed).",
+            "dependencies": [
+              3
+            ],
+            "details": "Add final sections:\n\n**Quality Gates**:\n- Requirement completeness scoring at each phase transition\n- Score 0-10, >=7 to proceed, <7 stop and request clarification\n- Track completeness for: Backend requirements, Frontend requirements, Integration requirements\n\n**Key Rules**:\n1. **Codex backend opinions are trustworthy** for API, database, business logic\n2. **Gemini frontend opinions are trustworthy** for UI, UX, components, styling\n3. **Backend authority does NOT extend to frontend** (and vice versa)\n4. External models have **zero filesystem write access**\n5. Claude handles all code writes, file operations, and integration decisions\n6. Claude resolves conflicts between Codex and Gemini recommendations\n7. Integration points (shared types, API contracts) are Claude's domain\n\n**Work Division Criteria Table**:\n| Domain | Authority | Scope |\n|--------|-----------|-------|\n| API endpoints, database, business logic, auth | Codex | Backend |\n| Components, styles, UX, a11y, responsiveness | Gemini | Frontend |\n| Shared types, interfaces, API contracts, integration | Claude | Orchestration |",
+            "status": "pending",
+            "testStrategy": "Verify quality gates section includes >=7 threshold, Key Rules section has clear trust hierarchy per domain, work division table is present, and filesystem access restrictions are documented.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 5,
+            "title": "Validate complete command file and test integration",
+            "description": "Final validation of the complete multi-workflow.md file ensuring all patterns match existing multi-backend.md/multi-frontend.md conventions, parallel execution is correctly documented, and the command integrates properly with the slash command system.",
+            "dependencies": [
+              4
+            ],
+            "details": "Validation checklist:\n\n1. **File structure validation**:\n   - File exists at `.claude/commands/multi-workflow.md`\n   - Follows same structure as multi-backend.md/multi-frontend.md\n\n2. **Parallel execution validation**:\n   - `run_in_background: true` present for parallel calls\n   - TaskOutput waiting syntax with 600000ms timeout\n   - Both Codex and Gemini call patterns documented\n\n3. **Workflow validation**:\n   - 6 phase labels present (Research, Ideation, Plan, Execute, Optimize, Review)\n   - Mode labels match `[Mode: X]` format\n   - Quality gates (>=7 threshold) documented\n\n4. **Work division validation**:\n   - Backend vs Frontend criteria clearly documented\n   - Integration/orchestration scope for Claude defined\n\n5. **Plan storage validation**:\n   - Save location `.claude/plan/multi-workflow-TIMESTAMP.md` documented\n\n6. **Consistency check**:\n   - Compare with multi-backend.md and multi-frontend.md for pattern consistency\n   - Verify codeagent-wrapper syntax matches existing commands\n   - Confirm {{LITE_MODE_FLAG}} placeholder is used",
+            "status": "pending",
+            "testStrategy": "Run comprehensive file validation: check file exists, contains all 6 phases, has parallel execution with run_in_background: true, TaskOutput 600000ms timeout, work division criteria, quality gates >=7 threshold, and plan save location. Compare structure against multi-backend.md for consistency.",
+            "parentId": "undefined"
+          }
+        ],
+        "updatedAt": "2026-02-18T22:13:23.956Z"
+      },
+      {
+        "id": "3",
+        "title": "Create strategic-compact skill SKILL.md",
+        "description": "Create the strategic-compact skill that documents tactical compaction patterns and decision guides for when to manually /compact during workflow transitions.",
+        "details": "Create `.claude/skills/strategic-compact/SKILL.md` based on ECC's strategic-compact skill.\n\nThis skill complements our existing `context-management.md` rule by providing actionable tactical patterns vs the rule's theory.\n\nSkill content structure:\n\n```yaml\n---\nname: strategic-compact\ndescription: Tactical compaction patterns with suggest-compact hook\n---\n```\n\n1. **Compaction Decision Guide Table**:\n| Phase Transition | Compact? | Rationale |\n|-----------------|----------|----------|\n| Research → Implementation | YES | Exploration context no longer needed |\n| Mid-implementation | NO | Preserves variable names, file paths |\n| Feature complete → next feature | YES | Fresh context for new work |\n| Debugging → fixed | YES | Debug traces are noise |\n| Planning → building | CONSIDER | If plan is persisted to file |\n| After major milestone | YES | Natural breakpoint |\n\n2. **What Survives Compaction**:\n- CLAUDE.md, rules, MCP definitions\n- Git state, Task Master tasks\n- Files on disk (can re-read)\n- Session summaries in .claude/sessions/\n\n3. **What's Lost**:\n- Conversation history and reasoning chains\n- Previously read file contents\n- Intermediate exploration findings\n\n4. **Hook Integration**:\n- Reference existing `.claude/hooks/suggest-compact.sh`\n- Thresholds: 50 (reminder), 75 (note), 100 (strong suggestion)\n- Hook is advisory, not blocking\n\n5. **Manual Trigger Patterns**:\n```\n- Before risky refactoring: /compact to preserve clean state\n- After completing sub-agent research: /compact to clear exploration\n- When Claude contradicts itself: Fresh session better than compact\n```",
+        "testStrategy": "1. File exists at `.claude/skills/strategic-compact/SKILL.md`\n2. YAML frontmatter with correct name and description\n3. Decision guide table covers all common phase transitions\n4. Survives/Lost sections match context-management.md\n5. Hook integration references suggest-compact.sh\n6. Manual trigger patterns documented",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create strategic-compact skill directory and YAML frontmatter",
+            "description": "Create the `.claude/skills/strategic-compact/` directory structure and initialize SKILL.md with the proper YAML frontmatter following the established pattern from other skills.",
+            "dependencies": [],
+            "details": "Create directory `.claude/skills/strategic-compact/` and initialize SKILL.md with:\n\n```yaml\n---\nname: strategic-compact\ndescription: Tactical compaction patterns with suggest-compact hook\n---\n```\n\nAdd the main heading `# Strategic Compact Skill` and an introductory paragraph explaining that this skill complements context-management.md rule by providing actionable tactical patterns versus theory. Follow the exact formatting pattern used in `.claude/skills/verification-loop/SKILL.md` and `.claude/skills/tdd-workflow/SKILL.md`.",
+            "status": "pending",
+            "testStrategy": "1. Verify file exists at `.claude/skills/strategic-compact/SKILL.md`\n2. Validate YAML frontmatter with `name: strategic-compact` and correct description\n3. Confirm skill follows same structure as existing skills (debugging, verification-loop, tdd-workflow)",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "Add compaction decision guide table for phase transitions",
+            "description": "Create the comprehensive phase transition decision table that guides when to compact versus when to preserve context, covering all common workflow phase transitions.",
+            "dependencies": [
+              1
+            ],
+            "details": "Add section `## Compaction Decision Guide` with a markdown table:\n\n| Phase Transition | Compact? | Rationale |\n|-----------------|----------|----------|\n| Research → Implementation | YES | Exploration context no longer needed |\n| Mid-implementation | NO | Preserves variable names, file paths |\n| Feature complete → next feature | YES | Fresh context for new work |\n| Debugging → fixed | YES | Debug traces are noise |\n| Planning → building | CONSIDER | If plan is persisted to file |\n| After major milestone | YES | Natural breakpoint |\n| Sub-agent research completed | YES | Agent findings should be in files |\n| Quality symptoms appearing | CONSIDER | Or start fresh session |\n\nInclude brief explanation that 'CONSIDER' means evaluate based on whether context is persisted to files. Reference the decision table in context-management.md for consistency.",
+            "status": "pending",
+            "testStrategy": "1. Table contains all 6+ phase transitions from PRD\n2. Each row has Phase Transition, Compact?, and Rationale columns\n3. Content aligns with existing context-management.md guidance\n4. Markdown renders correctly with proper column alignment",
+            "parentId": "undefined"
+          },
+          {
+            "id": 3,
+            "title": "Document what survives and what's lost during compaction",
+            "description": "Create two clear sections documenting exactly what context persists through compaction and what is lost, helping users understand the implications of triggering /compact.",
+            "dependencies": [
+              1
+            ],
+            "details": "Add two sections:\n\n`## What Survives Compaction`\nBulleted list:\n- CLAUDE.md, auto-loaded rules, MCP tool definitions\n- Git state and repository information\n- Task Master tasks and current task context\n- Files on disk (can be re-read)\n- Session summaries in `.claude/sessions/` (if session-end hook enabled)\n- Pre-compaction state file (`.claude/sessions/pre-compact-state.md`)\n\n`## What's Lost During Compaction`\nBulleted list:\n- Intermediate reasoning and decision chains\n- Previously read file contents (must re-read)\n- Conversation flow and earlier exchanges\n- In-progress variable names mentioned only in conversation\n- Exploration findings not persisted to files\n\nAdd a callout: `**Rule of thumb:** If context is important, persist it before compaction triggers. Use Task Master notes, `docs/decisions/`, code comments, or `.claude/work-log.md`.`\n\nContent must match context-management.md sections exactly for consistency.",
+            "status": "pending",
+            "testStrategy": "1. Both sections present with clear headings\n2. Survives list matches context-management.md exactly\n3. Lost list matches context-management.md exactly\n4. Rule of thumb callout included with persistence locations",
+            "parentId": "undefined"
+          },
+          {
+            "id": 4,
+            "title": "Add hook integration section referencing suggest-compact.sh",
+            "description": "Document how the strategic-compact skill integrates with the existing suggest-compact.sh hook, including threshold levels and advisory nature.",
+            "dependencies": [
+              1
+            ],
+            "details": "Add section `## Hook Integration`\n\nDocument the suggest-compact.sh hook behavior:\n\n```\nThe `suggest-compact.sh` hook provides advisory compaction reminders:\n\n| Threshold | Message Type | Recommendation |\n|-----------|-------------|----------------|\n| ~50 tool calls | Reminder | Consider compacting if quality declining |\n| ~75 tool calls | Note | Watch for quality degradation symptoms |\n| ~100 tool calls | Strong suggestion | Strongly consider compacting or fresh session |\n```\n\nKey points to include:\n- Hook is advisory, not blocking (hook runs on UserPromptSubmit)\n- Counter stored in `.claude/sessions/compact-state.tmp`\n- Counter resets on session end (session-end.sh)\n- User/Claude decides whether to act on suggestions\n- Quality symptoms matter more than raw counts\n\nReference the actual hook file at `.claude/hooks/suggest-compact.sh`.",
+            "status": "pending",
+            "testStrategy": "1. Hook integration section present\n2. Threshold table matches suggest-compact.sh values (50, 75, 100)\n3. Advisory nature emphasized\n4. State file location documented correctly\n5. References suggest-compact.sh by correct path",
+            "parentId": "undefined"
+          },
+          {
+            "id": 5,
+            "title": "Add manual trigger patterns and tactical examples",
+            "description": "Document specific tactical patterns for when to manually trigger /compact, including before/after scenarios and when to prefer fresh sessions over compaction.",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "details": "Add section `## Manual Trigger Patterns`\n\nProvide tactical examples with code blocks:\n\n```\n**Before risky refactoring:**\n/compact  # Preserve clean state before making sweeping changes\n\n**After completing sub-agent research:**\n/compact  # Clear exploration context, keep findings in files\n\n**When transitioning from research to implementation:**\n/compact  # Exploration context is noise for implementation\n\n**After debugging session resolved:**\n/compact  # Debug traces and hypothesis testing no longer needed\n```\n\nAdd section `## When Fresh Session is Better Than Compaction`:\n- Claude is contradicting itself repeatedly\n- Quality has degraded significantly\n- Switching to completely unrelated task\n- After completing major milestone (natural breakpoint)\n- Conversation has become circular\n\nInclude quick reference tree matching style in context-management.md:\n```\nShould I /compact?\n├─► Just finished research/exploration → YES\n├─► Mid-implementation → NO (keep context)\n├─► Feature complete → YES (fresh slate)\n├─► Claude contradicting itself → Fresh session instead\n└─► Not sure → Check for quality symptoms first\n```",
+            "status": "pending",
+            "testStrategy": "1. Manual trigger patterns section present with 4+ examples\n2. Fresh session vs compact section included with 5+ scenarios\n3. Quick reference decision tree matches context-management.md style\n4. Code blocks formatted correctly\n5. Content is actionable and specific, not theoretical",
+            "parentId": "undefined"
+          }
+        ],
+        "updatedAt": "2026-02-18T22:14:57.321Z"
+      },
+      {
+        "id": "4",
+        "title": "Verify and enhance suggest-compact.sh hook",
+        "description": "Compare existing suggest-compact.sh hook against ECC's implementation and enhance if needed. Ensure configurable thresholds and proper advisory messaging.",
+        "details": "The hook already exists at `.claude/hooks/suggest-compact.sh`. Compare against ECC's version and enhance.\n\nCurrent implementation analysis:\n- Uses SESSIONS_DIR for state storage\n- Tracks tool calls via counter file\n- Thresholds at 50, 75, 100\n- Advisory messaging (not blocking)\n\nEnhancements to consider from ECC:\n\n1. **Configurable thresholds** via environment variables:\n```bash\nTHRESHOLD_FIRST=${COMPACT_THRESHOLD_FIRST:-50}\nTHRESHOLD_SECOND=${COMPACT_THRESHOLD_SECOND:-75}\nTHRESHOLD_THIRD=${COMPACT_THRESHOLD_THIRD:-100}\n```\n\n2. **Phase transition detection** (optional, if ECC has it):\n```bash\n# Detect if we just completed a major phase\n# Could check for recent commit, file creation patterns, etc.\n```\n\n3. **Better messaging format** (consistent with other hooks):\n```bash\nif [ \"$TOOL_CALLS\" -eq $THRESHOLD_FIRST ]; then\n    echo \"💡 [suggest-compact] ~$TOOL_CALLS tool calls. Quality declining? Consider /compact or fresh session.\"\nfi\n```\n\n4. **Reset mechanism documentation**:\nEnsure the hook documents how counter resets (on session end or when state file is deleted).\n\nIf ECC's version has additional features, adopt them. If ours is functionally equivalent, document the comparison.",
+        "testStrategy": "1. Hook exists and is executable\n2. Thresholds are configurable via environment variables\n3. Messages are advisory (not blocking)\n4. Counter increments correctly\n5. State persists in .claude/sessions/compact-state.tmp",
+        "priority": "medium",
+        "dependencies": [
+          "3"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-18T22:15:40.515Z"
+      },
+      {
+        "id": "5",
+        "title": "Create comprehensive django-patterns skill",
+        "description": "Replace the thin python-django skill with ECC's comprehensive django-patterns skill covering project structure, split settings, ORM optimization, custom managers, DRF patterns, service layer, caching, signals, and middleware.",
+        "details": "Create `.claude/skills/django-patterns/SKILL.md` based on ECC's comprehensive implementation.\n\nNote: We have an existing `.claude/skills/python-django/SKILL.md` that covers basic patterns. The new django-patterns skill should be MORE comprehensive. Decision: Keep python-django as-is (it's in our additions list) and add django-patterns as a deeper reference.\n\nSkill content structure:\n\n```yaml\n---\nname: django-patterns\ndescription: Comprehensive Django development patterns - ORM, DRF, caching, signals, middleware\n---\n```\n\n1. **Project Structure**:\n```\nproject/\n├── config/              # Settings module\n│   ├── settings/\n│   │   ├── base.py\n│   │   ├── development.py\n│   │   └── production.py\n├── apps/\n│   ├── users/\n│   ├── orders/\n├── core/               # Shared utilities\n└── manage.py\n```\n\n2. **Split Settings Pattern**:\n```python\n# config/settings/base.py\nfrom pathlib import Path\nBASE_DIR = Path(__file__).resolve().parent.parent.parent\n\n# config/settings/development.py\nfrom .base import *\nDEBUG = True\n```\n\n3. **Model Best Practices**:\n- Abstract base models for timestamps\n- Custom QuerySet and Manager patterns\n- `get_absolute_url()` convention\n\n4. **Custom QuerySet/Manager**:\n```python\nclass OrderQuerySet(models.QuerySet):\n    def pending(self):\n        return self.filter(status='pending')\n    \n    def for_user(self, user):\n        return self.filter(customer=user)\n\nclass Order(models.Model):\n    objects = OrderQuerySet.as_manager()\n```\n\n5. **DRF Serializers with Nested Writes**:\n```python\nclass OrderSerializer(serializers.ModelSerializer):\n    items = OrderItemSerializer(many=True)\n    \n    def create(self, validated_data):\n        items_data = validated_data.pop('items')\n        order = Order.objects.create(**validated_data)\n        for item in items_data:\n            OrderItem.objects.create(order=order, **item)\n        return order\n```\n\n6. **Service Layer Pattern**:\n```python\n# services/orders.py\nclass OrderService:\n    @staticmethod\n    def create_order(user, items):\n        with transaction.atomic():\n            order = Order.objects.create(customer=user)\n            # Business logic here\n            return order\n```\n\n7. **Caching Strategies**:\n- Per-view caching with `@cache_page`\n- Template fragment caching\n- Low-level cache API for complex queries\n\n8. **Signals Best Practices** (when to use/avoid)\n\n9. **Middleware Patterns** (request/response lifecycle)\n\n10. **N+1 Prevention** (deeper than python-django's coverage)",
+        "testStrategy": "1. File exists at `.claude/skills/django-patterns/SKILL.md`\n2. YAML frontmatter present\n3. All 10 sections documented with code examples\n4. Custom QuerySet/Manager pattern included\n5. Service layer pattern with transaction.atomic\n6. Caching strategies cover multiple approaches\n7. More comprehensive than existing python-django skill",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create django-patterns skill directory with YAML frontmatter",
+            "description": "Create the `.claude/skills/django-patterns/` directory and initialize `SKILL.md` with proper YAML frontmatter including name and description fields.",
+            "dependencies": [],
+            "details": "Create new directory at `.claude/skills/django-patterns/` and initialize `SKILL.md` file with YAML frontmatter:\n\n```yaml\n---\nname: django-patterns\ndescription: Comprehensive Django development patterns - ORM, DRF, caching, signals, middleware\n---\n```\n\nFollowed by the main heading `# Django Patterns Skill` and a brief overview explaining this skill provides comprehensive Django patterns beyond basic usage, covering project structure, split settings, advanced ORM patterns, DRF best practices, service layer, caching, signals, and middleware.",
+            "status": "pending",
+            "testStrategy": "Verify file exists at `.claude/skills/django-patterns/SKILL.md` and YAML frontmatter parses correctly with `name: django-patterns` and appropriate description.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "Document project structure and split settings patterns",
+            "description": "Add comprehensive sections covering recommended Django project structure with apps layout and the split settings pattern for multi-environment configuration.",
+            "dependencies": [
+              1
+            ],
+            "details": "Add two major sections to SKILL.md:\n\n**1. Project Structure Section:**\n```\nproject/\n├── config/              # Settings module\n│   ├── settings/\n│   │   ├── base.py\n│   │   ├── development.py\n│   │   └── production.py\n├── apps/\n│   ├── users/\n│   ├── orders/\n├── core/               # Shared utilities\n└── manage.py\n```\n\n**2. Split Settings Pattern:**\n- Base settings with `from pathlib import Path` and common configuration\n- Development settings inheriting from base with DEBUG=True\n- Production settings with security hardening\n- Environment-specific database configurations\n- Example: `DJANGO_SETTINGS_MODULE = \"config.settings.production\"`",
+            "status": "pending",
+            "testStrategy": "Verify both sections exist with code examples, project tree diagram is properly formatted, and split settings shows inheritance pattern with `from .base import *`.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 3,
+            "title": "Add custom QuerySet, Manager, and model best practices",
+            "description": "Document advanced ORM patterns including custom QuerySet classes, Manager patterns, abstract base models, and model conventions like `get_absolute_url()`.",
+            "dependencies": [
+              1
+            ],
+            "details": "Add sections covering:\n\n**1. Model Best Practices:**\n- Abstract base model for timestamps (created_at, updated_at)\n- `get_absolute_url()` convention for URL generation\n- Proper `__str__` representation\n\n**2. Custom QuerySet/Manager Pattern:**\n```python\nclass OrderQuerySet(models.QuerySet):\n    def pending(self):\n        return self.filter(status='pending')\n    \n    def for_user(self, user):\n        return self.filter(customer=user)\n\nclass Order(models.Model):\n    objects = OrderQuerySet.as_manager()\n```\n\n**3. Chaining Examples:** Show how `Order.objects.pending().for_user(user)` works and when to use Manager vs QuerySet patterns.",
+            "status": "pending",
+            "testStrategy": "Verify custom QuerySet pattern uses `as_manager()` method, includes at least two filter methods, and shows method chaining example in usage section.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 4,
+            "title": "Document DRF patterns, service layer, and caching strategies",
+            "description": "Add comprehensive sections for DRF serializers with nested writes, service layer pattern with transaction.atomic, and multi-tier caching strategies.",
+            "dependencies": [
+              1
+            ],
+            "details": "Add three major sections:\n\n**1. DRF Serializers with Nested Writes:**\n```python\nclass OrderSerializer(serializers.ModelSerializer):\n    items = OrderItemSerializer(many=True)\n    \n    def create(self, validated_data):\n        items_data = validated_data.pop('items')\n        order = Order.objects.create(**validated_data)\n        for item in items_data:\n            OrderItem.objects.create(order=order, **item)\n        return order\n```\n\n**2. Service Layer Pattern:**\n```python\nclass OrderService:\n    @staticmethod\n    def create_order(user, items):\n        with transaction.atomic():\n            order = Order.objects.create(customer=user)\n            # Business logic here\n            return order\n```\n\n**3. Caching Strategies:**\n- Per-view caching with `@cache_page`\n- Template fragment caching with `{% cache %}`\n- Low-level cache API for complex queries\n- Cache invalidation patterns",
+            "status": "pending",
+            "testStrategy": "Verify DRF nested writes shows `validated_data.pop()` pattern, service layer uses `transaction.atomic()`, and caching covers at least three approaches (view, template, low-level).",
+            "parentId": "undefined"
+          },
+          {
+            "id": 5,
+            "title": "Add signals best practices, middleware patterns, and N+1 prevention",
+            "description": "Complete the skill with comprehensive signals guidance (when to use/avoid), middleware request/response lifecycle, and deep N+1 prevention patterns beyond basic `select_related`.",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "details": "Add final sections:\n\n**1. Signals Best Practices:**\n- When to use: cross-app notifications, audit logging, cache invalidation\n- When to avoid: same-app logic, complex business logic, transaction-dependent operations\n- Pattern: `@receiver(post_save, sender=Model)`\n\n**2. Middleware Patterns:**\n- Request/response lifecycle diagram\n- Order of execution (top-to-bottom request, bottom-to-top response)\n- Custom middleware skeleton with `__init__`, `__call__`, `process_exception`\n\n**3. N+1 Prevention (Deep Coverage):**\n- Beyond basic `select_related`/`prefetch_related`\n- `Prefetch` object for complex prefetch queries\n- Using `assertNumQueries` in tests\n- Django Debug Toolbar for detection\n- Common pitfalls: prefetch invalidation after filter()",
+            "status": "pending",
+            "testStrategy": "1. Signals section includes when-to-use and when-to-avoid guidance\n2. Middleware shows request/response lifecycle\n3. N+1 section is MORE comprehensive than python-django's coverage (includes Prefetch object, assertNumQueries, Debug Toolbar)\n4. All 10 sections from PRD are documented with code examples",
+            "parentId": "undefined"
+          }
+        ],
+        "updatedAt": "2026-02-18T22:17:44.354Z"
+      },
+      {
+        "id": "6",
+        "title": "Update ECC_COMPARISON.md with implemented gaps",
+        "description": "Update docs/ECC_COMPARISON.md to move implemented Phase 1 items from 'gaps' to 'matched' sections and update summary counts.",
+        "details": "After all components are implemented, update the comparison document:\n\n1. **Update Summary Table**:\n- Commands: Update ECC-only Gaps count (was 5, should reflect closed gaps)\n- Skills: Update gap count (was 14)\n\n2. **Move to Matched Commands**:\n- /multi-backend ✓\n- /multi-frontend ✓\n- /multi-workflow ✓\n\n3. **Move to Matched Skills**:\n- strategic-compact ✓\n- django-patterns ✓\n\n4. **Update Implementation Priority Queue**:\n- Phase 1 items marked complete with date\n- Note any adaptations from ECC source\n\n5. **Add to Decisions Log** if any adaptations were made:\n```markdown\n### Adopted ECC's Implementation (Phase 1 Gap Closure)\n\n| Component | Adaptation | Why |\n|-----------|-----------|-----|\n| /multi-workflow | Renamed from /workflow | Naming consistency with multi-* pattern |\n| strategic-compact | Integrated with existing suggest-compact.sh | Our hook was already bash-based |\n| django-patterns | Added alongside python-django | python-django is lightweight, django-patterns is comprehensive |\n```",
+        "testStrategy": "1. Summary table counts updated\n2. Command gaps reduced by 3\n3. Skill gaps reduced by 2\n4. Implementation priority queue shows Phase 1 complete\n5. Decisions log documents any adaptations",
+        "priority": "medium",
+        "dependencies": [
+          "2",
+          "3",
+          "4",
+          "5"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-18T22:19:11.899Z"
+      },
+      {
+        "id": "7",
+        "title": "Update CLAUDE.md slash commands table",
+        "description": "Add the new /multi-workflow command to the slash commands table in CLAUDE.md.",
+        "details": "Update CLAUDE.md's Slash Commands table to include:\n\n```markdown\n| `/multi-workflow` | Full-stack multi-model workflow (Codex backend + Gemini frontend + Claude orchestrator) |\n```\n\nPlace it near the existing multi-* commands:\n- /multi-plan\n- /multi-execute\n- /multi-backend (already listed)\n- /multi-frontend (already listed)\n- /multi-workflow (new)\n\nThe table should remain alphabetically or grouped by category. If grouped, these belong in the \"Multi-Model\" or \"Orchestration\" category.",
+        "testStrategy": "1. /multi-workflow appears in CLAUDE.md slash commands table\n2. Description is accurate and concise\n3. Grouped with related multi-* commands\n4. Table formatting is consistent",
+        "priority": "medium",
+        "dependencies": [
+          "2"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-18T22:19:46.346Z"
+      },
+      {
+        "id": "8",
+        "title": "Update TEMPLATE_OVERVIEW.md skill/command counts",
+        "description": "Update TEMPLATE_OVERVIEW.md to reflect the new skill and command counts after Phase 1 gap closure.",
+        "details": "After implementation, update TEMPLATE_OVERVIEW.md:\n\n1. Locate the stats section showing skill/command counts\n2. Increment counts:\n   - Commands: +1 (multi-workflow)\n   - Skills: +2 (strategic-compact, django-patterns)\n\n3. Update any feature list sections that enumerate capabilities\n\n4. If there's a version or changelog section, note the Phase 1 gap closure\n\nPseudo-code:\n```bash\n# Find and update counts in TEMPLATE_OVERVIEW.md\ngrep -n \"commands\\|skills\" TEMPLATE_OVERVIEW.md\n# Update the numbers found\n```",
+        "testStrategy": "1. Command count incremented correctly\n2. Skill count incremented correctly\n3. No stale counts remain\n4. File is valid markdown",
+        "priority": "low",
+        "dependencies": [
+          "6"
+        ],
+        "status": "in-progress",
+        "subtasks": [],
+        "updatedAt": "2026-02-18T22:19:52.314Z"
+      },
+      {
+        "id": "9",
+        "title": "Create conventional commits for all changes",
+        "description": "Create individual conventional commits for each component following the commit message format. One commit per new file/feature.",
+        "details": "Commit strategy:\n\n1. **Commit 1**: multi-workflow command\n```bash\ngit add .claude/commands/multi-workflow.md\ngit commit -m \"feat: Add /multi-workflow command from ECC\n\nMeta-orchestration for full-stack development with Codex (backend),\nGemini (frontend), and Claude (orchestrator). Includes parallel\nmodel execution and quality gates.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\"\n```\n\n2. **Commit 2**: strategic-compact skill\n```bash\ngit add .claude/skills/strategic-compact/\ngit add .claude/hooks/suggest-compact.sh  # if modified\ngit commit -m \"feat: Add strategic-compact skill from ECC\n\nTactical compaction patterns and decision guide. Complements\nexisting context-management rule with actionable patterns.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\"\n```\n\n3. **Commit 3**: django-patterns skill\n```bash\ngit add .claude/skills/django-patterns/\ngit commit -m \"feat: Add django-patterns skill from ECC\n\nComprehensive Django patterns: project structure, split settings,\ncustom managers, DRF, service layer, caching, signals, middleware.\nCompletes Django coverage alongside django-security/tdd/verification.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\"\n```\n\n4. **Commit 4**: Documentation updates\n```bash\ngit add docs/ECC_COMPARISON.md CLAUDE.md TEMPLATE_OVERVIEW.md\ngit commit -m \"docs: Update docs for ECC Gap Phase 1 closure\n\nMove implemented items from gaps to matched sections in\nECC_COMPARISON.md. Update slash commands table and counts.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\"\n```",
+        "testStrategy": "1. Each commit is atomic (one logical change)\n2. Commit messages follow conventional commit format\n3. Co-Authored-By trailer present\n4. No WIP or fixup commits in final history",
+        "priority": "medium",
+        "dependencies": [
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8"
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": "10",
+        "title": "Validate all Phase 1 components work together",
+        "description": "Final validation that all implemented components integrate correctly and Claude Code recognizes the new commands and skills.",
+        "details": "Validation checklist:\n\n1. **Command Recognition**:\n   - Claude Code shows /multi-workflow in command suggestions\n   - Command markdown is syntactically correct\n\n2. **Skill Loading**:\n   - Skills can be referenced in conversations\n   - YAML frontmatter parses correctly\n   - No syntax errors in skill content\n\n3. **Hook Functionality**:\n   - suggest-compact.sh executes without errors\n   - Thresholds trigger at correct counts\n\n4. **Documentation Consistency**:\n   - ECC_COMPARISON.md summary counts match actual files\n   - CLAUDE.md commands table complete\n   - No broken links or references\n\n5. **Git State**:\n   - All changes committed\n   - On feature/ecc-gap-phase1 branch\n   - Clean working tree\n\nValidation commands:\n```bash\n# Check file existence\nls -la .claude/commands/multi-workflow.md\nls -la .claude/skills/strategic-compact/SKILL.md\nls -la .claude/skills/django-patterns/SKILL.md\n\n# Validate YAML frontmatter\nhead -10 .claude/skills/*/SKILL.md\n\n# Git status\ngit status\ngit log --oneline -5\n```",
+        "testStrategy": "1. All new files exist at expected paths\n2. YAML frontmatter in skills parses correctly\n3. Git status shows clean working tree\n4. Recent commits show Phase 1 work\n5. Manual test: Claude Code recognizes /multi-workflow",
+        "priority": "high",
+        "dependencies": [
+          "9"
+        ],
+        "status": "pending",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "version": "1.0.0",
+      "lastModified": "2026-02-18T22:19:52.315Z",
+      "taskCount": 10,
+      "completedCount": 7,
+      "tags": [
+        "ecc-gap-p1"
       ]
     }
   }

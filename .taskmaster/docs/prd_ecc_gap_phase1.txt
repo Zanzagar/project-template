@@ -1,0 +1,85 @@
+# PRD: ECC Gap Phase 1 — High-Value Remaining Gaps
+
+## Overview
+Close the highest-priority remaining gaps between our project template and Everything Claude Code (ECC). These were identified in `docs/ECC_COMPARISON.md` as Phase 1 of the Implementation Priority Queue.
+
+ECC Phases 1-2 (50 tasks) are complete on main. This phase addresses gaps discovered during the comprehensive comparison audit — components that ECC has which we don't, and which provide clear value.
+
+## Background
+The `docs/ECC_COMPARISON.md` audit identified:
+- 14 skill gaps (5 HIGH/MEDIUM to implement, rest evaluated/skipped)
+- 5 command gaps (3 HIGH to implement, rest deferred)
+- Rule enrichment needs (content gaps in existing rules)
+
+This PRD covers the Phase 1 high-priority items only.
+
+User context:
+- All AI models accessed via OAuth (Claude Code, Codex, Gemini) — no direct API keys
+- ECC's `codeagent-wrapper` approach should be preserved for multi-model commands
+- Default to ECC's implementation unless specific technical reason to diverge
+- Bash hooks (not Node.js) per our design decision
+
+## Goals
+1. Add `/multi-backend` command — backend-focused multi-model workflow with Codex-led development
+2. Add `/multi-frontend` command — frontend-focused multi-model workflow with Gemini-led development
+3. Add `/multi-workflow` command — meta-orchestration coordinating backend + frontend + integration
+4. Add `strategic-compact` skill — tactical compaction patterns with suggest-compact hook
+5. Add `django-patterns` skill — comprehensive Django development patterns (ORM, DRF, caching, signals, middleware)
+
+## Non-Goals
+- Do NOT modify existing multi-plan or multi-execute commands
+- Do NOT replace orchestrate command (multi-workflow is complementary, not a replacement)
+- Do NOT add Phase 2 or Phase 3 gap items (those come in future PRDs)
+- Do NOT rewrite ECC's codeagent-wrapper — preserve their approach as-is
+
+## Detailed Requirements
+
+### Task 1: /multi-backend Command
+- **Source**: `affaan-m/everything-claude-code/commands/multi-backend.md`
+- **Location**: `.claude/commands/multi-backend.md`
+- **Description**: Backend-focused development workflow with 6 phases (Research → Ideation → Plan → Execute → Optimize → Review). Codex is the backend authority. Uses codeagent-wrapper for Codex calls with session reuse.
+- **Adaptation**: Change usage from `/backend` to `/multi-backend` to match our naming. Keep all codeagent-wrapper syntax, role prompt paths, and phase structure from ECC.
+- **Status**: ALREADY IMPLEMENTED (committed on feature/ecc-gap-phase1 branch)
+
+### Task 2: /multi-frontend Command
+- **Source**: `affaan-m/everything-claude-code/commands/multi-frontend.md`
+- **Location**: `.claude/commands/multi-frontend.md`
+- **Description**: Frontend-focused development workflow with 6 phases. Gemini is the frontend authority. Uses codeagent-wrapper for Gemini calls with gemini-3-pro-preview model.
+- **Adaptation**: Change usage from `/frontend` to `/multi-frontend`. Keep all codeagent-wrapper syntax and role prompt paths from ECC.
+- **Status**: ALREADY IMPLEMENTED (committed on feature/ecc-gap-phase1 branch)
+
+### Task 3: /multi-workflow Command
+- **Source**: `affaan-m/everything-claude-code/commands/multi-workflow.md`
+- **Location**: `.claude/commands/multi-workflow.md`
+- **Description**: Full-stack collaborative development workflow. Claude orchestrates, Codex handles backend, Gemini handles frontend. Parallel model calls with background tasks, session reuse, quality gates at each phase.
+- **Adaptation**: Change usage from `/workflow` to `/multi-workflow`. Keep all codeagent-wrapper syntax, parallel execution patterns, session management, and ace-tool MCP references from ECC.
+- **Key features to preserve**: Parallel background calls with `run_in_background: true`, TaskOutput waiting with 600000ms timeout, requirement completeness scoring, plan saving to `.claude/plan/`.
+
+### Task 4: strategic-compact Skill
+- **Source**: `affaan-m/everything-claude-code/skills/strategic-compact/`
+- **Location**: `.claude/skills/strategic-compact/SKILL.md` and `.claude/hooks/suggest-compact.sh`
+- **Description**: Suggests manual `/compact` at strategic workflow boundaries rather than relying on auto-compaction. Includes a hook script that tracks tool call count and suggests compaction at configurable thresholds.
+- **Adaptation**: ECC has two files — SKILL.md and suggest-compact.sh. We already have a suggest-compact.sh hook (check if it exists and compare). The SKILL.md documents compaction decision patterns. Adapt the hook to bash (ECC's is already bash). Add YAML frontmatter matching our skill format.
+- **Key content**: Compaction decision guide table (when to compact by phase transition), what survives compaction, hook setup instructions.
+- **Integration**: Reference from our existing context-management.md rule. The skill provides the tactical patterns that the rule's theory section describes.
+
+### Task 5: django-patterns Skill
+- **Source**: `affaan-m/everything-claude-code/skills/django-patterns/SKILL.md`
+- **Location**: `.claude/skills/django-patterns/SKILL.md`
+- **Description**: Comprehensive Django development patterns: project structure, split settings, model best practices, custom QuerySets/Managers, DRF serializers/viewsets, service layer, caching strategies, signals, middleware, N+1 prevention, bulk operations.
+- **Adaptation**: Adopt ECC's content as-is — it's comprehensive and well-structured. Add YAML frontmatter if missing. Keep all code examples.
+- **Fills gap**: We have django-security, django-tdd, django-verification but NO general Django patterns. This completes Django coverage.
+
+## Post-Implementation
+
+After all tasks complete:
+1. Update `docs/ECC_COMPARISON.md` — move implemented items from "gaps" to "matched" sections, update summary counts
+2. Update `CLAUDE.md` — add new commands to the slash commands table
+3. Update `TEMPLATE_OVERVIEW.md` — update skill/command counts
+
+## Success Criteria
+- All 5 components present in `.claude/commands/` and `.claude/skills/`
+- Commands appear in Claude Code's slash command list
+- ECC source material preserved faithfully (minimal adaptation)
+- Individual conventional commits per component
+- Comparison doc updated to reflect closed gaps

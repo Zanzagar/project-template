@@ -75,6 +75,12 @@ node_modules/
 # Generated project index (created by project-index.sh hook)
 .claude/project-index.json
 
+# Orchestration pipeline outputs (transient, per-run)
+.claude/orchestrate/
+
+# Multi-model plan outputs (transient, per-task)
+.claude/plan/
+
 # Project-specific MCP configuration (user preference)
 .claude/mcp-project.json
 
