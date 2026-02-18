@@ -218,6 +218,45 @@ func NewServer(opts ...Option) *Server {
 }
 ```
 
+## Security Essentials
+
+### Secrets — Never Hardcode
+```go
+// DO: Validate env vars at startup, fail fast
+func requireEnv(key string) string {
+    val := os.Getenv(key)
+    if val == "" {
+        log.Fatalf("required env var %s not set", key)
+    }
+    return val
+}
+
+var dbURL = requireEnv("DATABASE_URL")
+```
+
+### Context Timeouts — Always Bound External Calls
+```go
+// Every HTTP call, DB query, or external RPC needs a timeout
+ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+defer cancel() // ALWAYS defer cancel to avoid goroutine/memory leaks
+
+resp, err := client.Do(req.WithContext(ctx))
+```
+
+Run `gosec ./...` for static security analysis. See `/security-audit` for comprehensive scanning.
+
+## Tooling
+
+- `gofmt` / `goimports` — **mandatory**, no style debates
+- `go vet` — run after every edit (catches subtle bugs)
+- `staticcheck` — extended static analysis beyond `go vet`
+
+### Testing with Race Detection
+```bash
+# ALWAYS use -race in development — catches data races at runtime
+go test -race -cover ./...
+```
+
 ## Avoid
 
 - `init()` functions — prefer explicit initialization
@@ -225,3 +264,5 @@ func NewServer(opts ...Option) *Server {
 - Global mutable state — pass dependencies explicitly
 - Deep package nesting — prefer flat, focused packages
 - `interface{}` / `any` without type assertions — use generics where possible (Go 1.18+)
+
+See `golang-patterns` skill for comprehensive patterns reference.
