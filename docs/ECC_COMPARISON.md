@@ -285,7 +285,7 @@ Rather than splitting our files to match ECC's structure (which would multiply t
 
 | Component | What We Took From ECC | What We Kept From Ours |
 |-----------|----------------------|----------------------|
-| `/orchestrate` | bugfix + security pipelines, parallel execution | Our base pipeline structure |
+| `/orchestrate` | bugfix + security pipelines, parallel execution, file-persisted outputs, iterative agent evaluation (max 3 cycles), objective context passing | Our base pipeline structure, sub-agent isolation (stronger than manual `/clear`) |
 | `/checkpoint` | verify + list subcommands | Our richer content format with task/reasoning/session |
 | `/update-docs` | Multi-source (package.json, .env, routes), staleness detection | Our agent-based approach |
 
