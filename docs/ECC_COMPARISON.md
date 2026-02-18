@@ -202,11 +202,11 @@ build-fix, checkpoint, code-review, e2e, eval, evolve, go-build, go-review, go-t
 | common/coding-style.md | Language-specific rules + claude-behavior.md | Partial — check for missing generic style guidance |
 | common/git-workflow.md | git-workflow.md | No gap — ours is comprehensive |
 | common/testing.md | tdd-workflow skill + language rules | Partial — check for generic testing patterns missing |
-| common/performance.md | /optimize command | Gap — no performance rule/skill |
+| common/performance.md | context-management.md (model selection, context budgets, thinking modes) | **No gap** — ECC's "performance" is about Claude perf (model selection, context), not app perf. Our context-management.md covers model selection, thinking tokens, compaction strategy. Misclassified in earlier analysis. |
 | common/patterns.md | reasoning-patterns.md + workflow-guide.md | Partial — check for missing design patterns |
-| common/hooks.md | No equivalent | Gap — no rule teaching Claude about hook authoring |
-| common/agents.md | No equivalent | Gap — no rule teaching Claude about agent patterns |
-| common/security.md | security-scan skill | Partial — skill is on-demand, not auto-loaded |
+| common/hooks.md | No equivalent | Gap — no rule teaching Claude about hook authoring (LOW priority — existing hooks serve as examples) |
+| common/agents.md | proactive-steering.md (auto-invocation) + /orchestrate (sequential phases, iterative evaluation, parallel execution) | **No gap** — ECC's agents.md teaches when to auto-invoke and parallel execution patterns. Our proactive-steering.md has the auto-invoke table. /orchestrate now has iterative evaluation + objective context. Content distributed differently but present. |
+| common/security.md | security-scan skill + system prompt (OWASP top 10) + pre-commit-check.sh hook | **Minimal gap** — Claude's system prompt already enforces "Be careful not to introduce security vulnerabilities (command injection, XSS, SQL injection, OWASP top 10)." Our pre-commit hook validates before commits. ECC's rule is a checklist; our system prompt + hook achieves the same always-on coverage. |
 | {lang}/hooks.md | Not present | Gap — per-language hook patterns (e.g., React useEffect cleanup) |
 | {lang}/patterns.md | In language coding-standards files | Partial — compare content |
 | {lang}/security.md | Not present per-language | Gap — language-specific security patterns |
@@ -218,11 +218,12 @@ Rather than splitting our files to match ECC's structure (which would multiply t
 
 1. **ENRICH existing language rules** with any missing content from ECC's `{lang}/patterns.md`, `{lang}/security.md`, and `{lang}/hooks.md`. One larger file per language is still cheaper than 5 smaller files.
 
-2. **Create 2 new skills** (not rules) for:
-   - `performance-patterns` — from ECC's `common/performance.md`
+2. **Create 1 new skill** (not rule) for:
    - `hook-authoring` — from ECC's `common/hooks.md` (teaching Claude how to write hooks)
 
-3. **DO NOT create `common/agents.md` equivalent** — agent definitions are self-documenting. A rule about "how to use agents" adds auto-loaded token cost for marginal value.
+3. ~~Create `performance-patterns` skill~~ — **NOT NEEDED.** ECC's `common/performance.md` is about Claude performance (model selection, context budgets), not application performance. Our `context-management.md` rule already covers this. Misclassified in earlier analysis.
+
+4. ~~Create `common/agents.md` equivalent~~ — **NOT NEEDED.** ECC's agent orchestration patterns (auto-invocation, parallel execution, iterative retrieval) are already covered by our `proactive-steering.md` rule and updated `/orchestrate` command.
 
 ---
 
@@ -271,8 +272,8 @@ Rather than splitting our files to match ECC's structure (which would multiply t
 | Rule structure | 1 file per language (consolidated) | 5 files per language (granular) | 5x fewer file loads = 5x less token cost for language rules. Content equivalence achieved through enrichment. |
 | Hook language | Bash (.sh) | Node.js (.js) | Simpler to audit, no runtime dependency, matches deployment target (Linux server). |
 | Task management | Task Master MCP (deep integration) | Not integrated | Our core differentiator. AI-powered task tracking with dependencies, expansion, status tracking. ECC has no equivalent. |
-| TDD enforcement | Superpowers plugin (deletes untested code) | Advisory tdd-guide agent only | Ours is stricter by design. Advisory suggestions can be ignored; Superpowers makes it physically impossible to skip tests. |
-| Session learning | Instinct JSON with confidence scoring (0-1), decay, evolution | evaluate-session.js | Our version has explicit governance (authority hierarchy), confidence scoring, and skill evolution. ECC's is simpler but less structured. |
+| TDD enforcement | Superpowers plugin (deletes untested code) | Advisory tdd-guide agent only | Stricter discipline: Superpowers makes it physically impossible to skip tests. **Tradeoff:** Adds ~3-5K tokens startup + significant workflow complexity (worktrees, mandatory cycles, code deletion). ECC's advisory approach is simpler and aligns with their "configuration as fine-tuning, not architecture" philosophy. Superpowers is justified for teams wanting enforced discipline but is NOT universally better — it's a strictness-vs-simplicity choice. |
+| Session learning | Instinct JSON with confidence scoring (0-1), decay, authority hierarchy | evaluate-session.js | Core advantage: authority hierarchy (rules > instincts > defaults) prevents instincts from overriding explicit rules. Confidence scoring + decay prevents stale/low-quality patterns. **Tradeoff:** More machinery than ECC's simple discovery-save approach. The periphery (import/export, evolution clustering) adds complexity with diminishing returns for solo developers. Core governance is justified; full lifecycle may be over-engineered for smaller projects. |
 
 ### Chose ECC Over Ours (previously implemented)
 
@@ -314,7 +315,7 @@ Rather than splitting our files to match ECC's structure (which would multiply t
 | 10 | Skill | springboot-verification | Small | Complete Spring Boot coverage |
 | 11 | Hook | PR URL extraction | Small | UX improvement |
 | 12 | Hook | Long-running tmux reminder | Small | Safety net |
-| 13 | Skill | performance-patterns | Small | From ECC common/performance.md |
+| ~~13~~ | ~~Skill~~ | ~~performance-patterns~~ | ~~Small~~ | ~~REMOVED — misclassified gap. ECC's performance.md is about model selection/context, which our context-management.md already covers.~~ |
 
 ### Phase 3: Low-Value / Evaluate
 
