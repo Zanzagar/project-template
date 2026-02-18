@@ -164,6 +164,9 @@ Available commands for common tasks:
 | `/orchestrate <pipeline>` | Multi-agent pipeline (feature, review, refactor) |
 | `/multi-plan <requirements>` | Parallel planning with Claude + Gemini + Codex |
 | `/multi-execute <task>` | Parallel implementation with multiple models |
+| `/multi-backend <task>` | Backend-focused development (Codex-led, 6-phase) |
+| `/multi-frontend <task>` | Frontend-focused development (Gemini-led, 6-phase) |
+| `/multi-workflow <task>` | Full-stack multi-model collaborative workflow |
 | `/checkpoint [label]` | Manual session state save |
 | `/skill-create` | Auto-generate skills from git history |
 | `/update-codemaps` | Generate architecture docs in `docs/CODEMAPS/` |

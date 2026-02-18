@@ -13,10 +13,10 @@
 | Category | ECC | Ours | ECC-only Gaps | Our Additions |
 |----------|-----|------|---------------|---------------|
 | Agents | 13 | 13 | 0 (name diff only) | 0 |
-| Skills | 43 | 33 | 14 | 8 |
-| Commands | 31 | 46 | 5 | 19 |
+| Skills | 43 | 35 | 12 | 8 |
+| Commands | 31 | 49 | 2 | 19 |
 | Rules (files) | 23+ | 12 | 17+ | 8 |
-| Hooks | ~15 | 15 | 3 behaviors | 4 behaviors |
+| Hooks | ~15 | 15 | 2 behaviors | 4 behaviors |
 | Contexts | 3 | 3 | 0 | 0 |
 | Presets | 0 | 5 | — | 5 |
 
@@ -48,7 +48,7 @@ Both repos have 13 agents. One name difference: ECC's `build-error-resolver` = o
 
 ## SKILLS
 
-### Matched (22 skills present in both)
+### Matched (24 skills present in both)
 
 | Skill | Notes |
 |-------|-------|
@@ -58,6 +58,7 @@ Both repos have 13 agents. One name difference: ECC's `build-error-resolver` = o
 | cpp-testing | |
 | database-migrations | |
 | deployment-patterns | |
+| django-patterns | Added in ECC Gap Phase 1 |
 | django-security | |
 | django-tdd | |
 | django-verification | |
@@ -72,6 +73,7 @@ Both repos have 13 agents. One name difference: ECC's `build-error-resolver` = o
 | python-patterns | |
 | python-testing | |
 | security-scan | |
+| strategic-compact | Added in ECC Gap Phase 1 |
 | tdd-workflow | |
 | verification-loop | |
 
@@ -88,12 +90,12 @@ Both repos have 13 agents. One name difference: ECC's `build-error-resolver` = o
 | python-data-science | pandas, scikit-learn, Jupyter, geostatistics |
 | python-django | Combined Django ORM/middleware/signals |
 
-### ECC Has, We Don't (14 gaps)
+### ECC Has, We Don't (12 remaining gaps)
 
 | ECC Skill | Priority | Action | Rationale |
 |-----------|----------|--------|-----------|
-| **strategic-compact** | HIGH | IMPLEMENT | Complements our context-management rule. ECC's skill version provides tactical compaction patterns that agents can reference on-demand. Our rule covers the theory; this skill covers the practice. |
-| **django-patterns** | HIGH | IMPLEMENT | We have django-security, django-tdd, django-verification but NOT general Django patterns (ORM optimization, middleware chains, signal patterns, admin customization). Our python-django skill is thin compared to ECC's comprehensive coverage. |
+| ~~**strategic-compact**~~ | ~~HIGH~~ | ~~DONE~~ | ~~Implemented in ECC Gap Phase 1~~ |
+| ~~**django-patterns**~~ | ~~HIGH~~ | ~~DONE~~ | ~~Implemented in ECC Gap Phase 1~~ |
 | **cpp-coding-standards** | MEDIUM | IMPLEMENT | We have cpp-testing but no C++ coding standards. Incomplete language coverage. |
 | **cost-aware-llm-pipeline** | MEDIUM | IMPLEMENT | Directly relevant to our audience (ML/AI projects). Covers prompt optimization, model selection, caching, rate limiting patterns. |
 | **regex-vs-llm-structured-text** | MEDIUM | IMPLEMENT | Useful decision framework for when to use regex vs LLM for text processing. Novel and practical. |
@@ -116,7 +118,8 @@ Both repos have 13 agents. One name difference: ECC's `build-error-resolver` = o
 
 | Action | Count | Skills |
 |--------|-------|--------|
-| IMPLEMENT | 5 | strategic-compact, django-patterns, cpp-coding-standards, cost-aware-llm-pipeline, regex-vs-llm-structured-text |
+| DONE | 2 | strategic-compact, django-patterns |
+| IMPLEMENT | 3 | cpp-coding-standards, cost-aware-llm-pipeline, regex-vs-llm-structured-text |
 | IMPLEMENT (after eval) | 1 | springboot-verification |
 | EVALUATE (may merge) | 3 | java-coding-standards, springboot-patterns, springboot-security/tdd |
 | SKIP (justified) | 5 | configure-ecc, continuous-learning-v1, project-guidelines-example, clickhouse-io, nutrient-document-processing |
@@ -126,9 +129,9 @@ Both repos have 13 agents. One name difference: ECC's `build-error-resolver` = o
 
 ## COMMANDS
 
-### Matched (26 commands in both)
+### Matched (29 commands in both)
 
-build-fix, checkpoint, code-review, e2e, eval, evolve, go-build, go-review, go-test, instinct-export, instinct-import, instinct-status, learn, multi-execute, multi-plan, orchestrate, plan, python-review, refactor-clean, sessions, skill-create, tdd, test-coverage, update-codemaps, update-docs, verify
+build-fix, checkpoint, code-review, e2e, eval, evolve, go-build, go-review, go-test, instinct-export, instinct-import, instinct-status, learn, multi-backend, multi-execute, multi-frontend, multi-plan, multi-workflow, orchestrate, plan, python-review, refactor-clean, sessions, skill-create, tdd, test-coverage, update-codemaps, update-docs, verify
 
 ### Our Additions (19 commands ECC doesn't have)
 
@@ -154,13 +157,13 @@ build-fix, checkpoint, code-review, e2e, eval, evolve, go-build, go-review, go-t
 | /tasks | Tasks | List Taskmaster tasks |
 | /test | Testing | Run pytest |
 
-### ECC Has, We Don't (5 gaps)
+### ECC Has, We Don't (2 remaining gaps)
 
 | ECC Command | Priority | Action | Rationale |
 |-------------|----------|--------|-----------|
-| **/multi-backend** | HIGH | IMPLEMENT | Multi-agent backend implementation. Extends our multi-model system. ECC routes backend work across specialized agents (database, API, business logic) — this is orchestration at a finer grain than our `/orchestrate feature`. |
-| **/multi-frontend** | HIGH | IMPLEMENT | Multi-agent frontend implementation. Same pattern — routes frontend across component, styling, a11y, testing agents. |
-| **/multi-workflow** | HIGH | IMPLEMENT | Multi-agent workflow orchestration. Meta-command that coordinates multi-backend + multi-frontend + integration testing. |
+| ~~**/multi-backend**~~ | ~~HIGH~~ | ~~DONE~~ | ~~Implemented in ECC Gap Phase 1~~ |
+| ~~**/multi-frontend**~~ | ~~HIGH~~ | ~~DONE~~ | ~~Implemented in ECC Gap Phase 1~~ |
+| ~~**/multi-workflow**~~ | ~~HIGH~~ | ~~DONE~~ | ~~Implemented in ECC Gap Phase 1~~ |
 | **/pm2** | LOW | DEFER | PM2 process manager. Node.js-specific deployment tool. Relevant only for Node.js projects. Could add to node-nextjs preset later. |
 | **/setup-pm** | LOW | EVALUATE | Package manager auto-detection (npm/yarn/pnpm/bun). Our `/setup` covers project setup but doesn't auto-detect package managers. Could merge into setup. |
 
@@ -168,7 +171,7 @@ build-fix, checkpoint, code-review, e2e, eval, evolve, go-build, go-review, go-t
 
 | Action | Count | Commands |
 |--------|-------|----------|
-| IMPLEMENT | 3 | /multi-backend, /multi-frontend, /multi-workflow |
+| DONE | 3 | /multi-backend, /multi-frontend, /multi-workflow |
 | DEFER | 1 | /pm2 |
 | EVALUATE (merge into /setup) | 1 | /setup-pm |
 
@@ -290,16 +293,16 @@ Rather than splitting our files to match ECC's structure (which would multiply t
 
 ## IMPLEMENTATION PRIORITY QUEUE
 
-### Phase 1: High-Value Gaps (next sprint)
+### Phase 1: High-Value Gaps (COMPLETE — 2026-02-18)
 
-| # | Type | Component | Est. Effort | Value |
-|---|------|-----------|-------------|-------|
-| 1 | Command | /multi-backend | Medium | Extends multi-agent system |
-| 2 | Command | /multi-frontend | Medium | Extends multi-agent system |
-| 3 | Command | /multi-workflow | Medium | Meta-orchestration |
-| 4 | Skill | strategic-compact | Small | Tactical compaction patterns |
-| 5 | Skill | django-patterns | Small | Fill Django gap |
-| 6 | Rule enrichment | Enrich Python/TS/Go rules with ECC's security + patterns content | Medium | Close rule content gap without splitting files |
+| # | Type | Component | Est. Effort | Status |
+|---|------|-----------|-------------|--------|
+| 1 | Command | /multi-backend | Medium | DONE |
+| 2 | Command | /multi-frontend | Medium | DONE |
+| 3 | Command | /multi-workflow | Medium | DONE |
+| 4 | Skill | strategic-compact | Small | DONE |
+| 5 | Skill | django-patterns | Small | DONE |
+| 6 | Rule enrichment | Enrich Python/TS/Go rules with ECC's security + patterns content | Medium | Remaining (moved to Phase 2) |
 
 ### Phase 2: Medium-Value Gaps
 
