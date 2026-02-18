@@ -53,6 +53,16 @@ mypy src/
 
 ## Taskmaster Workflows
 
+### Workflow Rules (MANDATORY)
+
+1. **PRD first**: ALWAYS create a PRD before generating tasks. Never use `add-task` to build a task list from scratch — write a PRD in `.taskmaster/docs/`, then parse it.
+2. **New tag per phase**: Each workflow phase gets its own tag (e.g., `feature-auth`, `bugfix-api`). Never pollute the `master` tag with phase-specific work.
+3. **Switch tags**: Always `task-master tags use <name>` before running set-status, show, or list — operations target the active tag.
+4. **Expand after parse**: Always run `task-master expand --id=<id>` on complex tasks after parse-prd to generate actionable subtasks.
+5. **Float task count**: Use `--num-tasks 0` with parse-prd to let the AI determine the right number of tasks. Don't hardcode counts.
+
+### Commands
+
 ```bash
 # List tasks for current tag
 task-master list --with-subtasks
@@ -69,8 +79,11 @@ task-master next
 # Expand task into subtasks
 task-master expand --id=<id>
 
-# Parse PRD to generate tasks
-task-master parse-prd <prdfile> [--num-tasks N]
+# Parse PRD to generate tasks (use --num-tasks 0 to let AI decide count)
+task-master parse-prd <prdfile> --num-tasks 0
+
+# Switch tag context
+task-master tags use <tag-name>
 ```
 
 ## Development Workflow
