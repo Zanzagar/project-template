@@ -13,12 +13,14 @@
 | Category | ECC | Ours | ECC-only Gaps | Our Additions |
 |----------|-----|------|---------------|---------------|
 | Agents | 13 | 13 | 0 (name diff only) | 0 |
-| Skills | 43 | 39 | 8 (4 evaluate, 4 skip/defer) | 8 |
-| Commands | 31 | 50 | 2 | 20 |
-| Rules (files) | 23+ | 12 | 17+ (content merged) | 8 |
+| Skills | 43 | 39 | 7 (all skip/defer) | 8 |
+| Commands | 31 | 50 | 1 (defer) | 20 |
+| Rules (files) | 23+ | 12 | 0 (content merged) | 8 |
 | Hooks | ~15 | 17 | 0 behaviors | 6 behaviors |
 | Contexts | 3 | 3 | 0 | 0 |
 | Presets | 0 | 5 | — | 5 |
+
+**Integration status: COMPLETE.** All actionable gaps closed. Remaining items are intentionally skipped (vendor-specific, niche) or deferred (Swift, PM2).
 
 ---
 
@@ -103,12 +105,12 @@ Both repos have 13 agents. One name difference: ECC's `build-error-resolver` = o
 | ~~**cpp-coding-standards**~~ | ~~MEDIUM~~ | ~~DONE~~ | ~~Implemented in ECC Gap Phase 2~~ |
 | ~~**cost-aware-llm-pipeline**~~ | ~~MEDIUM~~ | ~~DONE~~ | ~~Implemented in ECC Gap Phase 2~~ |
 | ~~**regex-vs-llm-structured-text**~~ | ~~MEDIUM~~ | ~~DONE~~ | ~~Implemented in ECC Gap Phase 2~~ |
-| **java-coding-standards** | LOW | EVALUATE | We have `java/coding-standards.md` as a rule + `java-springboot` skill. May have overlap. Fetch ECC's content to see if it adds value beyond our rule. |
-| **springboot-patterns** | LOW | EVALUATE | We have `java-springboot` skill. ECC uses different naming (`springboot-*`). Need to compare content — may be superset. |
-| **springboot-security** | LOW | EVALUATE | We have `spring-boot-security`. Compare content — likely equivalent. |
-| **springboot-tdd** | LOW | EVALUATE | We have `spring-boot-tdd`. Compare content — likely equivalent. |
+| ~~**java-coding-standards**~~ | ~~LOW~~ | ~~RESOLVED~~ | ~~Evaluated Phase 3: Our `java/coding-standards.md` rule auto-loads on .java files (better than on-demand skill). Covers same ground: naming, Spring Boot patterns, Optional, exceptions, Records, Lombok, JUnit 5. No action needed.~~ |
+| ~~**springboot-patterns**~~ | ~~LOW~~ | ~~RESOLVED~~ | ~~Evaluated Phase 3: Our `java-springboot` skill has equivalent core coverage (DI, JPA, security, actuator). ECC adds caching/async/pagination; we add auto-config/profiles/actuator. Complementary — not worth duplicating.~~ |
+| ~~**springboot-security**~~ | ~~LOW~~ | ~~RESOLVED~~ | ~~Evaluated Phase 3: Our `spring-boot-security` skill is equivalent. We have testing patterns + misconfiguration table that ECC lacks. ECC has Bucket4j/Vault detail. Naming difference (`springboot-` vs `spring-boot-`) is cosmetic.~~ |
+| ~~**springboot-tdd**~~ | ~~LOW~~ | ~~RESOLVED~~ | ~~Evaluated Phase 3: Our `spring-boot-tdd` skill is equivalent. We have deeper Mockito patterns + test organization; ECC has JaCoCo config. Parity.~~ |
 | ~~**springboot-verification**~~ | ~~MEDIUM~~ | ~~DONE~~ | ~~Implemented in ECC Gap Phase 2~~ |
-| **coding-standards** (generic) | LOW | SKIP | ECC has a generic coding-standards skill. Our approach uses language-specific rules, which is more token-efficient. Generic standards are already embedded in our core rules. |
+| **coding-standards** (generic) | SKIP | SKIP | ECC has a generic coding-standards skill. Our approach uses language-specific rules, which is more token-efficient. Generic standards are already embedded in our core rules. |
 | **configure-ecc** | SKIP | SKIP | ECC self-configuration. Not applicable to our template. |
 | **continuous-learning** (v1) | SKIP | SKIP | We have v2. v1 is obsolete. |
 | **project-guidelines-example** | SKIP | SKIP | Template/example, not actionable skill content. |
@@ -123,8 +125,8 @@ Both repos have 13 agents. One name difference: ECC's `build-error-resolver` = o
 | Action | Count | Skills |
 |--------|-------|--------|
 | DONE | 6 | strategic-compact, django-patterns, cpp-coding-standards, cost-aware-llm-pipeline, regex-vs-llm-structured-text, springboot-verification |
-| EVALUATE (may merge) | 3 | java-coding-standards, springboot-patterns, springboot-security/tdd |
-| SKIP (justified) | 5 | configure-ecc, continuous-learning-v1, project-guidelines-example, clickhouse-io, nutrient-document-processing |
+| RESOLVED (at parity) | 4 | java-coding-standards, springboot-patterns, springboot-security, springboot-tdd |
+| SKIP (justified) | 5 | coding-standards (generic), configure-ecc, continuous-learning-v1, project-guidelines-example, clickhouse-io, nutrient-document-processing |
 | DEFER | 3 | content-hash-cache-pattern, swift-actor-persistence, swift-protocol-di-testing |
 
 ---
@@ -168,15 +170,15 @@ build-fix, checkpoint, code-review, e2e, eval, evolve, go-build, go-review, go-t
 | ~~**/multi-frontend**~~ | ~~HIGH~~ | ~~DONE~~ | ~~Implemented in ECC Gap Phase 1~~ |
 | ~~**/multi-workflow**~~ | ~~HIGH~~ | ~~DONE~~ | ~~Implemented in ECC Gap Phase 1~~ |
 | **/pm2** | LOW | DEFER | PM2 process manager. Node.js-specific deployment tool. Relevant only for Node.js projects. Could add to node-nextjs preset later. |
-| **/setup-pm** | LOW | EVALUATE | Package manager auto-detection (npm/yarn/pnpm/bun). Our `/setup` covers project setup but doesn't auto-detect package managers. Could merge into setup. |
+| ~~**/setup-pm**~~ | ~~LOW~~ | ~~RESOLVED~~ | ~~Evaluated Phase 3: Node.js-specific package manager detector with JS runtime dependency. Conflicts with our bash-first approach. Lock file detection could trivially be added to node-nextjs preset if needed. Not worth a standalone command.~~ |
 
 ### Command Gap Action Summary
 
 | Action | Count | Commands |
 |--------|-------|----------|
 | DONE | 3 | /multi-backend, /multi-frontend, /multi-workflow |
+| RESOLVED (not needed) | 1 | /setup-pm |
 | DEFER | 1 | /pm2 |
-| EVALUATE (merge into /setup) | 1 | /setup-pm |
 
 ---
 
@@ -322,14 +324,14 @@ Rather than splitting our files to match ECC's structure (which would multiply t
 | -- | Command | /prd-generate (novel — deep research PRD generation) | Medium | DONE |
 | ~~13~~ | ~~Skill~~ | ~~performance-patterns~~ | ~~Small~~ | ~~REMOVED — misclassified gap. ECC's performance.md is about model selection/context, which our context-management.md already covers.~~ |
 
-### Phase 3: Low-Value / Evaluate
+### Phase 3: Low-Value / Evaluate (COMPLETE — 2026-02-18)
 
-| # | Type | Component | Est. Effort | Notes |
-|---|------|-----------|-------------|-------|
-| 14 | Evaluate | java-coding-standards vs our rule | Small | May have overlap |
-| 15 | Evaluate | springboot-* naming vs our spring-boot-* | Small | Content comparison needed |
-| 16 | Evaluate | /setup-pm merge into /setup | Small | Package manager detection |
-| 17 | Skill | content-hash-cache-pattern | Small | Only if web preset needs it |
+| # | Type | Component | Est. Effort | Status |
+|---|------|-----------|-------------|--------|
+| 14 | Evaluate | java-coding-standards vs our rule | Small | RESOLVED — our auto-loading rule is superior |
+| 15 | Evaluate | springboot-* naming vs our spring-boot-* | Small | RESOLVED — content equivalent, naming cosmetic |
+| 16 | Evaluate | /setup-pm merge into /setup | Small | RESOLVED — Node.js-specific, not worth standalone |
+| 17 | Skill | content-hash-cache-pattern | Small | DEFERRED — niche, only if web preset materializes |
 
 ### Intentionally Skipped (not implementing)
 
@@ -349,15 +351,13 @@ Rather than splitting our files to match ECC's structure (which would multiply t
 
 ## HOW TO USE THIS DOCUMENT
 
-When implementing a gap from the priority queue:
+**All integration phases are COMPLETE.** This document is now a reference for:
 
-1. **Fetch ECC's source** for the component: `WebFetch` the raw file from `github.com/affaan-m/everything-claude-code`
-2. **Compare** against any existing overlap in our template
-3. **Adapt** to our conventions (naming, structure, token awareness)
-4. **Document** the decision in this file's Decisions Log section
-5. **Update** counts in TEMPLATE_OVERVIEW.md, CHANGELOG.md, and this file's summary table
+1. **Understanding design decisions** — Why we chose our approach over ECC's (or vice versa) for each component
+2. **Future gap analysis** — If ECC adds new components, compare against this document
+3. **Template evolution** — The DEFER items (Swift skills, PM2, content-hash-cache) can be revisited when relevant presets are requested
 
-When choosing our implementation over ECC's:
+When ECC adds new components:
 - Default to ECC unless you have a strong, specific reason
 - "Our way is different" is NOT sufficient justification
 - "Our way is better because [specific technical reason]" IS sufficient
