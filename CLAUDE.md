@@ -218,6 +218,21 @@ For cost-conscious development or long sessions, use the optimized preset:
 
 This reduces costs 60-80% by capping thinking tokens, compacting context earlier, and using lighter sub-agent models. See `docs/ECC_INTEGRATION.md` for details.
 
+## Status Line
+
+A status line script ships at `.claude/statusline.sh` showing model, git branch, context usage, and session duration:
+
+```
+[Opus] feature/my-branch* │ ctx: ████░░░░░░ 42% │ 1h 15m
+```
+
+Context percentage is color-coded: green (<50%), yellow (50-75%), red (>75%). Zero token cost — runs locally.
+
+**Setup:** Add to `~/.claude/settings.json`:
+```json
+{ "statusLine": { "type": "command", "command": ".claude/statusline.sh" } }
+```
+
 ## Session Persistence
 
 Sessions automatically save summaries on exit (when `session-end.sh` hook is enabled):

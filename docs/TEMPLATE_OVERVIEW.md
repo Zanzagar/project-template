@@ -15,13 +15,14 @@ The template was developed through systematic analysis and integration of best p
 
 **By the numbers:**
 - 13 specialized AI agents
-- 35 skills (domain-specific knowledge modules)
+- 39 skills (domain-specific knowledge modules)
 - 49 slash commands
 - 17 behavior rules (7 core + 5 language-specific + 5 workflow)
-- 15 automation hooks
+- 17 automation hooks
 - 5 project-type presets for one-command scaffolding
 - Multi-model collaboration (Claude + Gemini + Codex)
 - Continuous learning system with cross-session memory
+- Status line with context %, model, branch, and session duration
 
 ---
 
