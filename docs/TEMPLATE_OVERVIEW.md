@@ -15,13 +15,14 @@ The template was developed through systematic analysis and integration of best p
 
 **By the numbers:**
 - 13 specialized AI agents
-- 35 skills (domain-specific knowledge modules)
+- 39 skills (domain-specific knowledge modules)
 - 49 slash commands
 - 17 behavior rules (7 core + 5 language-specific + 5 workflow)
-- 15 automation hooks
+- 17 automation hooks
 - 5 project-type presets for one-command scaffolding
 - Multi-model collaboration (Claude + Gemini + Codex)
 - Continuous learning system with cross-session memory
+- Status line with context %, model, branch, and session duration
 
 ---
 
@@ -80,10 +81,10 @@ The difference is analogous to the difference between giving someone a text edit
 project-template/
 ├── .claude/
 │   ├── agents/          # 13 specialized sub-agents
-│   ├── commands/        # 46 slash commands (user-invocable)
-│   ├── skills/          # 33 domain knowledge modules (on-demand)
+│   ├── commands/        # 49 slash commands (user-invocable)
+│   ├── skills/          # 39 domain knowledge modules (on-demand)
 │   ├── rules/           # 17 behavior rules (auto-loaded)
-│   ├── hooks/           # 15 automation hooks
+│   ├── hooks/           # 17 automation hooks
 │   ├── presets/         # Project-type preset definitions (JSON)
 │   ├── instincts/       # Continuous learning patterns (JSON)
 │   ├── contexts/        # Session mode injection (dev/review/research)
@@ -116,7 +117,7 @@ A critical but often overlooked aspect of LLM-assisted development is **context 
 | Core behavior rules | ~5K | Always (startup) |
 | CLAUDE.md | ~2K | Always (startup) |
 | **Startup overhead** | **~35K** | **Before any work** |
-| Skills (33 total) | 0 | On-demand only |
+| Skills (39 total) | 0 | On-demand only |
 | Presets (5 project types) | 0 | On-demand only |
 | Slash commands | 0 | On-demand only |
 | Language rules | 0 | Only when matching files edited |
@@ -150,7 +151,7 @@ Rather than using one general-purpose model for everything, the template deploys
 
 **Why this matters:** A security review by a dedicated security agent with OWASP training produces categorically better results than asking a general-purpose model "does this code have security issues?" The specialization is in the system prompt, tool access, and model selection — not just the question asked.
 
-### 2. Slash Commands (46)
+### 2. Slash Commands (49)
 
 Commands are user-invocable workflows triggered by typing `/command-name`. They range from simple shortcuts to complex multi-step pipelines:
 
@@ -178,7 +179,7 @@ Commands are user-invocable workflows triggered by typing `/command-name`. They 
 **Infrastructure:**
 `/setup`, `/settings`, `/plugins`, `/mcps`, `/commit`, `/pr`, `/checkpoint`, `/sessions`
 
-### 3. Skills (33 domain knowledge modules)
+### 3. Skills (39 domain knowledge modules)
 
 Skills are **on-demand reference material** that Claude loads only when relevant. They cost zero tokens at startup but provide deep domain knowledge when activated:
 
@@ -526,7 +527,7 @@ The template's development followed a deliberate research-first methodology: stu
 
 **Key implementation decisions:**
 - **Language-specific rules use `paths:` frontmatter** so they load only when matching files are edited. A Python developer never pays the token cost for Go rules. This was our innovation — ECC loads all language rules at startup.
-- **Skills are on-demand** (loaded when Claude detects relevance), not startup-loaded. This means 35 skills contribute exactly 0 tokens to startup overhead. ECC handles this similarly.
+- **Skills are on-demand** (loaded when Claude detects relevance), not startup-loaded. This means 39 skills contribute exactly 0 tokens to startup overhead. ECC handles this similarly.
 - **The instinct system uses confidence scoring** (0.0-1.0) with automatic decay. Unused patterns lose 0.05 confidence per week and are removed when they reach 0. This prevents knowledge rot — outdated patterns fade naturally instead of persisting forever.
 
 **Delivery:** 50 tasks, 250 subtasks total across both phases. All implemented through Claude Code itself — the template was built using the template's own workflow enforcement, which served as both a development tool and a stress test.
@@ -753,4 +754,4 @@ Any student using this template starts their project with the workflow enforceme
 ---
 
 *Built with Claude Code (Anthropic) | Informed by Everything Claude Code (45K+ stars)*
-*Template version 2.2.0 | 13 agents, 35 skills, 49 commands, 17 rules, 15 hooks | 5 project-type presets*
+*Template version 2.3.0 | 13 agents, 39 skills, 49 commands, 17 rules, 17 hooks | 5 project-type presets*

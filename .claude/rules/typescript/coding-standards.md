@@ -176,6 +176,63 @@ type Result<T, E = AppError> =
   | { ok: false; error: E };
 ```
 
+## Security Essentials
+
+### Secrets — Never Hardcode
+```typescript
+// DO: Validate env vars at startup, fail fast
+function requireEnv(key: string): string {
+  const value = process.env[key];
+  if (!value) throw new Error(`Missing required env var: ${key}`);
+  return value;
+}
+
+const DB_URL = requireEnv("DATABASE_URL");
+const API_KEY = requireEnv("API_KEY");
+
+// DON'T: Hardcoded secrets or silent fallbacks
+const API_KEY = "sk-abc123"; // NEVER
+const API_KEY = process.env.API_KEY ?? "default"; // Silent failure
+```
+
+### Input Validation with Zod
+```typescript
+import { z } from "zod";
+
+// Validate at system boundaries (API input, form data, env vars)
+const CreateUserSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(1).max(100),
+  age: z.number().int().positive().optional(),
+});
+
+type CreateUserInput = z.infer<typeof CreateUserSchema>; // DRY: derive type
+
+function createUser(raw: unknown): User {
+  const input = CreateUserSchema.parse(raw); // throws ZodError on invalid
+  return db.users.create(input);
+}
+```
+
+### XSS Prevention
+- Never use `dangerouslySetInnerHTML` without sanitization (use `DOMPurify`)
+- Prefer React's built-in JSX escaping — it handles most cases automatically
+- Sanitize URL inputs: `new URL(input)` to validate before using in `href`
+
+## Immutability
+
+```typescript
+// Prefer spread over mutation
+const updated = { ...user, name: "New Name" }; // NOT: user.name = "New Name"
+const filtered = items.filter(x => x.active);   // NOT: items.splice(...)
+
+// Use Readonly<T> for function params you shouldn't mutate
+function processItems(items: Readonly<Item[]>): Summary {
+  // items.push() would be a type error
+  return items.reduce(/* ... */);
+}
+```
+
 ## Avoid
 
 - `enum` — use `as const` objects or union types instead (better tree-shaking)
@@ -183,3 +240,6 @@ type Result<T, E = AppError> =
 - Non-null assertion `!` — prefer optional chaining or explicit narrowing
 - `Function` type — use specific signatures `(args: T) => R`
 - Barrel files (`index.ts` re-exports) in large projects — they break tree-shaking
+- `console.log` in production code — use a structured logger
+
+See `typescript-patterns` skill for comprehensive patterns reference.

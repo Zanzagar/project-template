@@ -107,12 +107,21 @@ Use for: Simple API questions, single function lookups
 Example: WebFetch to docs.python.org for pathlib usage
 ```
 
+**Tier 2.5 - llms.txt** (lightweight, ~1-5k tokens):
+```
+Use for: Comprehensive library docs when available
+Check: WebFetch <docs-site>/llms.txt (many sites expose this)
+Example: https://www.helius.dev/docs/llms.txt
+Advantage: LLM-optimized format, more complete than single-page
+           WebFetch, cheaper than Context7
+```
+
 **Tier 3 - Context7** (heavy, ~5-20k tokens per query):
 ```
 Reserve for:
 - Complex multi-part queries needing code examples
 - Unfamiliar or rapidly-changing libraries
-- When Tier 1-2 failed to answer
+- When Tier 1-2.5 failed to answer
 ```
 
 **Never say:** "I think the API works like..."

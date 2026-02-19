@@ -13,10 +13,10 @@
 | Category | ECC | Ours | ECC-only Gaps | Our Additions |
 |----------|-----|------|---------------|---------------|
 | Agents | 13 | 13 | 0 (name diff only) | 0 |
-| Skills | 43 | 35 | 12 | 8 |
-| Commands | 31 | 49 | 2 | 19 |
-| Rules (files) | 23+ | 12 | 17+ | 8 |
-| Hooks | ~15 | 15 | 2 behaviors | 4 behaviors |
+| Skills | 43 | 39 | 8 (4 evaluate, 4 skip/defer) | 8 |
+| Commands | 31 | 50 | 2 | 20 |
+| Rules (files) | 23+ | 12 | 17+ (content merged) | 8 |
+| Hooks | ~15 | 17 | 0 behaviors | 6 behaviors |
 | Contexts | 3 | 3 | 0 | 0 |
 | Presets | 0 | 5 | — | 5 |
 
@@ -48,13 +48,15 @@ Both repos have 13 agents. One name difference: ECC's `build-error-resolver` = o
 
 ## SKILLS
 
-### Matched (24 skills present in both)
+### Matched (28 skills present in both)
 
 | Skill | Notes |
 |-------|-------|
 | api-design | |
 | backend-patterns | |
 | continuous-learning-v2 | |
+| cost-aware-llm-pipeline | Added in ECC Gap Phase 2 |
+| cpp-coding-standards | Added in ECC Gap Phase 2 |
 | cpp-testing | |
 | database-migrations | |
 | deployment-patterns | |
@@ -72,7 +74,9 @@ Both repos have 13 agents. One name difference: ECC's `build-error-resolver` = o
 | jpa-patterns | |
 | python-patterns | |
 | python-testing | |
+| regex-vs-llm-structured-text | Added in ECC Gap Phase 2 |
 | security-scan | |
+| springboot-verification | Added in ECC Gap Phase 2 |
 | strategic-compact | Added in ECC Gap Phase 1 |
 | tdd-workflow | |
 | verification-loop | |
@@ -96,14 +100,14 @@ Both repos have 13 agents. One name difference: ECC's `build-error-resolver` = o
 |-----------|----------|--------|-----------|
 | ~~**strategic-compact**~~ | ~~HIGH~~ | ~~DONE~~ | ~~Implemented in ECC Gap Phase 1~~ |
 | ~~**django-patterns**~~ | ~~HIGH~~ | ~~DONE~~ | ~~Implemented in ECC Gap Phase 1~~ |
-| **cpp-coding-standards** | MEDIUM | IMPLEMENT | We have cpp-testing but no C++ coding standards. Incomplete language coverage. |
-| **cost-aware-llm-pipeline** | MEDIUM | IMPLEMENT | Directly relevant to our audience (ML/AI projects). Covers prompt optimization, model selection, caching, rate limiting patterns. |
-| **regex-vs-llm-structured-text** | MEDIUM | IMPLEMENT | Useful decision framework for when to use regex vs LLM for text processing. Novel and practical. |
+| ~~**cpp-coding-standards**~~ | ~~MEDIUM~~ | ~~DONE~~ | ~~Implemented in ECC Gap Phase 2~~ |
+| ~~**cost-aware-llm-pipeline**~~ | ~~MEDIUM~~ | ~~DONE~~ | ~~Implemented in ECC Gap Phase 2~~ |
+| ~~**regex-vs-llm-structured-text**~~ | ~~MEDIUM~~ | ~~DONE~~ | ~~Implemented in ECC Gap Phase 2~~ |
 | **java-coding-standards** | LOW | EVALUATE | We have `java/coding-standards.md` as a rule + `java-springboot` skill. May have overlap. Fetch ECC's content to see if it adds value beyond our rule. |
 | **springboot-patterns** | LOW | EVALUATE | We have `java-springboot` skill. ECC uses different naming (`springboot-*`). Need to compare content — may be superset. |
 | **springboot-security** | LOW | EVALUATE | We have `spring-boot-security`. Compare content — likely equivalent. |
 | **springboot-tdd** | LOW | EVALUATE | We have `spring-boot-tdd`. Compare content — likely equivalent. |
-| **springboot-verification** | MEDIUM | IMPLEMENT | We DON'T have a Spring Boot verification skill. We have django-verification but no equivalent for Spring. |
+| ~~**springboot-verification**~~ | ~~MEDIUM~~ | ~~DONE~~ | ~~Implemented in ECC Gap Phase 2~~ |
 | **coding-standards** (generic) | LOW | SKIP | ECC has a generic coding-standards skill. Our approach uses language-specific rules, which is more token-efficient. Generic standards are already embedded in our core rules. |
 | **configure-ecc** | SKIP | SKIP | ECC self-configuration. Not applicable to our template. |
 | **continuous-learning** (v1) | SKIP | SKIP | We have v2. v1 is obsolete. |
@@ -118,9 +122,7 @@ Both repos have 13 agents. One name difference: ECC's `build-error-resolver` = o
 
 | Action | Count | Skills |
 |--------|-------|--------|
-| DONE | 2 | strategic-compact, django-patterns |
-| IMPLEMENT | 3 | cpp-coding-standards, cost-aware-llm-pipeline, regex-vs-llm-structured-text |
-| IMPLEMENT (after eval) | 1 | springboot-verification |
+| DONE | 6 | strategic-compact, django-patterns, cpp-coding-standards, cost-aware-llm-pipeline, regex-vs-llm-structured-text, springboot-verification |
 | EVALUATE (may merge) | 3 | java-coding-standards, springboot-patterns, springboot-security/tdd |
 | SKIP (justified) | 5 | configure-ecc, continuous-learning-v1, project-guidelines-example, clickhouse-io, nutrient-document-processing |
 | DEFER | 3 | content-hash-cache-pattern, swift-actor-persistence, swift-protocol-di-testing |
@@ -149,6 +151,7 @@ build-fix, checkpoint, code-review, e2e, eval, evolve, go-build, go-review, go-t
 | /plugins | Infrastructure | Plugin management |
 | /pr | Shipping | Create GitHub Pull Request |
 | /prd | Planning | Show/parse PRD documents |
+| /prd-generate | Planning | Deep research PRD generation (novel — ECC has no equivalent) |
 | /research | Research | Structured research workflow |
 | /security-audit | Security | Code-level vulnerability scanning |
 | /settings | Infrastructure | Configure Claude Code settings |
@@ -245,8 +248,8 @@ Rather than splitting our files to match ECC's structure (which would multiply t
 
 | ECC Behavior | Priority | Action | Rationale |
 |-------------|----------|--------|-----------|
-| **PR URL extraction/logging** | MEDIUM | IMPLEMENT | After `git push`, extract PR URL and provide review commands. Nice UX. Simple bash implementation. |
-| **Long-running command tmux reminder** | MEDIUM | IMPLEMENT | Complements our dev-server-blocker. Advisory warning for `npm install`, `pytest`, `cargo build` to use tmux. |
+| ~~**PR URL extraction/logging**~~ | ~~MEDIUM~~ | ~~DONE~~ | ~~Implemented in ECC Gap Phase 2 (pr-url-extract.sh)~~ |
+| ~~**Long-running command tmux reminder**~~ | ~~MEDIUM~~ | ~~DONE~~ | ~~Implemented in ECC Gap Phase 2 (long-running-tmux-hint.sh)~~ |
 | **Package manager auto-detection** | LOW | MERGE INTO /setup | Auto-detect npm/yarn/pnpm/bun. Useful but can be folded into our existing `/setup` command rather than a standalone hook. |
 
 ### Our Hook Additions (ECC doesn't have)
@@ -303,18 +306,20 @@ Rather than splitting our files to match ECC's structure (which would multiply t
 | 3 | Command | /multi-workflow | Medium | DONE |
 | 4 | Skill | strategic-compact | Small | DONE |
 | 5 | Skill | django-patterns | Small | DONE |
-| 6 | Rule enrichment | Enrich Python/TS/Go rules with ECC's security + patterns content | Medium | Remaining (moved to Phase 2) |
+| 6 | Rule enrichment | Enrich Python/TS/Go rules with ECC's security + patterns content | Medium | DONE |
 
-### Phase 2: Medium-Value Gaps
+### Phase 2: Medium-Value Gaps (COMPLETE — 2026-02-18)
 
-| # | Type | Component | Est. Effort | Value |
-|---|------|-----------|-------------|-------|
-| 7 | Skill | cpp-coding-standards | Small | Complete C++ coverage |
-| 8 | Skill | cost-aware-llm-pipeline | Small | Relevant for ML projects |
-| 9 | Skill | regex-vs-llm-structured-text | Small | Decision framework |
-| 10 | Skill | springboot-verification | Small | Complete Spring Boot coverage |
-| 11 | Hook | PR URL extraction | Small | UX improvement |
-| 12 | Hook | Long-running tmux reminder | Small | Safety net |
+| # | Type | Component | Est. Effort | Status |
+|---|------|-----------|-------------|--------|
+| 6 | Rule enrichment | Python/TS/Go security essentials + modern patterns | Medium | DONE |
+| 7 | Skill | cpp-coding-standards | Small | DONE |
+| 8 | Skill | cost-aware-llm-pipeline | Small | DONE |
+| 9 | Skill | regex-vs-llm-structured-text | Small | DONE |
+| 10 | Skill | springboot-verification | Small | DONE |
+| 11 | Hook | PR URL extraction (pr-url-extract.sh) | Small | DONE |
+| 12 | Hook | Long-running tmux reminder (long-running-tmux-hint.sh) | Small | DONE |
+| -- | Command | /prd-generate (novel — deep research PRD generation) | Medium | DONE |
 | ~~13~~ | ~~Skill~~ | ~~performance-patterns~~ | ~~Small~~ | ~~REMOVED — misclassified gap. ECC's performance.md is about model selection/context, which our context-management.md already covers.~~ |
 
 ### Phase 3: Low-Value / Evaluate

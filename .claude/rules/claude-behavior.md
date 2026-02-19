@@ -70,6 +70,8 @@ Use a tiered approach to minimize token usage:
 
 **Tier 2 - WebFetch** (lightweight): For simple lookups to official documentation sites.
 
+**Tier 2.5 - llms.txt** (lightweight): Try `<docs-site>/llms.txt` for LLM-optimized docs. More complete than single-page WebFetch, cheaper than Context7.
+
 **Tier 3 - Context7** (use sparingly): Reserve for complex queries, code examples, or unfamiliar libraries.
 
 Context7 queries inject 5-20k tokens per call. Multiple queries compound quickly.

@@ -38,6 +38,21 @@
                 "type": "command",
                 "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/pre-commit-check.sh",
                 "timeout": 120
+              },
+              {
+                "type": "command",
+                "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/long-running-tmux-hint.sh"
+              }
+            ]
+          }
+        ],
+        "PostToolUse": [
+          {
+            "matcher": "Bash",
+            "hooks": [
+              {
+                "type": "command",
+                "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/pr-url-extract.sh"
               }
             ]
           }
@@ -90,6 +105,21 @@
                 "type": "command",
                 "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/pre-commit-check.sh",
                 "timeout": 120
+              },
+              {
+                "type": "command",
+                "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/long-running-tmux-hint.sh"
+              }
+            ]
+          }
+        ],
+        "PostToolUse": [
+          {
+            "matcher": "Bash",
+            "hooks": [
+              {
+                "type": "command",
+                "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/pr-url-extract.sh"
               }
             ]
           }
@@ -154,6 +184,28 @@
               {
                 "type": "command",
                 "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/session-init.sh"
+              }
+            ]
+          }
+        ],
+        "PreToolUse": [
+          {
+            "matcher": "Bash",
+            "hooks": [
+              {
+                "type": "command",
+                "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/long-running-tmux-hint.sh"
+              }
+            ]
+          }
+        ],
+        "PostToolUse": [
+          {
+            "matcher": "Bash",
+            "hooks": [
+              {
+                "type": "command",
+                "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/pr-url-extract.sh"
               }
             ]
           }

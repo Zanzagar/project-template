@@ -165,6 +165,7 @@ Available commands for common tasks:
 | `/pr [title]` | Create GitHub Pull Request |
 | `/changelog [version]` | Generate changelog from git history |
 | `/prd` | Show/parse PRD documents |
+| `/prd-generate <concept>` | Deep research PRD generation with architecture diagrams |
 | `/generate-tests <file>` | Generate tests for a file |
 | `/security-audit` | Security vulnerability scan (code-level OWASP) |
 | `/optimize <file>` | Performance analysis |
@@ -216,6 +217,21 @@ For cost-conscious development or long sessions, use the optimized preset:
 ```
 
 This reduces costs 60-80% by capping thinking tokens, compacting context earlier, and using lighter sub-agent models. See `docs/ECC_INTEGRATION.md` for details.
+
+## Status Line
+
+A status line script ships at `.claude/statusline.sh` showing model, git branch, context usage, and session duration:
+
+```
+[Opus] feature/my-branch* │ ctx: ████░░░░░░ 42% │ 1h 15m
+```
+
+Context percentage is color-coded: green (<50%), yellow (50-75%), red (>75%). Zero token cost — runs locally.
+
+**Setup:** Add to `~/.claude/settings.json`:
+```json
+{ "statusLine": { "type": "command", "command": ".claude/statusline.sh" } }
+```
 
 ## Session Persistence
 
@@ -280,6 +296,8 @@ Available hooks:
 - **build-analysis.sh** - Advisory analysis of build command output
 - **typescript-check.sh** - Runs tsc --noEmit after editing .ts/.tsx files
 - **dev-server-blocker.sh** - Blocks dev servers outside tmux to prevent terminal capture
+- **pr-url-extract.sh** - Extracts PR creation URL from git push output, suggests review commands
+- **long-running-tmux-hint.sh** - Advisory tmux reminder for long-running commands (npm, pytest, cargo, docker)
 
 See `docs/HOOKS.md` for full documentation.
 

@@ -1,0 +1,74 @@
+# ECC Gap Phase 2: Medium-Value Skills, Rule Enrichment, and Hook Behaviors
+
+## Overview
+
+Close the remaining medium-priority gaps between our template and Everything Claude Code (ECC), as identified in docs/ECC_COMPARISON.md Phase 2 queue. This phase focuses on new skills from ECC's skill library, enriching existing language rules with ECC's security/patterns content, and adding two hook behaviors.
+
+## Context
+
+Phase 1 (merged PR #1) added multi-model commands, strategic-compact skill, django-patterns skill, orchestrate enhancements, and philosophical corrections. Phase 2 addresses the next tier of gaps.
+
+All skills should be fetched from ECC's GitHub repo (affaan-m/everything-claude-code), adapted to our conventions (skill directory structure with SKILL.md, on-demand loading), and documented in ECC_COMPARISON.md.
+
+## Requirements
+
+### 1. Rule Enrichment: Python, TypeScript, Go (Priority: HIGH)
+
+Fetch ECC's per-language rules (python/patterns.md, python/security.md, python/hooks.md, and equivalents for typescript and golang) and merge relevant content INTO our existing consolidated rule files:
+- .claude/rules/python/coding-standards.md
+- .claude/rules/typescript/coding-standards.md
+- .claude/rules/golang/coding-standards.md
+
+Do NOT create new files. Enrich existing files. Keep total token cost per file under ~2K tokens. Only add content that isn't already covered by our existing rules or on-demand skills.
+
+### 2. Skill: cpp-coding-standards (Priority: MEDIUM)
+
+Fetch from ECC: skills/cpp-coding-standards/SKILL.md
+Create at: .claude/skills/cpp-coding-standards/SKILL.md
+We already have cpp-testing but lack C++ coding standards. This completes C++ language coverage.
+
+### 3. Skill: cost-aware-llm-pipeline (Priority: MEDIUM)
+
+Fetch from ECC: skills/cost-aware-llm-pipeline/SKILL.md
+Create at: .claude/skills/cost-aware-llm-pipeline/SKILL.md
+Covers prompt optimization, model selection/routing, caching, rate limiting, budget tracking for LLM-powered applications. Relevant for our AI/ML audience.
+
+### 4. Skill: regex-vs-llm-structured-text (Priority: MEDIUM)
+
+Fetch from ECC: skills/regex-vs-llm-structured-text/SKILL.md
+Create at: .claude/skills/regex-vs-llm-structured-text/SKILL.md
+Decision framework for when to use regex vs LLM for text processing. Novel and practical.
+
+### 5. Skill: springboot-verification (Priority: MEDIUM)
+
+Fetch from ECC: skills/springboot-verification/SKILL.md
+Create at: .claude/skills/springboot-verification/SKILL.md
+We have django-verification but no Spring Boot equivalent. Completes Java/Spring Boot coverage alongside existing spring-boot-tdd and spring-boot-security skills.
+
+### 6. Hook: PR URL Extraction (Priority: MEDIUM)
+
+After `git push` output, extract PR creation URL and provide review commands. Implement as a PostToolUse hook for Bash commands matching `git push`. Simple bash implementation in .claude/hooks/. Add to settings presets.
+
+### 7. Hook: Long-Running Command tmux Reminder (Priority: MEDIUM)
+
+PreToolUse advisory hook for Bash commands matching long-running patterns (npm install, pip install, pytest, cargo build, make, docker build). Warns user to consider tmux if not already in a tmux session. Complements existing dev-server-blocker.sh. Simple bash implementation.
+
+### 8. Documentation Updates
+
+- Update docs/ECC_COMPARISON.md: Mark Phase 2 items as DONE, update summary counts
+- Update docs/TEMPLATE_OVERVIEW.md: Update skill/hook counts
+- Update CLAUDE.md if any new slash commands are added
+
+## Success Criteria
+
+- All 4 new skills load on demand (0 startup tokens)
+- Language rule files remain under ~2K tokens each after enrichment
+- Both hooks function correctly in safe/thorough/optimized presets
+- ECC_COMPARISON.md accurately reflects new state
+- No startup token regression
+
+## Out of Scope
+
+- Phase 3 items (java-coding-standards evaluation, springboot-* naming, /setup-pm merge, content-hash-cache-pattern)
+- New rules files (enrich existing only)
+- Changes to agent definitions

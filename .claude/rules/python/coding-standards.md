@@ -392,6 +392,68 @@ class Config:
     MAX_WORKERS = int(os.getenv("MAX_WORKERS", "4"))
 ```
 
+## Security Essentials
+
+### Secrets — Never Hardcode
+```python
+# DO: Environment variables with python-dotenv
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+API_KEY = os.environ["API_KEY"]  # KeyError if missing = good
+
+# DON'T: Hardcoded secrets, .get() with default for secrets
+API_KEY = "sk-abc123"  # NEVER
+API_KEY = os.getenv("API_KEY", "default")  # Silent failure
+```
+
+### Input Validation at Boundaries
+```python
+# Validate external input; trust internal code
+from pathlib import Path
+
+def read_user_file(user_path: str, allowed_dir: Path) -> str:
+    resolved = Path(user_path).resolve()
+    if not resolved.is_relative_to(allowed_dir):
+        raise ValueError("Path traversal blocked")
+    return resolved.read_text()
+```
+
+### SQL Safety
+```python
+# DO: Parameterized queries (ORM or raw)
+cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+
+# DON'T: String interpolation in SQL
+cursor.execute(f"SELECT * FROM users WHERE id = {user_id}")  # INJECTION
+```
+
+Run `bandit -r src/` for static security analysis. See `/security-audit` for comprehensive scanning.
+
+## Modern Patterns (3.9+)
+
+```python
+# Protocol-based duck typing (structural subtyping)
+from typing import Protocol
+
+class Renderable(Protocol):
+    def render(self) -> str: ...
+
+def display(item: Renderable) -> None:  # Any object with .render() works
+    print(item.render())
+
+# Frozen dataclasses for immutable value objects
+from dataclasses import dataclass
+
+@dataclass(frozen=True, slots=True)
+class Coordinate:
+    lat: float
+    lon: float
+```
+
+See `python-patterns` skill for comprehensive patterns reference.
+
 ## Key Conventions
 
 1. Begin projects with clear problem definition
