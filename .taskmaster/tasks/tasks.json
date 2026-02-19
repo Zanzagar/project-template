@@ -900,179 +900,196 @@
   "ecc-gap-p2": {
     "tasks": [
       {
-        "id": 1,
+        "id": "1",
         "title": "Enrich Python coding-standards.md with ECC security and patterns content",
         "description": "Fetch ECC's python/patterns.md, python/security.md, and python/hooks.md from the ECC GitHub repo, then merge relevant content INTO the existing .claude/rules/python/coding-standards.md file. Keep total file under ~2K tokens. Only add content not already covered by existing rules or on-demand skills.",
         "details": "Implementation steps:\n\n1. WebFetch ECC's Python rule files from github.com/affaan-m/everything-claude-code:\n   - skills/python/patterns.md\n   - skills/python/security.md\n   - skills/python/hooks.md (if exists)\n\n2. Read existing .claude/rules/python/coding-standards.md (~400 lines, ~1.5K tokens)\n\n3. Identify content gaps - ECC content NOT already in our file or covered by skills:\n   - Security patterns (input validation, SQL injection prevention, secrets handling)\n   - Advanced patterns (metaclasses, descriptors, async context managers)\n   - Framework hooks (Django signals, FastAPI dependencies)\n\n4. Merge using sections that maintain structure:\n   ```markdown\n   ## Security Patterns\n   ### Input Validation\n   ### SQL Safety\n   ### Secrets Handling\n   \n   ## Advanced Patterns\n   ### Async Context Managers\n   ### Protocol Classes (3.8+)\n   ```\n\n5. Token budget: Current ~1.5K, target <2K after enrichment (~500 tokens to add)\n\n6. Do NOT add content that duplicates:\n   - python-testing skill\n   - python-patterns skill\n   - security-scan skill\n   - django-security skill",
         "testStrategy": "1. Verify file token count stays under 2K (use `wc -w` * 1.3 as rough estimate)\n2. Verify no duplicate content with existing skills (Grep for key phrases in .claude/skills/)\n3. Verify file still loads correctly (syntax check for YAML frontmatter)\n4. Verify paths: frontmatter still matches Python file patterns",
         "priority": "high",
         "dependencies": [],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-18T23:46:48.532Z"
       },
       {
-        "id": 2,
+        "id": "2",
         "title": "Enrich TypeScript coding-standards.md with ECC security and patterns content",
         "description": "Fetch ECC's typescript/patterns.md, typescript/security.md, and typescript/hooks.md from the ECC GitHub repo, then merge relevant content INTO the existing .claude/rules/typescript/coding-standards.md file. Keep total file under ~2K tokens.",
         "details": "Implementation steps:\n\n1. WebFetch ECC's TypeScript rule files from github.com/affaan-m/everything-claude-code:\n   - skills/typescript/patterns.md\n   - skills/typescript/security.md\n   - skills/typescript/hooks.md (if exists)\n\n2. Read existing .claude/rules/typescript/coding-standards.md (~186 lines)\n\n3. Identify content gaps - ECC content NOT already covered:\n   - Security patterns (XSS prevention in React, sanitization, CSP headers)\n   - Advanced patterns (conditional types, mapped types, template literals)\n   - React hooks patterns (useCallback, useMemo, custom hooks)\n   - Node.js patterns (if present)\n\n4. Merge using sections:\n   ```markdown\n   ## Security Patterns\n   ### XSS Prevention\n   ### Input Sanitization\n   \n   ## Advanced Type Patterns\n   ### Conditional Types\n   ### Template Literal Types\n   \n   ## React Hooks Best Practices\n   ### Dependency Arrays\n   ### Custom Hook Patterns\n   ```\n\n5. Token budget: Current ~700 tokens, target <2K after enrichment\n\n6. Do NOT add content that duplicates:\n   - typescript-patterns skill\n   - frontend-patterns skill\n   - e2e-testing skill",
         "testStrategy": "1. Verify file token count stays under 2K\n2. Verify no duplicate content with typescript-patterns and frontend-patterns skills\n3. Verify YAML frontmatter paths: still correctly matches .ts/.tsx files\n4. Syntax validation of any code examples added",
         "priority": "high",
         "dependencies": [],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-18T23:48:07.592Z"
       },
       {
-        "id": 3,
+        "id": "3",
         "title": "Enrich Go coding-standards.md with ECC security and patterns content",
         "description": "Fetch ECC's golang/patterns.md, golang/security.md, and golang/hooks.md from the ECC GitHub repo, then merge relevant content INTO the existing .claude/rules/golang/coding-standards.md file. Keep total file under ~2K tokens.",
         "details": "Implementation steps:\n\n1. WebFetch ECC's Go rule files from github.com/affaan-m/everything-claude-code:\n   - skills/golang/patterns.md\n   - skills/golang/security.md\n   - skills/golang/hooks.md (if exists)\n\n2. Read existing .claude/rules/golang/coding-standards.md (~228 lines)\n\n3. Identify content gaps - ECC content NOT already covered:\n   - Security patterns (input validation, SQL injection with database/sql, secrets)\n   - Advanced patterns (generics 1.18+, error wrapping strategies)\n   - HTTP middleware patterns\n   - Graceful shutdown patterns\n\n4. Merge using sections:\n   ```markdown\n   ## Security Patterns\n   ### SQL Parameter Binding\n   ### Input Validation\n   ### Secrets Management\n   \n   ## Generics Patterns (Go 1.18+)\n   ### Type Constraints\n   ### Generic Data Structures\n   \n   ## HTTP Middleware\n   ### Chi/Gorilla Patterns\n   ### Context Propagation\n   ```\n\n5. Token budget: Current ~850 tokens, target <2K after enrichment\n\n6. Do NOT add content that duplicates:\n   - golang-patterns skill\n   - golang-testing skill\n   - api-design skill",
         "testStrategy": "1. Verify file token count stays under 2K\n2. Verify no duplicate content with golang-patterns and golang-testing skills\n3. Verify YAML frontmatter paths: correctly matches .go files\n4. Syntax validation of Go code examples",
         "priority": "high",
         "dependencies": [],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-18T23:49:20.827Z"
       },
       {
-        "id": 4,
+        "id": "4",
         "title": "Create cpp-coding-standards skill",
         "description": "Fetch ECC's skills/cpp-coding-standards/SKILL.md and create .claude/skills/cpp-coding-standards/SKILL.md. We have cpp-testing but lack C++ coding standards, so this completes C++ language coverage.",
         "details": "Implementation steps:\n\n1. WebFetch ECC's cpp-coding-standards skill from:\n   github.com/affaan-m/everything-claude-code/blob/main/skills/cpp-coding-standards/SKILL.md\n\n2. Create directory: .claude/skills/cpp-coding-standards/\n\n3. Adapt to our skill format:\n   ```markdown\n   ---\n   name: cpp-coding-standards\n   description: Modern C++ idioms, memory management, RAII, smart pointers, move semantics, const correctness\n   ---\n   # C++ Coding Standards Skill\n   \n   ## Modern C++ (C++17/20)\n   ### Smart Pointers\n   ### Move Semantics\n   ### std::optional and std::variant\n   \n   ## Memory Safety\n   ### RAII Pattern\n   ### Resource Ownership\n   \n   ## Const Correctness\n   ### Member Functions\n   ### References and Pointers\n   ```\n\n4. Ensure content complements cpp-testing skill (no overlap on testing patterns)\n\n5. Focus on coding standards, not testing (testing is in cpp-testing skill)",
         "testStrategy": "1. Verify skill file follows frontmatter format (name, description fields)\n2. Verify no content overlap with cpp-testing skill\n3. Verify skill loads on-demand (0 startup tokens) by checking it's not in any auto-load paths\n4. Verify code examples compile conceptually (modern C++ syntax)",
         "priority": "medium",
         "dependencies": [],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-18T23:55:18.170Z"
       },
       {
-        "id": 5,
+        "id": "5",
         "title": "Create cost-aware-llm-pipeline skill",
         "description": "Fetch ECC's skills/cost-aware-llm-pipeline/SKILL.md and create .claude/skills/cost-aware-llm-pipeline/SKILL.md. Covers prompt optimization, model selection/routing, caching, rate limiting, budget tracking for LLM-powered applications.",
         "details": "Implementation steps:\n\n1. WebFetch ECC's cost-aware-llm-pipeline skill from:\n   github.com/affaan-m/everything-claude-code/blob/main/skills/cost-aware-llm-pipeline/SKILL.md\n\n2. Create directory: .claude/skills/cost-aware-llm-pipeline/\n\n3. Adapt to our skill format:\n   ```markdown\n   ---\n   name: cost-aware-llm-pipeline\n   description: Prompt optimization, model selection/routing, caching, rate limiting, budget tracking for LLM-powered applications\n   ---\n   # Cost-Aware LLM Pipeline Skill\n   \n   ## Prompt Optimization\n   ### Token Reduction Strategies\n   ### Prompt Caching\n   ### System Prompt Efficiency\n   \n   ## Model Selection & Routing\n   ### Task-to-Model Mapping\n   ### Fallback Chains\n   ### Quality vs Cost Trade-offs\n   \n   ## Caching Strategies\n   ### Semantic Caching\n   ### Response Caching\n   ### Embedding Caches\n   \n   ## Rate Limiting\n   ### Token Budgets\n   ### Request Throttling\n   ### Circuit Breakers\n   \n   ## Budget Tracking\n   ### Cost Attribution\n   ### Usage Monitoring\n   ### Alerts and Limits\n   ```\n\n4. Relevant for our AI/ML audience building LLM applications\n\n5. Complements our existing context-management.md rule (which focuses on Claude Code context, not application LLM pipelines)",
         "testStrategy": "1. Verify skill file follows frontmatter format\n2. Verify content is distinct from context-management.md rule (different scope)\n3. Verify practical code examples for Python/TypeScript LLM integrations\n4. Verify skill loads on-demand",
         "priority": "medium",
         "dependencies": [],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-18T23:55:34.101Z"
       },
       {
-        "id": 6,
+        "id": "6",
         "title": "Create regex-vs-llm-structured-text skill",
         "description": "Fetch ECC's skills/regex-vs-llm-structured-text/SKILL.md and create .claude/skills/regex-vs-llm-structured-text/SKILL.md. Decision framework for when to use regex vs LLM for text processing.",
         "details": "Implementation steps:\n\n1. WebFetch ECC's regex-vs-llm-structured-text skill from:\n   github.com/affaan-m/everything-claude-code/blob/main/skills/regex-vs-llm-structured-text/SKILL.md\n\n2. Create directory: .claude/skills/regex-vs-llm-structured-text/\n\n3. Adapt to our skill format:\n   ```markdown\n   ---\n   name: regex-vs-llm-structured-text\n   description: Decision framework for when to use regex vs LLM for text processing tasks\n   ---\n   # Regex vs LLM Decision Framework\n   \n   ## When to Use Regex\n   ### Structured Formats (JSON, XML, CSV)\n   ### Known Patterns (emails, URLs, dates)\n   ### Performance-Critical Paths\n   ### Deterministic Requirements\n   \n   ## When to Use LLM\n   ### Natural Language Understanding\n   ### Ambiguous Formats\n   ### Classification Tasks\n   ### Entity Extraction from Prose\n   \n   ## Decision Matrix\n   | Characteristic | Regex | LLM |\n   |---------------|-------|-----|\n   | Structured input | ✓ | |\n   | Ambiguous input | | ✓ |\n   | Speed critical | ✓ | |\n   | Semantic understanding | | ✓ |\n   \n   ## Hybrid Approaches\n   ### Regex Pre-filtering + LLM\n   ### LLM Extraction + Regex Validation\n   ```\n\n4. Novel and practical skill for the AI/ML audience\n\n5. Include concrete code examples showing both approaches",
         "testStrategy": "1. Verify skill file follows frontmatter format\n2. Verify decision matrix is clear and actionable\n3. Verify code examples show both regex and LLM approaches\n4. Verify skill loads on-demand",
         "priority": "medium",
         "dependencies": [],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-18T23:55:50.401Z"
       },
       {
-        "id": 7,
+        "id": "7",
         "title": "Create springboot-verification skill",
         "description": "Fetch ECC's skills/springboot-verification/SKILL.md and create .claude/skills/springboot-verification/SKILL.md. We have django-verification but no Spring Boot equivalent, completing Java/Spring Boot coverage.",
         "details": "Implementation steps:\n\n1. WebFetch ECC's springboot-verification skill from:\n   github.com/affaan-m/everything-claude-code/blob/main/skills/springboot-verification/SKILL.md\n\n2. Create directory: .claude/skills/springboot-verification/\n\n3. Adapt to our skill format, mirroring django-verification structure:\n   ```markdown\n   ---\n   name: springboot-verification\n   description: Spring Boot health checks, actuator endpoints, configuration validation, migration verification, startup validation\n   ---\n   # Spring Boot Verification Skill\n   \n   ## Actuator Health Checks\n   ### Built-in Health Indicators\n   ### Custom Health Indicators\n   ### Readiness vs Liveness Probes\n   \n   ## Configuration Validation\n   ### @ConfigurationProperties Validation\n   ### Profile-Specific Settings\n   ### Required Properties Check\n   \n   ## Database Migration Verification\n   ### Flyway Migration Checks\n   ### Liquibase Validation\n   ### Schema Verification Tests\n   \n   ## Startup Validation\n   ### ApplicationRunner Checks\n   ### Bean Validation\n   ### Dependency Injection Verification\n   \n   ## Full Verification Pipeline\n   ```\n\n4. Complements existing spring-boot-tdd and spring-boot-security skills",
         "testStrategy": "1. Verify skill file follows frontmatter format\n2. Verify no content overlap with spring-boot-tdd or spring-boot-security skills\n3. Verify parallel structure to django-verification skill\n4. Verify Java/Kotlin code examples are syntactically correct",
         "priority": "medium",
         "dependencies": [],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-18T23:56:06.587Z"
       },
       {
-        "id": 8,
+        "id": "8",
         "title": "Create PR URL extraction hook",
         "description": "Implement a PostToolUse hook for Bash commands matching git push that extracts PR creation URL from output and provides review commands. Simple bash implementation in .claude/hooks/.",
         "details": "Implementation steps:\n\n1. Create .claude/hooks/pr-url-extract.sh:\n   ```bash\n   #!/bin/bash\n   # pr-url-extract.sh - Extract PR URL from git push output\n   # Hook type: PostToolUse (matcher: \"Bash\")\n   # Triggers when: After Bash command completes\n   #\n   # Extracts PR creation URLs from git push output and provides\n   # helpful review commands.\n   \n   INPUT=$(cat)\n   \n   COMMAND=$(echo \"$INPUT\" | jq -r '.tool_input.command // empty')\n   OUTPUT=$(echo \"$INPUT\" | jq -r '.output // empty')\n   \n   # Only process git push commands\n   [[ \"$COMMAND\" != *\"git push\"* ]] && exit 0\n   \n   # Extract PR URL patterns:\n   # GitHub: \"Create a pull request for 'branch' on GitHub by visiting:\"\n   # GitLab: \"To create a merge request for...\"\n   PR_URL=$(echo \"$OUTPUT\" | grep -oE 'https://github\\.com/[^/]+/[^/]+/pull/new/[^[:space:]]+' | head -1)\n   if [ -z \"$PR_URL\" ]; then\n     PR_URL=$(echo \"$OUTPUT\" | grep -oE 'https://github\\.com/[^/]+/[^/]+/compare/[^[:space:]]+' | head -1)\n   fi\n   if [ -z \"$PR_URL\" ]; then\n     PR_URL=$(echo \"$OUTPUT\" | grep -oE 'https://gitlab\\.com/[^[:space:]]+merge_requests/new[^[:space:]]*' | head -1)\n   fi\n   \n   [ -z \"$PR_URL\" ] && exit 0\n   \n   # Output helpful message\n   echo \"PR creation URL detected: $PR_URL\"\n   echo \"\"\n   echo \"Review commands:\"\n   echo \"  gh pr create --web     # Open PR creation in browser\"\n   echo \"  gh pr view --web       # View existing PR\"\n   echo \"  /pr                    # Create PR via Claude Code\"\n   \n   exit 0\n   ```\n\n2. Make executable: chmod +x .claude/hooks/pr-url-extract.sh\n\n3. Add to settings-presets.json for safe, thorough, and optimized presets",
         "testStrategy": "1. Test with mock git push output containing GitHub PR URL\n2. Test with mock git push output containing GitLab MR URL\n3. Test with git push output without PR URL (should exit silently)\n4. Verify hook exits with code 0 (advisory, never blocks)\n5. Verify settings presets include the hook",
         "priority": "medium",
         "dependencies": [],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-18T23:57:43.029Z"
       },
       {
-        "id": 9,
+        "id": "9",
         "title": "Create long-running command tmux reminder hook",
         "description": "Implement a PreToolUse advisory hook for Bash commands matching long-running patterns (npm install, pip install, pytest, cargo build, make, docker build). Warns user to consider tmux if not already in a tmux session.",
         "details": "Implementation steps:\n\n1. Create .claude/hooks/long-running-tmux-hint.sh:\n   ```bash\n   #!/bin/bash\n   # long-running-tmux-hint.sh - Advisory tmux reminder for long commands\n   # Hook type: PreToolUse (matcher: \"Bash\")\n   # Triggers when: Claude attempts to run a Bash command\n   #\n   # Detects potentially long-running commands and suggests tmux\n   # if not already in a tmux session. Complements dev-server-blocker.sh.\n   #\n   # Exit codes:\n   #   0 = Allow the command (advisory only, never blocks)\n   \n   INPUT=$(cat)\n   \n   COMMAND=$(echo \"$INPUT\" | jq -r '.tool_input.command // empty')\n   [ -z \"$COMMAND\" ] && exit 0\n   \n   # Already in tmux? No reminder needed.\n   [ -n \"$TMUX\" ] && exit 0\n   \n   # Detect long-running command patterns\n   IS_LONG_RUNNING=false\n   REASON=\"\"\n   case \"$COMMAND\" in\n     *\"npm install\"*|*\"npm ci\"*|*\"pnpm install\"*|*\"yarn install\"*)\n       IS_LONG_RUNNING=true; REASON=\"Package installation can take several minutes\" ;;\n     *\"pip install\"*|*\"poetry install\"*|*\"pdm install\"*)\n       IS_LONG_RUNNING=true; REASON=\"Python dependency installation can be slow\" ;;\n     *\"pytest\"*|*\"python -m pytest\"*)\n       IS_LONG_RUNNING=true; REASON=\"Test suites can run for minutes\" ;;\n     *\"cargo build\"*|*\"cargo test\"*)\n       IS_LONG_RUNNING=true; REASON=\"Rust compilation can be slow\" ;;\n     *\"make\"*|*\"cmake --build\"*)\n       IS_LONG_RUNNING=true; REASON=\"Build processes can take time\" ;;\n     *\"docker build\"*|*\"docker-compose up\"*)\n       IS_LONG_RUNNING=true; REASON=\"Container builds can be slow\" ;;\n     *\"go build\"*|*\"go test\"*)\n       IS_LONG_RUNNING=true; REASON=\"Go builds with dependencies can take time\" ;;\n   esac\n   \n   [ \"$IS_LONG_RUNNING\" = false ] && exit 0\n   \n   # Advisory message (never blocks)\n   echo \"ADVISORY: This command may take a while.\"\n   echo \"$REASON.\"\n   echo \"\"\n   echo \"Consider running in tmux for session persistence:\"\n   echo \"  tmux new-session -d '$COMMAND'\"\n   echo \"  tmux attach\"\n   echo \"\"\n   echo \"(This is just a suggestion - the command will proceed.)\"\n   \n   exit 0\n   ```\n\n2. Make executable: chmod +x .claude/hooks/long-running-tmux-hint.sh\n\n3. Add to settings-presets.json for safe, thorough, and optimized presets\n\n4. Note: Unlike dev-server-blocker.sh (exit 2 to block), this hook is advisory only (always exit 0)",
         "testStrategy": "1. Test with npm install command (should show advisory)\n2. Test with pytest command (should show advisory)\n3. Test with simple command like 'ls' (should not show advisory)\n4. Test with TMUX env var set (should not show advisory)\n5. Verify hook always exits 0 (advisory, never blocks)\n6. Verify settings presets include the hook",
         "priority": "medium",
         "dependencies": [],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-18T23:57:47.533Z"
       },
       {
-        "id": 10,
+        "id": "10",
         "title": "Update settings presets with new hooks",
         "description": "Add the new PR URL extraction and long-running tmux reminder hooks to the safe, thorough, and optimized presets in .claude/settings-presets.json.",
         "details": "Implementation steps:\n\n1. Read .claude/settings-presets.json\n\n2. Add PostToolUse hook for pr-url-extract.sh to safe, thorough, and optimized presets:\n   ```json\n   \"PostToolUse\": [\n     {\n       \"matcher\": \"Bash\",\n       \"hooks\": [\n         {\n           \"type\": \"command\",\n           \"command\": \"$CLAUDE_PROJECT_DIR/.claude/hooks/pr-url-extract.sh\"\n         }\n       ]\n     }\n   ]\n   ```\n\n3. Add PreToolUse hook for long-running-tmux-hint.sh to safe, thorough, and optimized presets:\n   - Must be added to existing PreToolUse array alongside pre-commit-check.sh\n   ```json\n   \"PreToolUse\": [\n     {\n       \"matcher\": \"Bash\",\n       \"hooks\": [\n         {\n           \"type\": \"command\",\n           \"command\": \"$CLAUDE_PROJECT_DIR/.claude/hooks/long-running-tmux-hint.sh\"\n         }\n       ]\n     }\n   ]\n   ```\n\n4. Ensure hooks are in correct order:\n   - PreToolUse: protect-sensitive-files, pre-commit-check, long-running-tmux-hint\n   - PostToolUse: pr-url-extract",
         "testStrategy": "1. Validate JSON syntax of settings-presets.json\n2. Verify hooks are in all three presets (safe, thorough, optimized)\n3. Verify hook paths use $CLAUDE_PROJECT_DIR variable\n4. Test /settings safe and verify hooks are applied",
         "priority": "medium",
         "dependencies": [
-          8,
-          9
+          "8",
+          "9"
         ],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-18T23:58:08.613Z"
       },
       {
-        "id": 11,
+        "id": "11",
         "title": "Update ECC_COMPARISON.md with Phase 2 completion",
         "description": "Update docs/ECC_COMPARISON.md to mark Phase 2 items as DONE, update summary counts, and adjust the implementation priority queue.",
         "details": "Implementation steps:\n\n1. Update Summary table:\n   - Skills: Update count from 35 to 39 (adding 4 new skills)\n   - Hooks: Update hook behaviors count (adding 2 new behaviors)\n\n2. Update SKILLS section:\n   - Add cpp-coding-standards to \"Matched\" table\n   - Add cost-aware-llm-pipeline to \"Matched\" table\n   - Add regex-vs-llm-structured-text to \"Matched\" table\n   - Add springboot-verification to \"Matched\" table\n   - Mark these as DONE in \"ECC Has, We Don't\" section\n\n3. Update Skill Gap Action Summary:\n   - Move cpp-coding-standards from IMPLEMENT to DONE\n   - Move cost-aware-llm-pipeline from IMPLEMENT to DONE\n   - Move regex-vs-llm-structured-text from IMPLEMENT to DONE\n   - Move springboot-verification from IMPLEMENT to DONE\n\n4. Update HOOKS section:\n   - Add PR URL extraction to \"Our Hook Additions\" (if ECC doesn't have it) or \"Matched\"\n   - Add Long-running tmux reminder to appropriate section\n   - Mark these as DONE in Hook Behavior Gaps table\n\n5. Update RULES section:\n   - Note that Python, TypeScript, Go rules have been enriched with ECC content\n   - Update Rule Gap Action Plan status\n\n6. Update Implementation Priority Queue:\n   - Mark Phase 2 items 7-12 as DONE\n   - Move Rule enrichment item 6 from \"Remaining\" to DONE\n\n7. Update \"Last updated\" date at top of file",
         "testStrategy": "1. Verify all counts are mathematically consistent\n2. Verify no items are listed in both DONE and TODO sections\n3. Verify Phase 2 section shows all items complete\n4. Verify summary table matches detailed section counts",
         "priority": "medium",
         "dependencies": [
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9",
+          "10"
         ],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-19T00:07:18.205Z"
       },
       {
-        "id": 12,
+        "id": "12",
         "title": "Update TEMPLATE_OVERVIEW.md with new counts",
         "description": "Update docs/TEMPLATE_OVERVIEW.md to reflect the new skill count (39 skills) and hook count (17 hooks with 2 new behaviors).",
         "details": "Implementation steps:\n\n1. Update \"By the numbers\" section:\n   - Skills: 35 → 39 skills\n   - Update hooks count if changed\n\n2. Update Architecture Overview section:\n   - Skills count in the tree structure\n   - Any hook-related counts\n\n3. Update Token Budget Awareness table if skill loading description changes\n\n4. Update Component Deep Dive sections:\n   - Add new skills to Skills list (Section 3)\n   - Add new hooks to Hooks list if enumerated\n\n5. Update version number if this constitutes a minor release\n\n6. Update the footer:\n   - \"Template version X.X.X | 13 agents, 39 skills, ...\"",
         "testStrategy": "1. Verify skill count matches actual .claude/skills/ directory count\n2. Verify hook count matches actual .claude/hooks/ directory count\n3. Verify \"By the numbers\" summary is consistent with detailed sections\n4. Verify no outdated counts remain in document",
         "priority": "medium",
         "dependencies": [
-          4,
-          5,
-          6,
-          7,
-          8,
-          9
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9"
         ],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-19T00:07:23.902Z"
       },
       {
-        "id": 13,
+        "id": "13",
         "title": "Update CLAUDE.md if slash commands were added",
         "description": "Review CLAUDE.md to verify all new skills are properly referenced and no new slash commands need documentation. Update the slash commands table if any new commands were added as part of Phase 2.",
         "details": "Implementation steps:\n\n1. Read CLAUDE.md and review the Slash Commands table\n\n2. Check if any new skills require associated slash commands:\n   - cpp-coding-standards: No (coding standards are auto-loaded rules pattern, not slash commands)\n   - cost-aware-llm-pipeline: No (skill loaded on-demand, no dedicated command)\n   - regex-vs-llm-structured-text: No (decision framework skill, no dedicated command)\n   - springboot-verification: Consider if /verify-spring command is needed\n\n3. If any new commands are added, update the Slash Commands table\n\n4. Verify skills are listed in appropriate sections if the document has a skills inventory\n\n5. Update any counts in CLAUDE.md that reference skill or hook totals\n\n6. Note: The PRD specifies \"Update CLAUDE.md if any new slash commands are added\" - most Phase 2 items are skills/hooks, not commands, so this may be a no-op",
         "testStrategy": "1. Verify slash command table is complete and accurate\n2. Verify any skill counts in CLAUDE.md match actual counts\n3. Verify no orphaned references to old skill names",
         "priority": "low",
         "dependencies": [
-          4,
-          5,
-          6,
-          7
+          "4",
+          "5",
+          "6",
+          "7"
         ],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-02-19T00:07:29.615Z"
       }
     ],
     "metadata": {
-      "created": "2026-02-18T23:17:33.059Z",
-      "updated": "2026-02-18T23:17:33.059Z",
-      "description": "Tasks for ecc-gap-p2 context"
+      "version": "1.0.0",
+      "lastModified": "2026-02-19T00:07:29.616Z",
+      "taskCount": 13,
+      "completedCount": 13,
+      "tags": [
+        "ecc-gap-p2"
+      ]
     }
   }
 }
