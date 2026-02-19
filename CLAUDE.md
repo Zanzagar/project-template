@@ -165,6 +165,7 @@ Available commands for common tasks:
 | `/pr [title]` | Create GitHub Pull Request |
 | `/changelog [version]` | Generate changelog from git history |
 | `/prd` | Show/parse PRD documents |
+| `/prd-generate <concept>` | Deep research PRD generation with architecture diagrams |
 | `/generate-tests <file>` | Generate tests for a file |
 | `/security-audit` | Security vulnerability scan (code-level OWASP) |
 | `/optimize <file>` | Performance analysis |
@@ -280,6 +281,8 @@ Available hooks:
 - **build-analysis.sh** - Advisory analysis of build command output
 - **typescript-check.sh** - Runs tsc --noEmit after editing .ts/.tsx files
 - **dev-server-blocker.sh** - Blocks dev servers outside tmux to prevent terminal capture
+- **pr-url-extract.sh** - Extracts PR creation URL from git push output, suggests review commands
+- **long-running-tmux-hint.sh** - Advisory tmux reminder for long-running commands (npm, pytest, cargo, docker)
 
 See `docs/HOOKS.md` for full documentation.
 
