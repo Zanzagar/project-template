@@ -2,7 +2,7 @@
 
 **Author:** Corey Hoydic
 **Date:** February 13, 2026
-**Version:** 2.2.0
+**Version:** 2.3.0
 **Repository:** github.com/Zanzagar/project-template
 
 ---
@@ -17,7 +17,7 @@ The template was developed through systematic analysis and integration of best p
 - 13 specialized AI agents
 - 39 skills (domain-specific knowledge modules)
 - 49 slash commands
-- 17 behavior rules (7 core + 5 language-specific + 5 workflow)
+- 13 behavior rules (8 core + 5 language-specific)
 - 17 automation hooks
 - 5 project-type presets for one-command scaffolding
 - Multi-model collaboration (Claude + Gemini + Codex)
@@ -55,7 +55,7 @@ Here's what they don't realize happened:
 | **Memory** | Every session starts from zero. The AI forgets your architecture, conventions, and past decisions. | Persistent session summaries, work logs, instinct system, and CLAUDE.md carry context across sessions indefinitely. |
 | **Discipline** | The AI writes whatever you ask for, including insecure code, untested features, and broken commits. | TDD enforcement (Superpowers deletes untested code), security gates, conventional commit rules, and verification pipelines make bad practices harder than good ones. |
 | **Resources** | 50K+ tokens consumed by unused tools at startup. Quality degrades silently mid-session with no recovery. | Token-conscious design (35K startup, 165K working). Strategic compaction, tiered documentation lookups, and on-demand skill loading maximize working context. |
-| **Context** | Generic "textbook" code that doesn't fit the project's patterns, framework idioms, or architectural decisions. | 17 behavior rules, 33 domain skills, and language-specific coding standards teach the AI your project's conventions. |
+| **Context** | Generic "textbook" code that doesn't fit the project's patterns, framework idioms, or architectural decisions. | 13 behavior rules, 39 domain skills, and language-specific coding standards teach the AI your project's conventions. |
 | **Specialization** | One general-purpose model handles security review, architecture planning, test generation, and documentation with equal (shallow) depth. | 13 purpose-built agents with appropriate model tiers, tool access, and domain training produce categorically deeper results in each specialty. |
 
 ### What a well-configured template provides
@@ -83,7 +83,7 @@ project-template/
 │   ├── agents/          # 13 specialized sub-agents
 │   ├── commands/        # 49 slash commands (user-invocable)
 │   ├── skills/          # 39 domain knowledge modules (on-demand)
-│   ├── rules/           # 17 behavior rules (auto-loaded)
+│   ├── rules/           # 13 behavior rules (auto-loaded)
 │   ├── hooks/           # 17 automation hooks
 │   ├── presets/         # Project-type preset definitions (JSON)
 │   ├── instincts/       # Continuous learning patterns (JSON)
@@ -92,12 +92,17 @@ project-template/
 │   └── work-log.md      # Cross-session decision ledger
 ├── .taskmaster/         # Task Master integration (AI task management)
 ├── scripts/
-│   ├── setup-preset.sh  # One-command project scaffolding
-│   ├── manage-mcps.sh   # MCP server management
-│   └── manage-plugins.sh # Plugin management
+│   ├── init-project.sh    # Initialize local .claude/ structure (symlinks or copies)
+│   ├── setup-preset.sh    # One-command project scaffolding
+│   ├── smoke-test.sh      # Validate template overlay deployments
+│   ├── sync-template.sh   # Sync/adopt template updates into existing projects
+│   ├── manage-mcps.sh     # MCP server management
+│   └── manage-plugins.sh  # Plugin management
 ├── docs/
 │   ├── TEMPLATE_OVERVIEW.md
+│   ├── TEMPLATE_OVERLAY_FRICTION.md  # Overlay testing results and fix status
 │   ├── ECC_INTEGRATION.md
+│   ├── ECC_COMPARISON.md
 │   ├── SECURITY.md
 │   ├── MCP_SETUP.md
 │   ├── PLUGINS.md
@@ -197,7 +202,7 @@ Skills are **on-demand reference material** that Claude loads only when relevant
 
 **Infrastructure:** api-design, deployment-patterns, docker-patterns
 
-### 4. Behavior Rules (17)
+### 4. Behavior Rules (13)
 
 Rules are **auto-loaded constraints** that define how Claude behaves. They're the "constitution" of the template:
 
@@ -209,6 +214,7 @@ Rules are **auto-loaded constraints** that define how Claude behaves. They're th
 - **context-management.md** — Thinking modes, compaction strategy, session persistence
 - **proactive-steering.md** — Project co-pilot behaviors, scope management, milestone tracking
 - **authority-hierarchy.md** — Rules > Instincts > Defaults precedence
+- **superpowers-integration.md** — Overrides Superpowers brainstorming→writing-plans routing to use PRD→Task Master pipeline instead
 
 **Language Rules (loaded only when editing matching files):**
 - Python, TypeScript, Go, Java, Frontend (React/Vue/Svelte)
@@ -625,6 +631,26 @@ The first step beyond ECC feature parity: **one-command project scaffolding.** P
 
 **Why this matters for adoption:** A student can now clone the template, run one command, and have a fully configured project with the right directory structure, dev commands, linting configuration, and skill activation for their stack. The 30-minute manual setup becomes a 30-second command.
 
+#### v3.0 Phase 2: Template Overlay Infrastructure (Completed)
+
+Real-world overlay testing on three projects (analog_image_generator, rideshare-rescue, postiz-social-automation) revealed a **critical architectural finding**: Claude Code's parent-directory traversal registers rules and CLAUDE.md from parent directories, but does NOT register commands, skills, or hooks. This meant all 49 slash commands and 39 skills were silently broken for any project that didn't have its own local `.claude/` directory.
+
+**What was built to fix this:**
+
+| Component | Description |
+|-----------|-------------|
+| `scripts/init-project.sh` | Bootstraps local `.claude/` structure. Auto-detects nested projects (creates symlinks) vs standalone projects (copies files). Handles 6 subdirs: rules, commands, skills, agents, contexts, hooks. Idempotent, supports `--dry-run`, `--force`, `--mode`. |
+| `scripts/smoke-test.sh` | Validates template overlay deployments. 8 checks (rules, commands, skills, agents, contexts, hooks, CLAUDE.md, .gitignore) with CRITICAL/WARN distinction. Uses `find -L` to follow symlinks. |
+| `.claude/rules/superpowers-integration.md` | Rule override fixing a workflow conflict: Superpowers brainstorming skill hard-routed to `writing-plans`, bypassing the template's PRD → Task Master pipeline. Rules take precedence per authority hierarchy, so this override is enforced. |
+| `session-init.sh` enhancements | Detects missing local commands/skills at session start, shows CRITICAL warning with fix instructions. |
+| `/setup` Step 0 | Setup wizard now initializes local `.claude/` structure before all other setup steps. |
+| `sync-template.sh` enhancements | `adopt` mode now copies all `.claude/` subdirectories, not just curated file lists. |
+| `docs/TEMPLATE_OVERLAY_FRICTION.md` | Friction log documenting all 3 overlay tests, findings, and fix status. |
+
+**Key architectural insight:** The correct workflow for the template is: brainstorm → PRD → parse-prd → analyze-complexity → expand → TDD per task. The Superpowers plugin's brainstorming skill previously bypassed this by routing directly to its own `writing-plans` skill. The `superpowers-integration.md` rule corrects this at the authority hierarchy level.
+
+See `docs/TEMPLATE_OVERLAY_FRICTION.md` for the complete overlay testing results and friction pattern tracker.
+
 ### Future Roadmap (v3.0+)
 
 #### Phase 1: Journel Server Deployment
@@ -754,4 +780,4 @@ Any student using this template starts their project with the workflow enforceme
 ---
 
 *Built with Claude Code (Anthropic) | Informed by Everything Claude Code (45K+ stars)*
-*Template version 2.3.0 | 13 agents, 39 skills, 49 commands, 17 rules, 17 hooks | 5 project-type presets*
+*Template version 2.3.0 | 13 agents, 39 skills, 49 commands, 13 rules, 17 hooks | 5 project-type presets*
