@@ -44,6 +44,10 @@ TARGET_DIRS=("rules" "commands" "skills" "agents" "contexts" "hooks")
 # Minimum command count to identify a directory as a template
 MIN_TEMPLATE_COMMANDS=10
 
+# Minimum number of TARGET_DIRS subdirectories that must exist to qualify as a template
+# Prevents false positives from partial .claude/ setups (e.g., projects with only commands/)
+MIN_TEMPLATE_SUBDIRS=4
+
 # Max parent levels to walk when auto-detecting
 MAX_PARENT_DEPTH=5
 
@@ -107,7 +111,38 @@ log_dry() {
 
 # --- Auto-Detection ---
 
-# Walk parent directories looking for a template with >MIN_TEMPLATE_COMMANDS commands
+# Check if a directory qualifies as a full template
+# Requires both sufficient commands AND sufficient subdirectory coverage
+is_valid_template() {
+    local dir="$1"
+
+    # Check 1: Must have enough commands
+    if [ ! -d "$dir/.claude/commands" ]; then
+        return 1
+    fi
+    local cmd_count
+    cmd_count=$(find "$dir/.claude/commands" -maxdepth 1 -name "*.md" -type f 2>/dev/null | wc -l)
+    if [ "$cmd_count" -le "$MIN_TEMPLATE_COMMANDS" ]; then
+        return 1
+    fi
+
+    # Check 2: Must have enough of the target subdirectories present
+    # This prevents false positives from partial .claude/ setups (e.g., a parent
+    # project that has commands/ and skills/ but is missing agents/, hooks/, rules/)
+    local subdir_count=0
+    for subdir in "${TARGET_DIRS[@]}"; do
+        if [ -d "$dir/.claude/$subdir" ]; then
+            subdir_count=$((subdir_count + 1))
+        fi
+    done
+    if [ "$subdir_count" -lt "$MIN_TEMPLATE_SUBDIRS" ]; then
+        return 1
+    fi
+
+    return 0
+}
+
+# Walk parent directories looking for a valid template
 find_template_parent() {
     local dir="$PROJECT_DIR"
     local depth=0
@@ -116,13 +151,9 @@ find_template_parent() {
         dir="$(dirname "$dir")"
         depth=$((depth + 1))
 
-        if [ -d "$dir/.claude/commands" ]; then
-            local cmd_count
-            cmd_count=$(find "$dir/.claude/commands" -maxdepth 1 -name "*.md" -type f 2>/dev/null | wc -l)
-            if [ "$cmd_count" -gt "$MIN_TEMPLATE_COMMANDS" ]; then
-                echo "$dir"
-                return 0
-            fi
+        if is_valid_template "$dir"; then
+            echo "$dir"
+            return 0
         fi
     done
     return 1
