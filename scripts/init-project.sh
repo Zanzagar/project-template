@@ -24,17 +24,22 @@
 #   hooks/      - Automation hooks (session-init, pre-commit, etc.)
 #
 # What it does NOT touch:
-#   rules/      - Already inherit from parent directories
 #   instincts/  - User-specific learned patterns
 #   sessions/   - Runtime session data
 #   plugins/    - User-installed plugins
+#
+# Note on rules/:
+#   Rules inherit from parent directories in Claude Code, so nested projects
+#   don't need local copies. However, standalone projects (copy mode) DO need
+#   rules copied locally since there's no parent to inherit from.
 
 set -e
 
 # --- Constants ---
 
 # Directories to initialize (order doesn't matter)
-TARGET_DIRS=("commands" "skills" "agents" "contexts" "hooks")
+# rules/ is included because standalone projects need them (no parent inheritance)
+TARGET_DIRS=("rules" "commands" "skills" "agents" "contexts" "hooks")
 
 # Minimum command count to identify a directory as a template
 MIN_TEMPLATE_COMMANDS=10
