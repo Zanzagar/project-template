@@ -187,20 +187,67 @@ Parent-directory traversal does **NOT** work for:
 
 ---
 
+## Fixes Applied (2026-02-20)
+
+Branch: `fix/workflow-integration-and-overlay-friction`
+
+### CRITICAL: Commands/skills don't inherit from parent
+
+**Root cause:** Claude Code's parent-directory traversal registers rules and CLAUDE.md but NOT commands, skills, or hooks.
+
+**Fix: `scripts/init-project.sh`** — Creates local `.claude/` structure automatically.
+- Auto-detects nested vs standalone projects
+- Nested (child of template): creates symlinks to parent `.claude/` subdirs
+- Standalone: copies files from template path
+- Handles 5 subdirs: `commands/`, `skills/`, `agents/`, `contexts/`, `hooks/`
+- Does NOT touch `rules/` (already inherits)
+- Options: `--mode symlink|copy`, `--template PATH`, `--force`, `--dry-run`
+
+**Supporting fixes:**
+- **`session-init.sh`** — Now detects missing local commands/skills at session start, shows CRITICAL warning with fix instructions
+- **`/setup` (setup.md)** — Added "Step 0: Initialize Local `.claude/` Structure" before all other steps
+- **`sync-template.sh`** — `adopt` mode now copies all `.claude/` subdirectories (commands, skills, agents, contexts, hooks)
+
+### HIGH: Smoke test false positives
+
+**Root cause:** Previous static checks only verified "do files exist in parent directory?" which doesn't mean Claude Code registers them.
+
+**Fix: `scripts/smoke-test.sh`** — New verification script.
+- Checks LOCAL presence (directory or symlink), not just parent
+- Distinguishes CRITICAL failures (commands/skills missing) from WARNINGS (hooks, .gitignore)
+- Uses `find -L` to follow symlinks correctly when counting files
+- 8 checks: rules, commands, skills, agents, contexts, hooks, CLAUDE.md, .gitignore
+
+### MEDIUM: Hooks not auto-wired
+
+**Partially fixed.** `init-project.sh` creates the hooks directory (symlink or copy), and `session-init.sh` now warns when hooks aren't configured. Full auto-wiring still requires running `/settings safe` — this is by design (hooks modify shell behavior, so explicit opt-in is appropriate).
+
+### MEDIUM: No onboarding prompt for new projects
+
+**Fixed.** `session-init.sh` now detects missing local commands/skills and shows a clear warning with instructions to run `./scripts/init-project.sh` or `/setup`.
+
+### META: Superpowers workflow bypass
+
+**Root cause:** Superpowers brainstorming skill hard-routes to `writing-plans`, bypassing PRD → Task Master pipeline entirely.
+
+**Fix: `.claude/rules/superpowers-integration.md`** — Rule override (rules take precedence over skill instructions per authority hierarchy). Defines correct flow: brainstorm → PRD → parse-prd → analyze-complexity → expand → TDD per task.
+
+---
+
 ## Friction Pattern Tracker
 
 Tracks recurring themes across multiple tests. Update counts as new tests are added.
 
 | Pattern | Occurrences | Severity | Status |
 |---------|-------------|----------|--------|
-| **Commands/skills don't inherit from parent** | **1/3 (but masked in 2/3)** | **CRITICAL** | **Root cause of most friction — local `.claude/` is REQUIRED** |
-| Hooks not auto-wired | 3/3 | Medium | **Confirmed pattern** — add to `/setup` flow |
-| No onboarding/discovery prompt | 1/3 | Medium | Greenfield users don't know what's available |
-| `.gitignore` missing template entries | 1/3 | Low | Template workflows create uncommittable files |
-| Smoke test false positives (file presence ≠ runtime) | 1/3 | High | Future tests must include live skill invocation |
-| Skill/command shadowing (child overrides parent) | 1/3 | Medium | Only with pre-existing `.claude/` content |
-| Duplicate entries in listing | 1/3 | Low | Only with pre-existing `.claude/` content |
-| Sensitive data in `settings.local.json` | 1/3 | High | Only with pre-existing `.claude/` content |
+| **Commands/skills don't inherit from parent** | **1/3 (but masked in 2/3)** | **CRITICAL** | **FIXED** — `init-project.sh` creates local symlinks/copies |
+| Hooks not auto-wired | 3/3 | Medium | **MITIGATED** — `init-project.sh` creates hooks dir; `/settings safe` still required for activation |
+| No onboarding/discovery prompt | 1/3 | Medium | **FIXED** — `session-init.sh` warns when commands/skills missing |
+| `.gitignore` missing template entries | 1/3 | Low | **FIXED** — template `.gitignore` includes `settings.local.json`, `.claude/sessions/`, `.claude/instincts/` |
+| Smoke test false positives (file presence ≠ runtime) | 1/3 | High | **FIXED** — `smoke-test.sh` checks LOCAL presence with `find -L` |
+| Skill/command shadowing (child overrides parent) | 1/3 | Medium | **Open** — Claude Code behavior, not fixable at template level |
+| Duplicate entries in listing | 1/3 | Low | **Open** — Claude Code behavior |
+| Sensitive data in `settings.local.json` | 1/3 | High | **MITIGATED** — in `.gitignore`; `protect-sensitive-files.sh` hook catches if enabled |
 | Command namespace collision | 0/3 | — | No issue |
 | CLAUDE.md section conflicts | 0/3 | — | No issue |
 | Rule loading failures | 0/3 | — | No issue |
@@ -208,4 +255,4 @@ Tracks recurring themes across multiple tests. Update counts as new tests are ad
 
 ---
 
-*Add new test sections above the Friction Pattern Tracker. Update the tracker after each test.*
+*Add new test sections above the Fixes Applied section. Update the tracker after each test.*
