@@ -1344,12 +1344,12 @@
           "6",
           "9"
         ],
-        "status": "in-progress",
+        "status": "done",
         "subtasks": [],
         "complexity": 2,
         "recommendedSubtasks": 0,
         "expansionPrompt": "Update TEMPLATE_OVERLAY_FRICTION.md friction tracker table with fix status. Update CLAUDE.md if rule counts changed. Add references to new scripts. Verify all component counts are accurate.",
-        "updatedAt": "2026-02-20T05:42:12.072Z"
+        "updatedAt": "2026-02-20T05:55:51.470Z"
       },
       {
         "id": "11",
@@ -1364,7 +1364,7 @@
           "8",
           "9"
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -1433,7 +1433,8 @@
         ],
         "complexity": 6,
         "recommendedSubtasks": 5,
-        "expansionPrompt": "Break down into: 1) Test analog_image_generator (existing project with local .claude/ - smoke-test should PASS, init-project should skip), 2) Test rideshare-rescue (pre-existing .claude/ content - verify shadowing behavior unchanged), 3) Test postiz-social-automation (remove symlinks, verify FAIL, run init-project, verify PASS), 4) Create and test standalone project (outside template tree, verify copy mode), 5) Document all results and edge cases discovered."
+        "expansionPrompt": "Break down into: 1) Test analog_image_generator (existing project with local .claude/ - smoke-test should PASS, init-project should skip), 2) Test rideshare-rescue (pre-existing .claude/ content - verify shadowing behavior unchanged), 3) Test postiz-social-automation (remove symlinks, verify FAIL, run init-project, verify PASS), 4) Create and test standalone project (outside template tree, verify copy mode), 5) Document all results and edge cases discovered.",
+        "updatedAt": "2026-02-20T06:02:39.672Z"
       },
       {
         "id": "12",
@@ -1455,9 +1456,9 @@
     ],
     "metadata": {
       "version": "1.0.0",
-      "lastModified": "2026-02-20T05:42:12.073Z",
+      "lastModified": "2026-02-20T06:02:39.672Z",
       "taskCount": 12,
-      "completedCount": 10,
+      "completedCount": 12,
       "tags": [
         "overlay-fixes"
       ]
