@@ -41,6 +41,33 @@ List available presets by running:
 
 ---
 
+### Step 0: Initialize Local `.claude/` Structure
+
+Before anything else, ensure the project has locally-registered commands and skills. Claude Code only registers commands and skills from LOCAL `.claude/` directories — parent-directory inheritance works for rules and CLAUDE.md, but NOT for commands or skills. Without this step, all slash commands will fail with "Unknown skill".
+
+```bash
+# Check for local commands dir (directory or symlink)
+test -d .claude/commands -o -L .claude/commands && echo "commands: OK" || echo "commands: MISSING"
+test -d .claude/skills -o -L .claude/skills && echo "skills: OK" || echo "skills: MISSING"
+```
+
+If either is missing:
+
+1. **If `scripts/init-project.sh` exists** (project is within or has the template scripts):
+   ```bash
+   ./scripts/init-project.sh
+   ```
+   This auto-detects whether to create symlinks (nested project) or copies (standalone).
+
+2. **If `scripts/init-project.sh` doesn't exist** (standalone project without scripts):
+   - Ask the user: "Where is the project-template? (local path or git URL)"
+   - If local path: `TEMPLATE_PATH=/path/to/template ./scripts/init-project.sh`
+   - If git URL: Clone the template to a temp dir and copy `.claude/` subdirectories (commands, skills, agents, contexts, hooks)
+
+If both are already present, skip to Step 1.
+
+---
+
 ### Step 1: Detect Project State
 
 Check what already exists:
@@ -126,6 +153,12 @@ If a preset matches, suggest: "A preset is available for this stack. Run `/setup
 #### For Adopting Template:
 
 1. **Preserve existing work** - DO NOT modify existing code
+
+1.5. **Initialize `.claude/` structure** (if not already done by Step 0):
+   ```bash
+   ./scripts/init-project.sh
+   ```
+   Creates symlinks (nested) or copies (standalone) for commands, skills, agents, contexts, and hooks.
 
 2. **Update CLAUDE.md**:
    - Customize with existing project details

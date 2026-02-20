@@ -414,6 +414,63 @@ for file in "${FILES_TO_SYNC[@]}"; do
     fi
 done
 
+# Full directory sync for adopt mode
+# Copies ALL files from template .claude/ subdirectories (not just curated lists)
+sync_full_directories() {
+    local template="$1"
+    local subdirs=("commands" "skills" "agents" "contexts" "hooks")
+
+    echo ""
+    echo -e "${BOLD}Syncing full .claude/ directories...${NC}"
+
+    for subdir in "${subdirs[@]}"; do
+        local source_dir="$template/.claude/$subdir"
+        local dest_dir=".claude/$subdir"
+
+        if [ ! -d "$source_dir" ]; then
+            echo -e "  ${YELLOW}Skip:${NC} .claude/$subdir/ (not in template)"
+            continue
+        fi
+
+        mkdir -p "$dest_dir"
+        local new_count=0
+        local updated_count=0
+        local same_count=0
+
+        while IFS= read -r -d '' file; do
+            local rel="${file#$source_dir/}"
+            local dest="$dest_dir/$rel"
+            mkdir -p "$(dirname "$dest")"
+
+            if [ ! -f "$dest" ]; then
+                new_count=$((new_count + 1))
+                if [ "$DRY_RUN" = false ]; then
+                    cp "$file" "$dest"
+                fi
+            elif ! diff -q "$file" "$dest" > /dev/null 2>&1; then
+                updated_count=$((updated_count + 1))
+                if [ "$DRY_RUN" = false ] && [ "$FORCE" = true ]; then
+                    cp "$file" "$dest"
+                fi
+            else
+                same_count=$((same_count + 1))
+            fi
+        done < <(find "$source_dir" -type f -print0)
+
+        local total=$((new_count + updated_count + same_count))
+        if [ "$DRY_RUN" = true ]; then
+            echo -e "  ${BLUE}Preview:${NC} .claude/$subdir/ — $total files ($new_count new, $updated_count changed, $same_count same)"
+        else
+            echo -e "  ${GREEN}Synced:${NC} .claude/$subdir/ — $total files ($new_count new, $updated_count updated, $same_count unchanged)"
+        fi
+    done
+}
+
+# Run full directory sync for adopt mode (after individual file sync)
+if [ "$COMMAND" = "adopt" ]; then
+    sync_full_directories "$TEMPLATE_PATH"
+fi
+
 echo ""
 if [ "$DRY_RUN" = true ]; then
     echo "Dry run complete. No files were modified."

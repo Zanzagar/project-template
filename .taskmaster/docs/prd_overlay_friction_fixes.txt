@@ -1,0 +1,187 @@
+# Template Overlay Friction Fixes
+
+## Overview
+Fix the CRITICAL and HIGH friction issues discovered during template overlay testing across 3 real projects. The primary issue: Claude Code's parent-directory traversal does NOT register commands or skills from parent `.claude/` directories, silently breaking all 50 slash commands for new projects. Secondary issues include false-positive smoke tests, unwired hooks, and missing onboarding guidance.
+
+## Context
+Template overlay testing (documented in `docs/TEMPLATE_OVERLAY_FRICTION.md`) revealed that Claude Code inheritance is partial:
+- **Rules** (`.claude/rules/`) and **CLAUDE.md** inherit from parent directories automatically
+- **Commands**, **skills**, **hooks**, **agents**, and **contexts** do NOT inherit — they must exist locally (as real directories or symlinks)
+
+Tests 1 and 2 masked this because they had pre-existing local `.claude/` content. Test 3 (greenfield project with no local `.claude/`) exposed the gap: every slash command listed in CLAUDE.md returned "Unknown skill."
+
+### Related files
+- `docs/TEMPLATE_OVERLAY_FRICTION.md` — Full friction log with 3 test results
+- `scripts/sync-template.sh` — Existing template sync tool (copies individual files)
+- `.claude/hooks/session-init.sh` — Session startup hook (detects project state)
+- `.claude/commands/setup.md` — Setup wizard command
+- `.claude/rules/superpowers-integration.md` — Workflow integration rule (just added)
+
+## Architecture
+
+### Component Interaction Flow
+
+```mermaid
+graph TB
+    subgraph "New Project Setup"
+        A[User runs /setup] --> B{init-project.sh}
+        B --> C{Auto-detect mode}
+        C -->|Nested under template| D[Create symlinks]
+        C -->|Standalone project| E[Copy from template]
+        D --> F[Local .claude/ ready]
+        E --> F
+    end
+
+    subgraph "Session Startup"
+        G[session-init.sh fires] --> H{Check local .claude/}
+        H -->|commands/ missing| I[CRITICAL warning + suggest fix]
+        H -->|commands/ present| J[Normal startup flow]
+    end
+
+    subgraph "Standalone Adoption"
+        K[User runs sync-template.sh adopt] --> L[Copy ALL .claude/ subdirs]
+        L --> F
+    end
+
+    subgraph "Verification"
+        M[smoke-test.sh] --> N{Check LOCAL dirs}
+        N -->|Symlink or dir exists| O[PASS - count items]
+        N -->|Missing| P[FAIL - not registered]
+    end
+```
+
+### Key Architecture Decisions
+
+**Decision 1: Symlinks for nested, copies for standalone**
+- Alternatives: Always copy, always symlink, git submodules
+- Rationale: Symlinks keep nested projects in sync with template automatically (zero maintenance). Copies are needed for standalone projects that can't rely on relative paths. Git submodules add too much complexity for `.claude/` infrastructure.
+
+**Decision 2: init-project.sh as the single entry point**
+- Alternatives: Inline in `/setup`, multiple scripts (init-nested.sh + init-standalone.sh)
+- Rationale: One script with auto-detection is simpler to document and maintain. `/setup` calls it, `sync-template.sh` can delegate to it, and users can run it directly.
+
+**Decision 3: Don't touch rules/ directory**
+- Alternatives: Symlink/copy rules too for consistency
+- Rationale: Rules already inherit via parent-directory traversal. Copying them would create duplicate loading. Symlinking would be redundant.
+
+**Decision 4: Smoke test checks LOCAL presence, not file existence**
+- Alternatives: Try to invoke a skill via Claude Code CLI
+- Rationale: We can't programmatically invoke Claude Code from a bash script to test runtime skill registration. But checking for LOCAL `.claude/commands/` (dir or symlink, not parent) is a reliable proxy — the friction log confirmed that local presence = registration.
+
+## Technology Stack
+
+### Core
+| Technology | Version | Purpose | Documentation |
+|------------|---------|---------|---------------|
+| Bash | 5.x | Script implementation | Built-in |
+| GNU coreutils | Standard | ln, cp, readlink, realpath | Built-in |
+| Python 3 | 3.10+ | os.path.relpath for symlink calculation | Built-in |
+
+### Supporting
+| Tool | Purpose | Notes |
+|------|---------|-------|
+| `find` | Directory traversal in sync-template.sh | For counting files in copied dirs |
+| `diff` | Detecting changed files during sync | Already used in sync-template.sh |
+| `stat` | File age checking in smoke-test.sh | Cross-platform (GNU/BSD) |
+
+## Requirements
+
+### 1. Project Initialization Script (`scripts/init-project.sh`)
+Core deliverable that fixes the CRITICAL inheritance gap.
+
+- Req 1.1: Auto-detect whether the current project is nested under a template parent directory by walking parent directories looking for `.claude/commands/` with >10 command files
+- Req 1.2: In nested mode, create symlinks from project `.claude/<subdir>` to the template's `.claude/<subdir>` using relative paths (not absolute)
+- Req 1.3: In standalone mode, copy entire `.claude/` subdirectories from a template path specified by `--template PATH`, `$TEMPLATE_PATH` env var, or default `~/projects/project-template`
+- Req 1.4: Handle these 5 subdirectories: `commands/`, `skills/`, `agents/`, `contexts/`, `hooks/`
+- Req 1.5: Do NOT touch: `rules/` (already inherits), `instincts/` (user-specific), `sessions/` (runtime), `plugins/` (user-installed), `evals/`, `examples/`, `presets/`
+- Req 1.6: Be idempotent — skip existing directories or symlinks with informational message
+- Req 1.7: Support `--force` flag to recreate (remove existing + create new)
+- Req 1.8: Support `--dry-run` flag to preview without changes
+- Req 1.9: Support `--mode symlink|copy` to override auto-detection
+- Req 1.10: Create `.claude/` directory if it doesn't exist
+- Req 1.11: Print clear summary of what was created (symlink targets or copy counts)
+- Req 1.12: Exit with non-zero status if template source cannot be found
+- Req 1.13: Warn (don't error) if a subdirectory exists but is a real directory in symlink mode (suggests pre-existing content that may shadow template)
+
+### 2. Session Init Enhancement (`.claude/hooks/session-init.sh`)
+Early warning system for missing local `.claude/` structure.
+
+- Req 2.1: Add check for LOCAL `.claude/commands/` presence (directory OR symlink, not parent)
+- Req 2.2: Add check for LOCAL `.claude/skills/` presence (directory OR symlink, not parent)
+- Req 2.3: If either is missing, add to CRITICAL_ISSUES array: "Slash commands not registered"
+- Req 2.4: Add to SETUP_NEEDED array: actionable fix command (`./scripts/init-project.sh` or `/setup`)
+- Req 2.5: Existing session-init behavior must not change — only ADD new checks
+- Req 2.6: The check must work for both real directories and symlinks (use `-d` OR `-L` tests)
+
+### 3. Setup Wizard Update (`.claude/commands/setup.md`)
+Guided path that ensures new projects get working commands/skills.
+
+- Req 3.1: Add new "Step 0: Initialize Local .claude/ Structure" before existing Step 1
+- Req 3.2: Step 0 checks for local commands/ and skills/ presence
+- Req 3.3: If missing, run `./scripts/init-project.sh` automatically
+- Req 3.4: If init-project.sh doesn't exist (standalone without scripts/), provide manual instructions
+- Req 3.5: Include explanation of WHY this step is needed (parent inheritance gap)
+- Req 3.6: Update the "For Adopting Template" section to include init-project.sh step
+
+### 4. Sync Template Enhancement (`scripts/sync-template.sh`)
+Full-directory sync for standalone project adoption.
+
+- Req 4.1: Add `sync_full_directories()` function that copies ALL files from template `.claude/` subdirs
+- Req 4.2: The `adopt` command must use full-directory sync for: commands/, skills/, agents/, contexts/, hooks/
+- Req 4.3: Full-directory sync must create subdirectory structure (e.g., `.claude/skills/debugging/SKILL.md`)
+- Req 4.4: Dry-run mode must show file counts per directory and list new/changed files
+- Req 4.5: Existing curated file lists (STOCK_COMMANDS, etc.) remain for selective `sync` command
+- Req 4.6: `adopt` mode must call `sync_full_directories()` IN ADDITION to existing individual file sync (for rules, docs, etc.)
+
+### 5. Smoke Test Script (`scripts/smoke-test.sh`)
+Verification tool that catches the false-positive problem.
+
+- Req 5.1: Accept optional project directory argument (default: current directory)
+- Req 5.2: Check LOCAL `.claude/commands/` presence (dir or symlink) with item count
+- Req 5.3: Check LOCAL `.claude/skills/` presence (dir or symlink) with item count
+- Req 5.4: Check LOCAL `.claude/agents/` presence (dir or symlink) with item count
+- Req 5.5: Check LOCAL `.claude/contexts/` presence with item count
+- Req 5.6: Check LOCAL `.claude/hooks/` presence with item count
+- Req 5.7: Check rules presence (can be local OR inherited from parent — walk up to find)
+- Req 5.8: Check CLAUDE.md presence and customization status
+- Req 5.9: Check .gitignore for template-required entries (settings.local.json, sessions/, instincts/)
+- Req 5.10: Output PASS/FAIL per check with counts/details
+- Req 5.11: Output summary line: "X/Y checks passed"
+- Req 5.12: Exit with non-zero status if any CRITICAL checks fail (commands, skills)
+- Req 5.13: Distinguish between CRITICAL failures (commands/skills missing) and WARNINGS (hooks not wired, .gitignore gaps)
+
+### 6. Documentation Updates
+Update friction log and CLAUDE.md to reflect fixes.
+
+- Req 6.1: Update Friction Pattern Tracker in `docs/TEMPLATE_OVERLAY_FRICTION.md` with fix status
+- Req 6.2: Mark "Commands/skills don't inherit" as FIXED with reference to init-project.sh
+- Req 6.3: Mark "Smoke test false positives" as FIXED with reference to smoke-test.sh
+- Req 6.4: Mark "Hooks not auto-wired" as MITIGATED with reference to session-init.sh warning
+- Req 6.5: Mark "No onboarding prompt" as MITIGATED with reference to session-init.sh detection
+- Req 6.6: Update CLAUDE.md if the template component count changes (rules count: 7→8 with superpowers-integration.md)
+
+## Success Criteria
+- Running `./scripts/init-project.sh` in a nested child project creates 5 working symlinks
+- Running `./scripts/init-project.sh --mode copy` in a standalone project copies all 5 subdirectories with full contents
+- `session-init.sh` outputs CRITICAL warning when commands/ is missing, no warning when present
+- `/setup` runs init-project.sh as its first step and reports success
+- `sync-template.sh adopt` copies ALL commands (50), skills (81 dirs), agents (13), contexts (3), hooks (20+)
+- `smoke-test.sh` returns PASS for projects with local .claude/ and FAIL for projects without
+- All 3 test projects (`analog_image_generator`, `rideshare-rescue`, `postiz-social-automation`) pass smoke-test.sh
+
+## Out of Scope
+- Modifying Superpowers plugin code (it's third-party, would be overwritten on update)
+- Upstream Claude Code feature request for command/skill inheritance (separate effort)
+- Hook auto-activation (hooks still require explicit `/settings safe` — too risky to auto-enable)
+- Resolving skill/command shadowing when both parent and child define the same name (Claude Code behavior, can't fix from template side)
+- Creating a GUI or TUI for the init script (bash output is sufficient)
+
+## Security Considerations
+- init-project.sh must not follow symlinks outside the template tree (prevent symlink attacks)
+- Symlinks should use relative paths only (absolute paths break if the tree is moved)
+- smoke-test.sh should warn about `settings.local.json` if it contains tokens and isn't gitignored
+
+## Performance Requirements
+- init-project.sh should complete in <2 seconds (it's creating 5 symlinks or copying ~200 files)
+- smoke-test.sh should complete in <5 seconds (it's checking file/dir presence)
+- session-init.sh additions should add <0.5 seconds to startup (2 stat calls)

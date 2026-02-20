@@ -1,0 +1,109 @@
+{
+	"meta": {
+		"generatedAt": "2026-02-20T05:25:18.253Z",
+		"tasksAnalyzed": 12,
+		"totalTasks": 12,
+		"analysisCount": 12,
+		"thresholdScore": 5,
+		"projectName": "__PROJECT_NAME__",
+		"usedResearch": true
+	},
+	"complexityAnalysis": [
+		{
+			"taskId": 1,
+			"taskTitle": "Create init-project.sh Script Foundation",
+			"complexityScore": 4,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down into: 1) Create script skeleton with shebang, color constants, and TARGET_DIRS array, 2) Implement argument parsing using the same pattern as sync-template.sh (lines 154-177), 3) Implement helper functions (show_usage, log_info, log_warn, log_error, ensure_claude_dir). Reference sync-template.sh for consistent patterns.",
+			"reasoning": "Moderate complexity. The codebase already has sync-template.sh as an excellent template with matching argument parsing patterns (--template, --dry-run, --force, etc.). Can directly copy the color constants (lines 49-55), argument parsing loop (lines 154-177), and cleanup patterns. The pseudo-code is well-specified. Main work is adapting existing patterns, not creating from scratch."
+		},
+		{
+			"taskId": 2,
+			"taskTitle": "Implement Template Auto-Detection Logic",
+			"complexityScore": 5,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down into: 1) Create detect_template_parent() function that walks parent directories (max 5 levels), 2) Implement file counting logic to identify template by .claude/commands/ presence with >10 files, 3) Integrate auto-detection into main script flow and set MODE/TEMPLATE_PATH variables accordingly. Test edge cases: at root, exactly at template, symlinked paths.",
+			"reasoning": "Moderate-to-high complexity. Requires careful path manipulation and edge case handling. The realpath and parent-walking logic needs to work across different filesystem layouts (test-projects nested under template vs. standalone projects). Python's os.path.relpath is needed for accurate relative paths. The friction log confirms this is the critical determination point - getting it wrong breaks the entire workflow."
+		},
+		{
+			"taskId": 3,
+			"taskTitle": "Implement Symlink Creation Mode",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break down into: 1) Create calc_relative_path() helper using Python os.path.relpath, 2) Implement create_symlinks() function with status tracking (created/skipped/warned counts), 3) Handle existing symlinks vs. real directories with appropriate warnings, 4) Implement --force flag behavior for symlink recreation. Test symlinks resolve correctly from project .claude/ to template .claude/ subdirs.",
+			"reasoning": "Moderate-to-high complexity. Symlink handling has subtle edge cases: wrong target detection, real directory shadowing warnings, relative vs absolute paths. The postiz test revealed symlinks ARE a viable solution but must use relative paths (../../../.claude/commands). The --force behavior needs to be safe (rm -f for symlinks, warn before rm -rf for directories)."
+		},
+		{
+			"taskId": 4,
+			"taskTitle": "Implement Copy Mode for Standalone Projects",
+			"complexityScore": 4,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down into: 1) Create copy_directories() function with file counting and progress output, 2) Handle nested directory structures (preserve skills/debugging/SKILL.md hierarchy), 3) Implement --dry-run and --force flag behavior with appropriate warnings. Verify cp -r preserves structure without flattening.",
+			"reasoning": "Moderate complexity. Simpler than symlink mode because cp -r is straightforward. The key challenge is preserving nested structure (skills have subdirectories like debugging/, code-review/) and providing good progress output. sync-template.sh already handles file copying (lines 359-415) but only for curated lists - this needs to copy entire directories."
+		},
+		{
+			"taskId": 5,
+			"taskTitle": "Add Idempotency and Summary Output",
+			"complexityScore": 3,
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "Implement summary tracking (CREATED_COUNT, SKIPPED_COUNT, WARNED_COUNT) and show_summary() function. Add exit codes (0=success, 1=error, 2=warnings). This is straightforward enhancement to existing functions.",
+			"reasoning": "Low complexity. This is incremental enhancement to the functions created in Tasks 1, 3, and 4. Simple counter variables and a summary function. The pattern exists in sync-template.sh output. No expansion needed - can be done as a single implementation task."
+		},
+		{
+			"taskId": 6,
+			"taskTitle": "Enhance session-init.sh with Local Presence Checks",
+			"complexityScore": 3,
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "Add check_local_claude_dirs() function after line 88 in session-init.sh. Check for .claude/commands/ and .claude/skills/ as directories OR symlinks. Add to CRITICAL_ISSUES and SETUP_NEEDED arrays. Pattern already exists in the script for MISSING_COMPONENTS checks (lines 89-93).",
+			"reasoning": "Low complexity. session-init.sh (422 lines) already has all the patterns needed: CRITICAL_ISSUES array, SETUP_NEEDED array, directory existence checks, and symlink detection. Adding 15-20 lines following the existing pattern at line 88. The check is simple: [ ! -d path ] && [ ! -L path ] triggers the warning."
+		},
+		{
+			"taskId": 7,
+			"taskTitle": "Update setup.md Command with Step 0",
+			"complexityScore": 2,
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "Add Step 0 section to .claude/commands/setup.md before current Step 1. Document the init-project.sh script, when to run it, and why local .claude/ is required. Update step numbering throughout the document.",
+			"reasoning": "Very low complexity. Pure documentation change to an existing markdown file. setup.md is 213 lines with clear section structure. Adding a new section and renumbering is straightforward. No code changes, just explanation of the fix."
+		},
+		{
+			"taskId": 8,
+			"taskTitle": "Add sync_full_directories to sync-template.sh",
+			"complexityScore": 4,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down into: 1) Create sync_full_directories() function that copies entire .claude subdirectories (commands, skills, agents, contexts, hooks), 2) Modify adopt command logic (around line 228-235) to call sync_full_directories() in addition to existing file sync, 3) Update dry-run mode to show directory file counts and sample files. Keep existing STOCK_* arrays intact for selective sync command.",
+			"reasoning": "Moderate complexity. sync-template.sh is substantial (463 lines) and well-structured. The current adopt mode uses curated STOCK_* arrays - need to add full directory copy without breaking existing selective sync. The ensure_directories() function (lines 334-354) shows the pattern. Must preserve subdirectory structure and avoid disrupting --commands, --skills flags."
+		},
+		{
+			"taskId": 9,
+			"taskTitle": "Create smoke-test.sh Verification Script",
+			"complexityScore": 4,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down into: 1) Create script skeleton with check_local_dir() function that verifies directory/symlink presence and counts files, 2) Add specialized checks: rules (parent walk-up), CLAUDE.md customization, .gitignore entries, 3) Implement summary output with PASS/FAIL/WARN counts and appropriate exit codes. Mark commands/ and skills/ as CRITICAL failures.",
+			"reasoning": "Moderate complexity. The friction log explicitly calls out that static file presence checks gave false positives. This script must distinguish between 'files exist' and 'actually registered'. The rules check requires parent-directory walking (different from other checks). Good test coverage is critical - this is the verification tool for the entire fix."
+		},
+		{
+			"taskId": 10,
+			"taskTitle": "Update Documentation with Fix Status",
+			"complexityScore": 2,
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "Update TEMPLATE_OVERLAY_FRICTION.md friction tracker table with fix status. Update CLAUDE.md if rule counts changed. Add references to new scripts. Verify all component counts are accurate.",
+			"reasoning": "Very low complexity. Documentation-only changes to existing files. The friction log has clear structure for status updates. CLAUDE.md component counts need verification but changes are minor. No code changes required."
+		},
+		{
+			"taskId": 11,
+			"taskTitle": "Integration Testing Across Test Projects",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Break down into: 1) Test analog_image_generator (existing project with local .claude/ - smoke-test should PASS, init-project should skip), 2) Test rideshare-rescue (pre-existing .claude/ content - verify shadowing behavior unchanged), 3) Test postiz-social-automation (remove symlinks, verify FAIL, run init-project, verify PASS), 4) Create and test standalone project (outside template tree, verify copy mode), 5) Document all results and edge cases discovered.",
+			"reasoning": "High complexity. This is the critical validation step. Three real test projects with different profiles need testing. Must verify: smoke-test accuracy, init-project behavior (create vs skip), session-init warnings, and actual slash command functionality. The postiz test is most important - it's the greenfield case that revealed the bug."
+		},
+		{
+			"taskId": 12,
+			"taskTitle": "Add Security Checks to init-project.sh",
+			"complexityScore": 4,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down into: 1) Create validate_template_path() to verify template is a real directory or safe symlink, 2) Add symlink boundary validation to ensure links don't escape template tree, 3) Add settings.local.json token warning check. All security checks should warn/error but not over-block legitimate use cases.",
+			"reasoning": "Moderate complexity. Security checks need to be effective without being overly restrictive. The validate_template_path() check is straightforward with realpath. Symlink boundary validation requires checking resolved paths. Token detection in settings.local.json is a simple grep. Balance between security and usability is key."
+		}
+	]
+}
