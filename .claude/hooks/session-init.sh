@@ -92,6 +92,18 @@ fi
 [ ! -d "$PROJECT_DIR/.claude/rules" ] && MISSING_COMPONENTS+=("rules/")
 [ ! -f "$SYNC_SCRIPT" ] && MISSING_COMPONENTS+=("sync-template.sh")
 
+# Check for LOCALLY available commands/skills (parent inheritance doesn't register these)
+# Claude Code only registers commands/skills from LOCAL .claude/ directories (or symlinks).
+# Parent-directory traversal works for rules and CLAUDE.md, but NOT commands/skills.
+HAS_LOCAL_COMMANDS=false
+HAS_LOCAL_SKILLS=false
+if [ -d "$PROJECT_DIR/.claude/commands" ] || [ -L "$PROJECT_DIR/.claude/commands" ]; then
+    HAS_LOCAL_COMMANDS=true
+fi
+if [ -d "$PROJECT_DIR/.claude/skills" ] || [ -L "$PROJECT_DIR/.claude/skills" ]; then
+    HAS_LOCAL_SKILLS=true
+fi
+
 # Check if CLAUDE.md has been customized (not still placeholder)
 if [ -f "$CLAUDE_MD" ]; then
     if ! grep -q "\[PROJECT_NAME\]" "$CLAUDE_MD" 2>/dev/null; then
@@ -211,6 +223,13 @@ if [ "$HAS_SUPERPOWERS" = false ]; then
     SETUP_NEEDED+=("Install: /plugin marketplace add obra/superpowers-marketplace")
     SETUP_NEEDED+=("Then: /plugin install superpowers@superpowers-marketplace")
     SETUP_NEEDED+=("Create .superpowers-installed after installation to dismiss this warning")
+fi
+
+# Check for locally registered commands/skills
+if [ "$HAS_LOCAL_COMMANDS" = false ] || [ "$HAS_LOCAL_SKILLS" = false ]; then
+    CRITICAL_ISSUES+=("Slash commands not registered (needs local .claude/commands/ and .claude/skills/)")
+    SETUP_NEEDED+=("Run: ./scripts/init-project.sh (creates symlinks or copies from template)")
+    SETUP_NEEDED+=("Or run: /setup (guided wizard)")
 fi
 
 # Check CLAUDE.md customization
