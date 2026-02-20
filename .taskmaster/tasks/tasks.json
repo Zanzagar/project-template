@@ -2,7 +2,7 @@
   "master": {
     "tasks": [
       {
-        "id": "16",
+        "id": 16,
         "title": "Create AgentShield Security Documentation",
         "description": "Create docs/SECURITY.md documenting AgentShield scanning capabilities including quick scan, auto-fix, and deep scan modes.",
         "details": "Create comprehensive security documentation at docs/SECURITY.md covering:\n\n1. **AgentShield Overview**: What it scans (CLAUDE.md secrets, MCP permissions, hook injection vectors, agent misconfigs)\n\n2. **Scan Commands**:\n   - Quick scan: `npx ecc-agentshield scan`\n   - Auto-fix: `npx ecc-agentshield scan --fix`\n   - Deep scan: `npx ecc-agentshield scan --opus` (3 adversarial Claude agents)\n\n3. **When to Run**:\n   - Before committing .claude/ changes\n   - In CI pipelines\n   - After adding new MCPs or modifying hooks\n   - Before PR reviews touching config\n\n4. **CI Integration Example**:\n```yaml\n# .github/workflows/security.yml\njobs:\n  agentshield:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - run: npx ecc-agentshield scan\n```\n\n5. **Relationship to /security-audit**: Clarify that /security-audit handles code-level vulnerabilities (OWASP), while AgentShield handles config-level risks.",
@@ -14,7 +14,7 @@
         "updatedAt": "2026-02-13T05:51:09.950Z"
       },
       {
-        "id": "17",
+        "id": 17,
         "title": "Integrate AgentShield into /health Command",
         "description": "Update the /health command to check AgentShield scan status and recommend running it when stale or never run.",
         "details": "Modify .claude/commands/health.md to add AgentShield section:\n\n1. **Add Section 10: AgentShield Status**:\n```bash\n# Check for AgentShield marker file\nASHIELD_LAST_RUN=\"$PROJECT_DIR/.claude/agentshield-last-run\"\nif [ -f \"$ASHIELD_LAST_RUN\" ]; then\n    LAST_SCAN=$(cat \"$ASHIELD_LAST_RUN\")\n    SCAN_AGE=$(( ($(date +%s) - LAST_SCAN) / 86400 ))\n    # Recommend re-scan if >7 days old\nelse\n    echo \"AgentShield: Never run\"\nfi\n```\n\n2. **Health Table Entry**:\n```\n║ AgentShield         │ ⚠ Stale     │ Last scan: 14 days ago  ║\n```\n\n3. **Recommendations**:\n- If never run: \"Run `npx ecc-agentshield scan` for config security\"\n- If >7 days: \"Consider re-scanning with AgentShield\"\n\n4. **Update /security-audit**: Add note suggesting AgentShield for config scanning at end of report.",
@@ -28,7 +28,7 @@
         "updatedAt": "2026-02-13T05:55:58.825Z"
       },
       {
-        "id": "18",
+        "id": 18,
         "title": "Create TDD-Guide Agent (Advisory)",
         "description": "Create the tdd-guide.md agent that coaches users on writing effective failing tests, constrained to never write production code.",
         "details": "Create .claude/agents/tdd-guide.md with:\n\n```yaml\n---\nname: tdd-guide\ndescription: Advisory TDD coaching - helps write effective failing tests. Superpowers enforces the cycle.\nmodel: sonnet\ntools: [Read, Write, Edit, Grep, Glob]\nconstraints:\n  - NEVER write production code - only tests and test guidance\n  - Superpowers enforces RED-GREEN-REFACTOR - this agent coaches the RED phase\n  - Cannot bypass or override Superpowers workflow\n---\n```\n\n**Agent Content**:\n1. **Role**: Help users write effective failing tests that Superpowers requires\n2. **Trigger**: When user struggles to write a test that Superpowers requires\n3. **Capabilities**:\n   - Test strategy selection (unit vs integration vs e2e)\n   - Mock/fixture guidance (when to mock, pytest fixtures)\n   - Edge case identification (boundary conditions, error paths)\n   - Assertion selection (appropriate matchers, clear failure messages)\n4. **CRITICAL CONSTRAINT** (in bold): \"This agent NEVER writes production code. Only test code and test guidance. Superpowers remains the enforcer of TDD discipline.\"\n5. **Example prompts**:\n   - \"Help me write a test for this authentication flow\"\n   - \"What edge cases should I test for this parser?\"\n   - \"How should I mock this external API?\"",
@@ -40,7 +40,7 @@
         "updatedAt": "2026-02-13T05:58:23.558Z"
       },
       {
-        "id": "19",
+        "id": 19,
         "title": "Create Architect Agent",
         "description": "Create the architect.md agent for high-level system design, distinct from the implementation-focused planner agent.",
         "details": "Create .claude/agents/architect.md:\n\n```yaml\n---\nname: architect\ndescription: High-level system design, component diagrams, technology selection\nmodel: opus\ntools: [Read, Grep, Glob]\nreadOnly: true\n---\n```\n\n**Agent Content**:\n1. **Role**: Strategic technical decisions, not implementation details\n2. **Distinct from planner**: Planner does implementation planning (step-by-step). Architect does system design (big picture).\n3. **Capabilities**:\n   - Scalability analysis (when to scale, what bottlenecks exist)\n   - API boundary design (service contracts, versioning strategy)\n   - Data flow modeling (where data lives, how it moves)\n   - Technology selection (framework comparisons, tradeoffs)\n   - Component diagrams (ASCII or Mermaid syntax)\n4. **Output Format**:\n   - Architecture Decision Records (ADR) style\n   - Diagrams where helpful\n   - Explicit tradeoffs section\n5. **When to use**: Before starting major features, when adding new services, during scaling discussions",
@@ -52,7 +52,7 @@
         "updatedAt": "2026-02-13T05:58:23.563Z"
       },
       {
-        "id": "20",
+        "id": 20,
         "title": "Create Database Reviewer Agent",
         "description": "Create the database-reviewer.md agent for SQL and database optimization review.",
         "details": "Create .claude/agents/database-reviewer.md:\n\n```yaml\n---\nname: database-reviewer\ndescription: SQL/database optimization review - queries, indexes, migrations, schema design\nmodel: sonnet\ntools: [Read, Grep, Bash, Glob]\nreadOnly: true\n---\n```\n\n**Agent Content**:\n1. **Supported Databases**: PostgreSQL, SQLite, MongoDB patterns\n2. **Review Areas**:\n   - Query performance (EXPLAIN analysis, join optimization)\n   - Index suggestions (covering indexes, partial indexes)\n   - N+1 detection (ORM query patterns in Python/JS)\n   - Migration safety (zero-downtime migrations, rollback plans)\n   - Schema design (normalization, denormalization tradeoffs)\n3. **Output Format**:\n   - Severity-ordered findings like code-reviewer\n   - Include EXPLAIN output when relevant\n   - Suggest specific index CREATE statements\n4. **Bash Usage**: For running EXPLAIN, checking index stats, pg_stat_statements",
@@ -64,7 +64,7 @@
         "updatedAt": "2026-02-13T05:58:23.570Z"
       },
       {
-        "id": "21",
+        "id": 21,
         "title": "Create Doc-Updater Agent",
         "description": "Create the doc-updater.md agent for automatic documentation maintenance after code changes.",
         "details": "Create .claude/agents/doc-updater.md:\n\n```yaml\n---\nname: doc-updater\ndescription: Documentation maintenance - README, docstrings, API docs, CHANGELOG\nmodel: haiku\ntools: [Read, Write, Edit, Grep, Glob]\n---\n```\n\n**Agent Content**:\n1. **Model: haiku** - Lightweight; docs don't need deep reasoning\n2. **Capabilities**:\n   - README.md updates (new features, changed APIs)\n   - Docstring maintenance (sync with code changes)\n   - API documentation (endpoint changes, parameter updates)\n   - CHANGELOG entries (conventional commit integration)\n3. **Trigger Patterns**:\n   - After implementing a feature\n   - When public API changes\n   - Before PR creation\n4. **Rules**:\n   - Preserve existing structure\n   - Don't add unnecessary content\n   - Match existing documentation style\n   - Only update what changed",
@@ -76,7 +76,7 @@
         "updatedAt": "2026-02-13T05:58:23.575Z"
       },
       {
-        "id": "22",
+        "id": 22,
         "title": "Create Refactor-Cleaner Agent",
         "description": "Create the refactor-cleaner.md agent for controlled refactoring with minimal blast radius.",
         "details": "Create .claude/agents/refactor-cleaner.md:\n\n```yaml\n---\nname: refactor-cleaner\ndescription: Controlled refactoring with minimal blast radius - preserves tests, no behavior changes\nmodel: sonnet\ntools: [Read, Write, Edit, Grep, Glob]\n---\n```\n\n**Agent Content**:\n1. **Core Rules**:\n   - Preserve ALL existing tests (never delete or modify test assertions)\n   - No behavior changes (pure refactoring only)\n   - Extract-then-inline pattern (safer than direct modification)\n2. **Capabilities**:\n   - Dead code detection (unused functions, imports)\n   - Import cleanup (organize, remove unused)\n   - Naming consistency (variable/function naming patterns)\n   - Code deduplication (extract shared logic)\n   - Type annotation cleanup\n3. **Safety Measures**:\n   - Run tests before and after\n   - Commit after each atomic change\n   - Keep changes reviewable (small PRs)\n4. **Anti-patterns to avoid**:\n   - Changing public API signatures\n   - Modifying test behavior\n   - Adding new features during refactoring",
@@ -88,7 +88,7 @@
         "updatedAt": "2026-02-13T05:58:23.580Z"
       },
       {
-        "id": "23",
+        "id": 23,
         "title": "Create E2E-Runner Agent",
         "description": "Create the e2e-runner.md agent for end-to-end test execution and debugging.",
         "details": "Create .claude/agents/e2e-runner.md:\n\n```yaml\n---\nname: e2e-runner\ndescription: E2E test execution and debugging - Playwright, Cypress, Selenium support\nmodel: sonnet\ntools: [Read, Bash, Grep, Glob]\nreadOnly: false\n---\n```\n\n**Agent Content**:\n1. **Supported Frameworks**: Playwright, Cypress, Selenium\n2. **Capabilities**:\n   - Test execution with detailed output\n   - Flaky test diagnosis (retry patterns, timing issues)\n   - Screenshot analysis (when available as files)\n   - Network request debugging (HAR files, request logs)\n   - Selector debugging (element not found, stale elements)\n3. **Debugging Workflow**:\n   1. Run test in verbose mode\n   2. Analyze failure output\n   3. Check for timing/flakiness patterns\n   4. Examine network requests if applicable\n   5. Suggest fixes\n4. **Common Issues**:\n   - Race conditions (add waits, use proper assertions)\n   - Selector brittleness (use data-testid, ARIA roles)\n   - Environment dependencies (mock external services)",
@@ -100,7 +100,7 @@
         "updatedAt": "2026-02-13T05:58:23.588Z"
       },
       {
-        "id": "24",
+        "id": 24,
         "title": "Create Go-Reviewer and Go-Build-Resolver Agents",
         "description": "Create Go-specific agents for code review and build error resolution.",
         "details": "Create two agent files:\n\n**1. .claude/agents/go-reviewer.md**:\n```yaml\n---\nname: go-reviewer\ndescription: Go-specific code review - error handling, goroutines, interfaces, packages\nmodel: sonnet\ntools: [Read, Grep, Glob]\nreadOnly: true\n---\n```\n- Error handling patterns (checking errors, wrapping with %w)\n- Goroutine leaks (unbuffered channels, missing done signals)\n- Interface design (small interfaces, io.Reader patterns)\n- Package structure (internal/, cmd/, avoiding cyclic imports)\n- go vet/staticcheck pattern detection\n\n**2. .claude/agents/go-build-resolver.md**:\n```yaml\n---\nname: go-build-resolver\ndescription: Go build error resolution - modules, CGO, cross-compilation, linker\nmodel: sonnet\ntools: [Read, Write, Edit, Bash, Grep, Glob]\n---\n```\n- Module dependency issues (go mod tidy, replace directives)\n- CGO problems (missing libraries, cross-compile flags)\n- Cross-compilation (GOOS/GOARCH, static linking)\n- Linker errors (undefined symbols, version mismatches)",
@@ -112,7 +112,7 @@
         "updatedAt": "2026-02-13T05:58:23.594Z"
       },
       {
-        "id": "25",
+        "id": 25,
         "title": "Create Python-Reviewer Agent",
         "description": "Create the python-reviewer.md agent for deep Python-specific code review beyond general patterns.",
         "details": "Create .claude/agents/python-reviewer.md:\n\n```yaml\n---\nname: python-reviewer\ndescription: Deep Python-specific review - async, metaclasses, descriptors, GIL, packaging\nmodel: sonnet\ntools: [Read, Grep, Glob]\nreadOnly: true\n---\n```\n\n**Agent Content**:\n1. **Beyond General Code Review** - This complements code-reviewer with Python-specific depth\n2. **Advanced Patterns**:\n   - async/await patterns (event loop management, asyncio.gather vs TaskGroup)\n   - Metaclass usage (when appropriate, simpler alternatives)\n   - Descriptor protocol (__get__, __set__, __delete__)\n   - GIL implications (multiprocessing vs threading decisions)\n3. **Packaging**:\n   - pyproject.toml best practices\n   - Virtual environment issues\n   - Dependency conflicts\n4. **Python-Specific Anti-patterns**:\n   - Late binding closures in loops\n   - Mutable default arguments (also in code-reviewer but deeper context)\n   - Import cycles\n   - Overuse of __all__",
@@ -124,7 +124,7 @@
         "updatedAt": "2026-02-13T05:58:23.600Z"
       },
       {
-        "id": "26",
+        "id": 26,
         "title": "Create Python Testing and Django Skills",
         "description": "Create python-testing and python-django skill directories with SKILL.md files.",
         "details": "Create two skill files:\n\n**1. .claude/skills/python-testing/SKILL.md**:\n```yaml\n---\nname: python-testing\ndescription: pytest patterns, fixtures, parametrize, mocking, async testing, coverage\n---\n```\nContent:\n- pytest patterns (markers, conftest.py organization)\n- Fixture strategies (scope, factories, database fixtures)\n- parametrize patterns (test case generation)\n- Mock best practices (patch vs dependency injection)\n- Async testing (pytest-asyncio, event loop fixtures)\n- Coverage targets (realistic goals, branch coverage)\n\n**2. .claude/skills/python-django/SKILL.md**:\n```yaml\n---\nname: python-django\ndescription: Django patterns - ORM, middleware, signals, admin, DRF\n---\n```\nContent:\n- ORM optimization (select_related, prefetch_related, only/defer)\n- Middleware patterns (request/response processing)\n- Signals best practices (when to use, when to avoid)\n- Admin customization (ModelAdmin, inline, custom actions)\n- Django REST Framework patterns (serializers, viewsets, permissions)",
@@ -136,7 +136,7 @@
         "updatedAt": "2026-02-13T06:03:35.130Z"
       },
       {
-        "id": "27",
+        "id": 27,
         "title": "Create TypeScript and Frontend Skills",
         "description": "Create typescript-patterns and frontend-patterns skill directories.",
         "details": "Create two skill files:\n\n**1. .claude/skills/typescript-patterns/SKILL.md**:\n```yaml\n---\nname: typescript-patterns\ndescription: TypeScript strict mode, generics, utility types, discriminated unions, modules\n---\n```\nContent:\n- Strict mode configuration (strictNullChecks, noImplicitAny)\n- Generics patterns (constraints, inference, conditional types)\n- Utility types (Partial, Pick, Omit, Record, custom utilities)\n- Discriminated unions (type narrowing, exhaustive checks)\n- Module patterns (barrel exports, path aliases)\n\n**2. .claude/skills/frontend-patterns/SKILL.md**:\n```yaml\n---\nname: frontend-patterns\ndescription: React/Vue/Svelte patterns, state management, accessibility, performance\n---\n```\nContent:\n- React patterns (hooks, composition, error boundaries)\n- Vue patterns (composition API, composables)\n- Svelte patterns (stores, actions, transitions)\n- State management (when to lift, global vs local)\n- Accessibility (ARIA, keyboard navigation, focus management)\n- Performance (lazy loading, virtualization, memoization)",
@@ -148,7 +148,7 @@
         "updatedAt": "2026-02-13T06:03:35.135Z"
       },
       {
-        "id": "28",
+        "id": 28,
         "title": "Create Go and Java Skills",
         "description": "Create golang-patterns, golang-testing, and java-springboot skill directories.",
         "details": "Create three skill files:\n\n**1. .claude/skills/golang-patterns/SKILL.md**:\n- Go idioms (accept interfaces, return structs)\n- Error handling (wrapping, sentinel errors, custom types)\n- Concurrency patterns (worker pools, fan-out/fan-in, context)\n- Interface design (small interfaces, embedding)\n- Testing with table-driven tests\n\n**2. .claude/skills/golang-testing/SKILL.md**:\n- Table-driven tests pattern\n- Benchmarks (b.N loop, memory stats)\n- Fuzzing (go test -fuzz)\n- testify assertions\n- httptest for HTTP testing\n- Integration test organization\n\n**3. .claude/skills/java-springboot/SKILL.md**:\n- Spring Boot patterns (auto-configuration, profiles)\n- Dependency injection (@Autowired, constructor injection)\n- JPA/Hibernate patterns (entity mapping, lazy loading)\n- Security configuration (SecurityFilterChain, CORS)\n- Actuator endpoints (health, metrics)",
@@ -160,7 +160,7 @@
         "updatedAt": "2026-02-13T06:03:35.142Z"
       },
       {
-        "id": "29",
+        "id": 29,
         "title": "Create E2E Testing and Django Security Skills",
         "description": "Create e2e-testing and django-security skill directories.",
         "details": "Create two skill files:\n\n**1. .claude/skills/e2e-testing/SKILL.md**:\n```yaml\n---\nname: e2e-testing\ndescription: Playwright/Cypress patterns, page objects, network interception, visual regression, CI\n---\n```\nContent:\n- Page object pattern (encapsulation, reusability)\n- Network interception (mocking APIs, waiting for requests)\n- Visual regression (screenshot comparison, thresholds)\n- CI integration (headless mode, parallel execution, artifacts)\n- Test data management (fixtures, factories, cleanup)\n\n**2. .claude/skills/django-security/SKILL.md**:\n```yaml\n---\nname: django-security\ndescription: Django-specific security - CSRF, XSS, SQL injection, auth, secrets\n---\n```\nContent:\n- CSRF protection (middleware, AJAX requests, exemptions)\n- XSS prevention (template auto-escaping, mark_safe usage)\n- SQL injection prevention (ORM usage, raw queries)\n- Authentication (Django auth, custom backends, sessions)\n- Permissions (object-level, custom permissions, DRF permissions)\n- Secrets management (django-environ, environment variables)",
@@ -172,7 +172,7 @@
         "updatedAt": "2026-02-13T06:03:35.147Z"
       },
       {
-        "id": "30",
+        "id": 30,
         "title": "Create Database Patterns Skill",
         "description": "Create database-patterns skill directory with SQL optimization, indexing, and migration safety.",
         "details": "Create .claude/skills/database-patterns/SKILL.md:\n\n```yaml\n---\nname: database-patterns\ndescription: SQL optimization, indexing, migration safety, N+1 prevention, connection pooling\n---\n```\n\n**Content**:\n1. **SQL Optimization**:\n   - EXPLAIN analysis (reading query plans)\n   - Join optimization (order, type selection)\n   - Subquery vs JOIN decisions\n\n2. **Indexing Strategies**:\n   - B-tree vs hash vs GIN/GiST\n   - Covering indexes (INCLUDE clause)\n   - Partial indexes (WHERE clause)\n   - Index maintenance (bloat, reindexing)\n\n3. **Migration Safety**:\n   - Zero-downtime migrations (add column, backfill, add constraint)\n   - Rollback strategies\n   - Large table migrations (batching)\n\n4. **N+1 Prevention**:\n   - Django: select_related, prefetch_related\n   - SQLAlchemy: joinedload, subqueryload\n   - Detection patterns\n\n5. **Connection Pooling**:\n   - PgBouncer configuration\n   - Django CONN_MAX_AGE\n   - SQLAlchemy pool settings",
@@ -184,7 +184,7 @@
         "updatedAt": "2026-02-13T06:03:35.152Z"
       },
       {
-        "id": "31",
+        "id": 31,
         "title": "Create Continuous Learning v2 Directory Structure",
         "description": "Create .claude/instincts/ directory with README explaining the instinct-based learning system.",
         "details": "Create directory structure for continuous learning:\n\n**1. Create .claude/instincts/README.md**:\n- Overview of instinct-based learning\n- Format specification: JSON with pattern, confidence, source, category\n- Confidence thresholds: <0.3 discard, 0.3-0.7 candidate, >0.7 active\n- Categories: coding-style, testing-strategy, debugging-approach, architecture-preference, tool-usage\n- Authority hierarchy: Rules (.claude/rules/) > Instincts > Defaults\n\n**2. Create .claude/instincts/.gitkeep** (directory marker)\n\n**3. Add to .gitignore**:\n```\n.claude/instincts/*.json\n```\n(Instincts are personal, not shared by default)\n\n**4. Create example instinct file** (.claude/instincts/example.json):\n```json\n{\n  \"pattern\": \"Always run tests before committing\",\n  \"confidence\": 0.85,\n  \"category\": \"tool-usage\",\n  \"source_sessions\": [\"2024-01-15\", \"2024-01-18\"],\n  \"last_reinforced\": \"2024-01-18\",\n  \"active\": true\n}\n```",
@@ -196,7 +196,7 @@
         "updatedAt": "2026-02-13T06:05:47.552Z"
       },
       {
-        "id": "32",
+        "id": 32,
         "title": "Create Authority Hierarchy Rule",
         "description": "Add a rule in .claude/rules/ establishing that rules take precedence over instincts.",
         "details": "Create .claude/rules/authority-hierarchy.md:\n\n```yaml\n---\ntemplate-version: 2.0.0\ntemplate-file: .claude/rules/authority-hierarchy.md\n---\n```\n\n**Content**:\n# Authority Hierarchy\n\nWhen guidance conflicts, follow this precedence:\n\n1. **Rules** (.claude/rules/*.md) - Highest authority, project-defined behavior\n2. **Instincts** (.claude/instincts/*.json) - Learned patterns, supplementary\n3. **Defaults** - Built-in Claude behavior\n\n## Key Principles\n\n- Instincts **supplement** rules, they never **override** them\n- If an instinct contradicts a rule, follow the rule\n- Instincts are suggestions; rules are requirements\n- When in doubt, check rules first\n\n## Examples\n\n- Rule says \"commit frequently\" → Do it, even if instinct suggests batching\n- Instinct suggests \"use pytest-asyncio\" → Follow it (no conflicting rule)\n- Rule says \"80% confidence threshold\" → Enforce it, regardless of instinct patterns\n\n## Instinct Integration\n\nWhen referencing instincts:\n- Say \"also consider\" not \"must follow\"\n- Treat as learned preferences, not requirements\n- Allow user override without friction",
@@ -210,7 +210,7 @@
         "updatedAt": "2026-02-13T06:05:47.557Z"
       },
       {
-        "id": "33",
+        "id": 33,
         "title": "Create Continuous Learning Skill",
         "description": "Create the continuous-learning-v2 skill defining pattern extraction, instinct evolution, and confidence management.",
         "details": "Create .claude/skills/continuous-learning-v2/SKILL.md:\n\n```yaml\n---\nname: continuous-learning-v2\ndescription: Instinct-based pattern extraction, confidence scoring, skill evolution\n---\n```\n\n**Content**:\n\n1. **Pattern Extraction**:\n   - After completing significant tasks, identify recurring patterns\n   - Focus on: tool usage, coding style, testing approaches, debugging methods\n   - Require 2+ occurrences before creating instinct\n\n2. **Instinct Format**:\n   ```json\n   {\n     \"pattern\": \"description of learned behavior\",\n     \"confidence\": 0.0-1.0,\n     \"category\": \"coding-style|testing-strategy|debugging-approach|architecture-preference|tool-usage\",\n     \"source_sessions\": [\"session_ids\"],\n     \"last_reinforced\": \"ISO-date\",\n     \"active\": true|false\n   }\n   ```\n\n3. **Confidence Management**:\n   - <0.3: Discard (noise)\n   - 0.3-0.7: Candidate (needs reinforcement)\n   - >0.7: Active instinct (applied automatically)\n   - Reinforcement: +0.1 per positive use\n   - Decay: -0.05 per week unused\n\n4. **Skill Evolution**:\n   - When 3+ related instincts cluster, suggest creating a skill\n   - Use /evolve command to trigger clustering analysis",
@@ -225,7 +225,7 @@
         "updatedAt": "2026-02-13T06:05:47.563Z"
       },
       {
-        "id": "34",
+        "id": 34,
         "title": "Create Instinct Management Commands",
         "description": "Create /instinct-status, /instinct-import, /instinct-export, and /evolve commands.",
         "details": "Create four command files:\n\n**1. .claude/commands/instinct-status.md**:\n- List all instincts with confidence scores\n- Group by category\n- Show active vs candidate vs deprecated\n- Format: table with pattern, confidence, last_reinforced\n\n**2. .claude/commands/instinct-import.md**:\n- Import instincts from JSON file\n- Validate format before import\n- Merge with existing (higher confidence wins)\n- Usage: `/instinct-import path/to/instincts.json`\n\n**3. .claude/commands/instinct-export.md**:\n- Export instincts to shareable JSON\n- Filter by category or confidence threshold\n- Usage: `/instinct-export [--category=X] [--min-confidence=0.7]`\n\n**4. .claude/commands/evolve.md**:\n- Analyze instincts for clustering opportunities\n- Suggest new skills from related instincts\n- Interactive: user approves/rejects suggestions\n- Creates SKILL.md from approved clusters",
@@ -241,7 +241,7 @@
         "updatedAt": "2026-02-13T06:05:47.569Z"
       },
       {
-        "id": "35",
+        "id": 35,
         "title": "Create /orchestrate Command",
         "description": "Create the /orchestrate command for multi-agent pipeline execution.",
         "details": "Create .claude/commands/orchestrate.md:\n\n**Command Definition**:\n- Usage: `/orchestrate [pipeline-name]` or `/orchestrate agent1 agent2 agent3`\n\n**Default Pipelines**:\n1. `feature`: planner → tdd-guide → (implement) → code-reviewer → security-reviewer\n2. `review`: code-reviewer → security-reviewer → database-reviewer (if SQL detected)\n3. `refactor`: architect → refactor-cleaner → code-reviewer → (tests)\n\n**Custom Pipelines**:\n- Specify agent names in order: `/orchestrate architect planner code-reviewer`\n\n**Handoff Documents**:\n- Each agent produces structured output for the next\n- Format: Summary, Findings, Recommendations, Context for Next Agent\n\n**Final Report**:\n- Aggregated findings from all agents\n- Severity-ordered across entire pipeline\n- Conflicts/contradictions noted\n\n**Example**:\n```\n/orchestrate feature\n\nExecuting pipeline: planner → tdd-guide → code-reviewer → security-reviewer\n\n[1/4] Running planner...\n[2/4] Running tdd-guide...\n...\n\n═══ ORCHESTRATION REPORT ═══\n...\n```",
@@ -262,7 +262,7 @@
         "updatedAt": "2026-02-13T06:09:24.928Z"
       },
       {
-        "id": "36",
+        "id": 36,
         "title": "Update Proactive Steering for Orchestration",
         "description": "Update proactive-steering.md to mention /orchestrate when detecting full feature cycles.",
         "details": "Modify .claude/rules/proactive-steering.md:\n\n1. **Add to Auto-Invoke Tools section**:\n```markdown\n| Context Signal | Auto-Invoke |\n|----------------|-------------|\n| Full feature cycle detected | Suggest /orchestrate |\n| \"implement this feature end-to-end\" | /orchestrate feature |\n| \"review this thoroughly\" | /orchestrate review |\n```\n\n2. **Add Orchestration Pattern** (new section):\n```markdown\n### Pattern: Full Feature Cycle\n\nWhen user requests a complete feature implementation:\n\n1. Detect scope (is this end-to-end work?)\n2. Suggest orchestration: \"This looks like a full feature. Want me to run /orchestrate feature?\"\n3. If accepted, execute pipeline\n4. Present aggregated report\n\n**Signals for orchestration:**\n- \"Build this feature\"\n- \"Implement X from scratch\"\n- \"Add full support for Y\"\n```\n\n3. **Update Tool Selection Decision Tree** in workflow-guide.md:\n- Add orchestration branch for multi-agent workflows",
@@ -276,7 +276,7 @@
         "updatedAt": "2026-02-13T06:09:24.934Z"
       },
       {
-        "id": "37",
+        "id": 37,
         "title": "Create /multi-plan Command",
         "description": "Create the /multi-plan command for parallel planning with Claude, Gemini, and Codex.",
         "details": "Create .claude/commands/multi-plan.md:\n\n**Command Definition**:\n- Usage: `/multi-plan <requirements>`\n- Sends requirements to multiple models in parallel\n\n**Model Roles**:\n- Claude: Primary analysis (architecture, security, testing strategy)\n- Gemini: Alternative perspective (different approaches, catches different issues)\n- Codex: Implementation-focused (practical code patterns, API usage)\n\n**Synthesis Step**:\n- Claude aggregates all perspectives\n- Notes conflicts between models\n- Produces unified plan\n\n**Output Format**:\n```markdown\n# Multi-Model Plan\n\n## Claude Analysis\n[Primary plan]\n\n## Gemini Perspective\n[Alternative viewpoints, additional concerns]\n\n## Codex Suggestions\n[Implementation details, code patterns]\n\n## Synthesis\n[Unified plan with conflicts noted]\n\n## Conflicts/Differences\n- [Area]: Claude says X, Gemini says Y\n```\n\n**API Requirements**:\n- Gemini: Google AI Studio API key (GOOGLE_AI_KEY)\n- Codex: OpenAI API key (OPENAI_API_KEY)\n- Graceful degradation: Skip missing models, note in output",
@@ -288,7 +288,7 @@
         "updatedAt": "2026-02-13T06:09:24.940Z"
       },
       {
-        "id": "38",
+        "id": 38,
         "title": "Create /multi-execute Command",
         "description": "Create the /multi-execute command for parallel implementation with multiple models.",
         "details": "Create .claude/commands/multi-execute.md:\n\n**Command Definition**:\n- Usage: `/multi-execute <task>`\n- Parallel implementation with different models\n\n**Division of Work**:\n- Claude: Core logic, complex algorithms\n- Gemini: Alternative implementations, edge case handling\n- Codex: Boilerplate generation, API integrations\n\n**Merge Step**:\n- Claude reviews all outputs\n- Selects best approaches per component\n- Synthesizes into cohesive implementation\n\n**Output Format**:\n```markdown\n# Multi-Model Execution\n\n## Implementation Components\n\n### Core Logic (Claude)\n[code]\n\n### Alternative Approach (Gemini)\n[code - if different/better]\n\n### Boilerplate (Codex)\n[code]\n\n## Merged Implementation\n[synthesized code]\n\n## Selection Rationale\n- Used Claude's approach for X because...\n- Incorporated Gemini's Y because...\n```\n\n**Graceful Degradation**:\n- Missing API keys: Note which model skipped\n- API errors: Retry once, then skip with note",
@@ -302,7 +302,7 @@
         "updatedAt": "2026-02-13T06:09:24.946Z"
       },
       {
-        "id": "39",
+        "id": 39,
         "title": "Create Multi-Model Configuration Example",
         "description": "Create .claude/examples/multi-model-config.json showing API key configuration for multi-model commands.",
         "details": "Create .claude/examples/multi-model-config.json:\n\n```json\n{\n  \"description\": \"Multi-model API configuration example\",\n  \"note\": \"Add these to your .env file - never commit actual keys\",\n  \"required_env_vars\": {\n    \"GOOGLE_AI_KEY\": {\n      \"description\": \"Google AI Studio API key for Gemini\",\n      \"source\": \"https://makersuite.google.com/app/apikey\",\n      \"subscription\": \"$20/month Google AI plan or free tier\"\n    },\n    \"OPENAI_API_KEY\": {\n      \"description\": \"OpenAI API key for Codex/GPT\",\n      \"source\": \"https://platform.openai.com/api-keys\",\n      \"subscription\": \"$20/month ChatGPT Plus or API credits\"\n    }\n  },\n  \"example_env\": [\n    \"# .env (DO NOT COMMIT)\",\n    \"GOOGLE_AI_KEY=your_google_key_here\",\n    \"OPENAI_API_KEY=your_openai_key_here\"\n  ],\n  \"verification\": {\n    \"gemini\": \"curl -H 'Authorization: Bearer $GOOGLE_AI_KEY' https://generativelanguage.googleapis.com/v1/models\",\n    \"openai\": \"curl -H 'Authorization: Bearer $OPENAI_API_KEY' https://api.openai.com/v1/models\"\n  }\n}\n```\n\nAlso update protect-sensitive-files.sh to include these keys if not already.",
@@ -317,7 +317,7 @@
         "updatedAt": "2026-02-13T06:09:24.952Z"
       },
       {
-        "id": "40",
+        "id": 40,
         "title": "Create /verify Command",
         "description": "Create the /verify command for structured verification pipeline (test + lint + type-check + security).",
         "details": "Create .claude/commands/verify.md:\n\n**Command Definition**:\n- Usage: `/verify [scope]`\n- Scope: file, directory, or 'all' (default: changed files)\n\n**Pipeline Stages**:\n1. **Tests**: `pytest` (or detected test runner)\n2. **Lint**: `ruff check` (or detected linter)\n3. **Type Check**: `mypy` (or detected type checker)\n4. **Security**: `bandit -r` (or detected security scanner)\n\n**Output Format**:\n```\n╔════════════════════════════════════════════╗\n║           VERIFICATION REPORT              ║\n╠════════════════════════════════════════════╣\n║ Stage        │ Status  │ Details           ║\n╠──────────────┼─────────┼───────────────────╣\n║ Tests        │ ✓ Pass  │ 45 passed, 0 failed║\n║ Lint         │ ✗ Fail  │ 3 errors          ║\n║ Type Check   │ ✓ Pass  │                   ║\n║ Security     │ ⚠ Warn  │ 1 low severity    ║\n╠══════════════════════════════════════════════╣\n║ Overall: FAIL (fix lint errors)            ║\n╚════════════════════════════════════════════╝\n```\n\n**Relationship to /test**:\n- /test is quick (just pytest)\n- /verify is comprehensive (all checks)\n- Both respect same test configuration",
@@ -329,7 +329,7 @@
         "updatedAt": "2026-02-13T06:19:50.397Z"
       },
       {
-        "id": "41",
+        "id": 41,
         "title": "Create /eval Command",
         "description": "Create the /eval command for quality metrics evaluation and tracking over time.",
         "details": "Create .claude/commands/eval.md and .claude/evals/ directory:\n\n**Command Definition**:\n- Usage: `/eval [--save]`\n- Runs comprehensive quality analysis\n- Stores results in .claude/evals/ as timestamped JSON\n\n**Metrics Collected**:\n1. Test coverage (pytest-cov percentage)\n2. Lint score (errors/warnings per file)\n3. Type coverage (typed functions percentage)\n4. Cyclomatic complexity (average per function)\n\n**Output Format**:\n```\n╔═══════════════════════════════════════════╗\n║          EVALUATION RESULTS               ║\n╠═══════════════════════════════════════════╣\n║ Metric            │ Current │ Previous    ║\n╠───────────────────┼─────────┼─────────────╣\n║ Test Coverage     │ 78%     │ 75% (+3%)   ║\n║ Lint Score        │ 0.2/file│ 0.5 (+60%)  ║\n║ Type Coverage     │ 65%     │ 60% (+5%)   ║\n║ Avg Complexity    │ 4.2     │ 4.5 (+7%)   ║\n╚═══════════════════════════════════════════╝\n```\n\n**Storage Format** (.claude/evals/eval_TIMESTAMP.json):\n```json\n{\n  \"timestamp\": \"2024-01-15T10:30:00Z\",\n  \"metrics\": {\n    \"test_coverage\": 78,\n    \"lint_score\": 0.2,\n    \"type_coverage\": 65,\n    \"avg_complexity\": 4.2\n  },\n  \"files_analyzed\": 42\n}\n```\n\n**Integration with /health**:\n- Show recent eval results in health check\n- Warn if no eval in last 7 days",
@@ -343,7 +343,7 @@
         "updatedAt": "2026-02-13T06:19:50.919Z"
       },
       {
-        "id": "42",
+        "id": 42,
         "title": "Create /skill-create Command",
         "description": "Create the /skill-create command to auto-generate SKILL.md files from git commit history.",
         "details": "Create .claude/commands/skill-create.md:\n\n**Command Definition**:\n- Usage: `/skill-create [--days=30]`\n- Analyzes git commit history for patterns\n- Proposes new skills based on detected patterns\n\n**Analysis Process**:\n1. Read recent commits (default: 30 days)\n2. Categorize by conventional commit type (feat, fix, test, etc.)\n3. Identify recurring patterns:\n   - Files frequently changed together\n   - Common commit message themes\n   - Repeated fix patterns\n4. Cluster related patterns\n5. Propose skill from each cluster\n\n**Output Format**:\n```\n📊 Analyzing 45 commits from last 30 days...\n\nDetected patterns:\n\n1. API Error Handling (12 commits)\n   Files: src/api/*.py\n   Pattern: \"fix: handle ... error\"\n   Suggested skill: api-error-handling\n\n2. Database Migrations (8 commits)\n   Files: migrations/*.py\n   Pattern: \"feat: add migration for ...\"\n   Suggested skill: migration-patterns\n\nCreate skills? [1] [2] [all] [none]\n```\n\n**Skill Generation**:\n- Creates .claude/skills/{name}/SKILL.md\n- Extracts content from related commits and code\n- User reviews and edits before final save",
@@ -355,7 +355,7 @@
         "updatedAt": "2026-02-13T06:19:51.611Z"
       },
       {
-        "id": "43",
+        "id": 43,
         "title": "Create /update-codemaps Command",
         "description": "Create the /update-codemaps command to generate human-readable architecture docs in docs/CODEMAPS/.",
         "details": "Create .claude/commands/update-codemaps.md and docs/CODEMAPS/ directory:\n\n**Command Definition**:\n- Usage: `/update-codemaps [scope]`\n- Generates human-readable architecture documentation\n- Complements project-index.sh (machine-readable JSON)\n\n**Generated Files**:\n\n1. **docs/CODEMAPS/imports.md**:\n   - Import/dependency graph per module\n   - External dependencies highlighted\n   - Circular dependency warnings\n\n2. **docs/CODEMAPS/exports.md**:\n   - Public API surface per module\n   - Functions, classes, constants exported\n   - Deprecation notices\n\n3. **docs/CODEMAPS/architecture.md**:\n   - High-level module relationships\n   - ASCII or Mermaid diagrams\n   - Layer boundaries (if detectable)\n\n**Example Output** (imports.md):\n```markdown\n# Import Map\n\n## src/api/\n- **auth.py** → utils, models.user, services.jwt\n- **endpoints.py** → auth, models, schemas\n\n## External Dependencies\n- fastapi (api/*)\n- sqlalchemy (models/*)\n- pydantic (schemas/*)\n```\n\n**Relationship to project-index.sh**:\n- project-index.sh: JSON for Claude/tools\n- update-codemaps: Markdown for humans",
@@ -367,7 +367,7 @@
         "updatedAt": "2026-02-13T06:19:52.393Z"
       },
       {
-        "id": "44",
+        "id": 44,
         "title": "Create /checkpoint Command",
         "description": "Create the /checkpoint command for manual session state saves beyond automatic session-end.",
         "details": "Create .claude/commands/checkpoint.md:\n\n**Command Definition**:\n- Usage: `/checkpoint [name]`\n- Manual session state save to .claude/sessions/\n- Supplements automatic session-end.sh saves\n\n**When to Use**:\n- Before risky operations\n- At significant milestones\n- When you want to preserve current reasoning\n- Before switching contexts within a session\n\n**Output File** (.claude/sessions/checkpoint-TIMESTAMP.md):\n```markdown\n# Checkpoint: [name]\nTimestamp: 2024-01-15T14:30:00Z\n\n## Current Context\n- Task: [current task ID and title]\n- Branch: [git branch]\n- Recent commits: [last 3]\n\n## Active Reasoning\n[Summary of current thinking/approach]\n\n## Files in Focus\n[Recently read/modified files]\n\n## Next Steps\n[Planned actions]\n\n---\n*Manual checkpoint via /checkpoint*\n```\n\n**Integration**:\n- session-init.sh detects checkpoints alongside automatic summaries\n- Shows in \"Last Session\" section if <24h old\n- Named checkpoints easier to find than timestamped ones",
@@ -379,7 +379,7 @@
         "updatedAt": "2026-02-13T06:19:52.852Z"
       },
       {
-        "id": "45",
+        "id": 45,
         "title": "Create TypeScript Language Rules",
         "description": "Create .claude/rules/typescript/coding-standards.md with TypeScript-specific conventions.",
         "details": "Create .claude/rules/typescript/coding-standards.md:\n\n```yaml\n---\ntemplate-version: 2.0.0\ntemplate-file: .claude/rules/typescript/coding-standards.md\npaths: [\"**/*.ts\", \"**/*.tsx\"]\n---\n```\n\n**Content**:\n\n# TypeScript Coding Standards\n\n## Strict Mode Requirements\n- Always enable strict mode in tsconfig.json\n- No `any` without explicit justification comment\n- Enable strictNullChecks, noImplicitAny, strictFunctionTypes\n\n## Type Patterns\n- Prefer interfaces for object shapes\n- Use type for unions, intersections, mapped types\n- Avoid excessive generics (YAGNI applies)\n- Use branded types for IDs: `type UserId = string & { _brand: 'UserId' }`\n\n## Null Handling\n- Use optional chaining (?.) over explicit null checks\n- Use nullish coalescing (??) over || for defaults\n- Prefer undefined over null for optional values\n\n## Imports\n- Use type imports for type-only imports: `import type { X }`\n- Organize: external, internal, relative, types\n\n## React-Specific (if applicable)\n- Use FC sparingly (prefer explicit return types)\n- Props interfaces named ComponentNameProps\n- Custom hooks return explicit types",
@@ -391,7 +391,7 @@
         "updatedAt": "2026-02-13T06:19:53.500Z"
       },
       {
-        "id": "46",
+        "id": 46,
         "title": "Create Go and Java Language Rules",
         "description": "Create .claude/rules/golang/ and .claude/rules/java/ with language-specific conventions.",
         "details": "Create two rule files:\n\n**1. .claude/rules/golang/coding-standards.md**:\n```yaml\n---\npaths: [\"**/*.go\"]\n---\n```\n- Error handling: Always check errors, wrap with %w\n- Naming: MixedCaps, not underscores; short receiver names\n- Package design: One package per directory, meaningful names\n- Interfaces: Accept interfaces, return structs\n- Goroutines: Always have exit conditions, use context\n- Testing: Table-driven tests, testify optional\n\n**2. .claude/rules/java/coding-standards.md**:\n```yaml\n---\npaths: [\"**/*.java\"]\n---\n```\n- Naming: Classes PascalCase, methods camelCase, constants UPPER_SNAKE\n- Spring patterns: Constructor injection over field injection\n- Null handling: Use Optional for nullable returns\n- Collections: Prefer List.of(), Map.of() for immutables\n- Exceptions: Checked for recoverable, unchecked for bugs\n- Lombok: Acceptable for DTOs, avoid for complex classes",
@@ -403,7 +403,7 @@
         "updatedAt": "2026-02-13T06:19:54.197Z"
       },
       {
-        "id": "47",
+        "id": 47,
         "title": "Create Frontend Component Rules",
         "description": "Create .claude/rules/frontend/component-standards.md for React/Vue/Svelte conventions.",
         "details": "Create .claude/rules/frontend/component-standards.md:\n\n```yaml\n---\ntemplate-version: 2.0.0\ntemplate-file: .claude/rules/frontend/component-standards.md\npaths: [\"**/*.jsx\", \"**/*.tsx\", \"**/*.vue\", \"**/*.svelte\"]\n---\n```\n\n**Content**:\n\n# Frontend Component Standards\n\n## Universal Principles\n- Single responsibility per component\n- Props down, events up\n- Prefer composition over inheritance\n- Keep components under 200 lines\n\n## React\n- Functional components with hooks\n- Custom hooks for shared logic (useX naming)\n- Memoize expensive computations (useMemo, useCallback)\n- Error boundaries for crash isolation\n\n## Vue\n- Composition API for new components\n- Composables for shared logic (useX naming)\n- Avoid excessive watchers\n- Use v-memo for list optimizations\n\n## Svelte\n- Use stores for shared state\n- Actions for reusable behavior\n- Transitions for UX polish\n- Keep reactivity simple ($: statements)\n\n## Accessibility\n- Semantic HTML first (button not div)\n- ARIA only when semantic HTML insufficient\n- Keyboard navigation for all interactive elements\n- Focus management on navigation",
@@ -415,7 +415,7 @@
         "updatedAt": "2026-02-13T06:19:54.878Z"
       },
       {
-        "id": "48",
+        "id": 48,
         "title": "Update /update-docs and Documentation Automation",
         "description": "Create /update-docs command that triggers doc-updater agent on recently changed files.",
         "details": "Create .claude/commands/update-docs.md:\n\n**Command Definition**:\n- Usage: `/update-docs [scope]`\n- Scope: 'recent' (default), 'all', or specific file/directory\n- Triggers doc-updater agent\n\n**Workflow**:\n1. Identify changed files (git diff or explicit scope)\n2. Filter to code files (exclude docs, configs)\n3. Spawn doc-updater agent with file list\n4. Agent updates:\n   - README.md (if public API changed)\n   - Docstrings (if functions changed)\n   - CHANGELOG (if new features/fixes)\n\n**Output**:\n```\n📝 Documentation Update\n\nFiles analyzed: 5\nDocs updated: 2\n\nChanges:\n- README.md: Updated API section\n- src/auth.py: Added docstrings to 3 functions\n\nNo CHANGELOG entry needed (no feat/fix commits)\n```\n\n**Integration**:\n- Can be run manually or as pre-PR step\n- Suggested by proactive-steering before /pr\n- Lightweight (haiku model via doc-updater agent)",
@@ -429,7 +429,7 @@
         "updatedAt": "2026-02-13T06:19:55.433Z"
       },
       {
-        "id": "49",
+        "id": 49,
         "title": "Update CLAUDE.md with Phase 2 Features",
         "description": "Update CLAUDE.md to document new Phase 2 commands, agents, and skills.",
         "details": "Update CLAUDE.md with comprehensive Phase 2 documentation:\n\n**1. Update Agents Section**:\nAdd table entries for all 9 new agents:\n- architect (opus, read-only)\n- tdd-guide (sonnet, advisory)\n- database-reviewer (sonnet, SQL focus)\n- doc-updater (haiku, lightweight)\n- refactor-cleaner (sonnet, controlled refactoring)\n- e2e-runner (sonnet, Playwright/Cypress)\n- go-reviewer (sonnet, Go-specific)\n- go-build-resolver (sonnet, Go builds)\n- python-reviewer (sonnet, Python-specific)\n\n**2. Update Slash Commands Table**:\nAdd new commands:\n- /orchestrate - Multi-agent pipeline execution\n- /multi-plan - Parallel planning with Claude/Gemini/Codex\n- /multi-execute - Parallel implementation\n- /verify - Test + lint + type-check + security\n- /eval - Quality metrics tracking\n- /checkpoint - Manual session save\n- /instinct-status, /instinct-import, /instinct-export, /evolve - Instinct management\n- /skill-create - Auto-generate skills\n- /update-codemaps - Architecture docs\n- /update-docs - Documentation sync\n\n**3. Add Continuous Learning Section**:\n- Instinct system overview\n- Authority hierarchy (rules > instincts)\n- Commands for management\n\n**4. Add Multi-Model Section**:\n- API key requirements\n- How /multi-plan and /multi-execute work\n- Graceful degradation\n\n**5. Update Reference Docs**:\n- Add docs/SECURITY.md (AgentShield)",
@@ -475,7 +475,7 @@
         "updatedAt": "2026-02-13T06:22:18.259Z"
       },
       {
-        "id": "50",
+        "id": 50,
         "title": "Update ECC_INTEGRATION.md for Phase 2",
         "description": "Update docs/ECC_INTEGRATION.md with Phase 2 features and migration notes.",
         "details": "Update docs/ECC_INTEGRATION.md:\n\n**1. Update \"What Was Integrated\" Table**:\nAdd Phase 2 features:\n- Continuous learning v2 | ECC instinct patterns | .claude/instincts/\n- Multi-agent orchestration | ECC pipeline patterns | /orchestrate\n- Multi-model collaboration | ECC multi-model patterns | /multi-plan, /multi-execute\n- AgentShield | ECC security scanning | docs/SECURITY.md\n- 9 new agents | ECC agent library | .claude/agents/\n- 10 new skills | ECC skill library | .claude/skills/\n- Language-specific rules | ECC polyglot patterns | .claude/rules/{lang}/\n\n**2. Add Phase 2 Quick Start**:\n- Continuous learning: /instinct-status, /evolve\n- Orchestration: /orchestrate feature\n- Multi-model: Configure API keys, /multi-plan\n- Security: npx ecc-agentshield scan\n\n**3. Update Migration Notes**:\n- New directories: .claude/instincts/, .claude/evals/, docs/CODEMAPS/\n- New files: 9 agents, 10 skills, 4 language rules\n- New gitignore entries: .claude/instincts/*.json, .claude/evals/*.json\n- API key setup for multi-model\n\n**4. Update Token Overhead Table**:\n- Note that skills are on-demand (not auto-loaded)\n- Instincts are lightweight JSON\n- AgentShield is external (npx, no token cost)",
@@ -489,7 +489,7 @@
         "updatedAt": "2026-02-13T06:22:18.991Z"
       },
       {
-        "id": "51",
+        "id": 51,
         "title": "Create /multi-backend command",
         "description": "Adapt ECC's multi-backend command to our template. Backend-focused development workflow (Research → Ideation → Plan → Execute → Optimize → Review) with codeagent-wrapper for Codex-led backend work.",
         "details": "Fetch ECC source from affaan-m/everything-claude-code/commands/multi-backend.md. Adapt file paths and naming to our .claude/commands/ structure. Keep codeagent-wrapper approach and role prompt references. Preserve 6-phase workflow structure.",
@@ -501,7 +501,7 @@
         "updatedAt": "2026-02-18T21:58:28.150Z"
       },
       {
-        "id": "52",
+        "id": 52,
         "title": "Create /multi-frontend command",
         "description": "Adapt ECC's multi-frontend command to our template. Frontend-focused development workflow with Gemini-led UI/UX work via codeagent-wrapper.",
         "details": "Fetch ECC source from affaan-m/everything-claude-code/commands/multi-frontend.md. Adapt file paths and naming to our .claude/commands/ structure. Keep Gemini-led approach with codeagent-wrapper.",
@@ -513,7 +513,7 @@
         "updatedAt": "2026-02-18T21:59:11.146Z"
       },
       {
-        "id": "53",
+        "id": 53,
         "title": "Create /multi-workflow command",
         "description": "Adapt ECC's multi-workflow command. Meta-orchestration coordinating backend (Codex) + frontend (Gemini) + Claude for full-stack collaborative development.",
         "details": "Fetch ECC source from affaan-m/everything-claude-code/commands/multi-workflow.md. Combined 6-phase workflow with parallel model calls, session reuse, and quality gates.",
@@ -525,7 +525,7 @@
         "updatedAt": "2026-02-18T21:59:35.567Z"
       },
       {
-        "id": "54",
+        "id": 54,
         "title": "Create strategic-compact skill",
         "description": "Adopt ECC's strategic-compact skill. Tactical compaction patterns with suggest-compact.sh hook script adapted from ECC's bash version.",
         "details": "Fetch ECC source from affaan-m/everything-claude-code/skills/strategic-compact/. Contains SKILL.md and suggest-compact.sh. Adapts our existing suggest-compact.sh hook with ECC's skill documentation for compaction decision guide.",
@@ -537,7 +537,7 @@
         "updatedAt": "2026-02-18T21:59:41.021Z"
       },
       {
-        "id": "55",
+        "id": 55,
         "title": "Create django-patterns skill",
         "description": "Adopt ECC's django-patterns skill. Comprehensive Django development patterns covering ORM, DRF, caching, signals, middleware, service layer.",
         "details": "Fetch ECC source from affaan-m/everything-claude-code/skills/django-patterns/SKILL.md. Fills gap in our Django coverage (we have security/tdd/verification but not general patterns). Default to ECC's implementation.",
@@ -556,13 +556,15 @@
       "completedCount": 37,
       "tags": [
         "master"
-      ]
+      ],
+      "created": "2026-02-20T05:20:06.052Z",
+      "description": "Tasks for master context"
     }
   },
   "ecc-gap-p1": {
     "tasks": [
       {
-        "id": "1",
+        "id": 1,
         "title": "Verify multi-backend and multi-frontend commands exist",
         "description": "Confirm that the /multi-backend and /multi-frontend commands were successfully committed and match ECC's implementation patterns. These are marked as ALREADY IMPLEMENTED in the PRD.",
         "details": "Read and verify the existing implementations at:\n- `.claude/commands/multi-backend.md` - Backend-focused workflow with Codex as authority\n- `.claude/commands/multi-frontend.md` - Frontend-focused workflow with Gemini as authority\n\nVerification checklist:\n1. Usage syntax uses /multi-backend and /multi-frontend (not /backend, /frontend)\n2. codeagent-wrapper call syntax is preserved from ECC\n3. Role prompt paths reference ~/.claude/.ccg/prompts/\n4. 6-phase workflow structure (Research → Ideation → Plan → Execute → Optimize → Review) intact\n5. Session reuse (CODEX_SESSION / GEMINI_SESSION) documented\n6. Model specification correct (Codex default, Gemini with gemini-3-pro-preview)\n\nPseudo-code for verification:\n```bash\n# Check files exist\ntest -f .claude/commands/multi-backend.md && echo \"multi-backend: OK\"\ntest -f .claude/commands/multi-frontend.md && echo \"multi-frontend: OK\"\n\n# Verify key content\ngrep -q \"codeagent-wrapper\" .claude/commands/multi-backend.md\ngrep -q \"codeagent-wrapper\" .claude/commands/multi-frontend.md\n```",
@@ -573,7 +575,7 @@
         "subtasks": []
       },
       {
-        "id": "2",
+        "id": 2,
         "title": "Create /multi-workflow command",
         "description": "Implement the meta-orchestration command that coordinates Codex (backend) + Gemini (frontend) + Claude (orchestrator) for full-stack collaborative development with parallel model execution.",
         "details": "Create `.claude/commands/multi-workflow.md` based on ECC's multi-workflow.md source.\n\nKey implementation details:\n\n1. **Phase structure** (6 phases like multi-backend/multi-frontend):\n   - Research: Gather context from codebase, identify backend vs frontend scope\n   - Ideation: Parallel calls to Codex (backend analysis) + Gemini (frontend analysis)\n   - Plan: Synthesize both perspectives into unified plan\n   - Execute: Parallel implementation with work division\n   - Optimize: Parallel reviews from both models\n   - Review: Claude synthesizes final quality check\n\n2. **Parallel execution pattern**:\n```markdown\n### Parallel Model Calls\n\nUse `run_in_background: true` for parallel calls:\n\nBash({\n  command: \"~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--backend codex - \\\"$PWD\\\" <<'EOF'\n  ...\n  EOF\",\n  run_in_background: true,\n  timeout: 3600000,\n  description: \"Codex backend analysis\"\n})\n\nBash({\n  command: \"~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--backend gemini --gemini-model gemini-3-pro-preview - \\\"$PWD\\\" <<'EOF'\n  ...\n  EOF\",\n  run_in_background: true,\n  timeout: 3600000,\n  description: \"Gemini frontend analysis\"\n})\n\n# Wait for both with TaskOutput\nTaskOutput({ task_id: \"<codex_task_id>\", block: true, timeout: 600000 })\nTaskOutput({ task_id: \"<gemini_task_id>\", block: true, timeout: 600000 })\n```\n\n3. **Work division criteria**:\n   - Backend (Codex): API endpoints, database, business logic, authentication\n   - Frontend (Gemini): Components, styles, UX, accessibility, responsiveness\n   - Claude: Integration points, shared types/interfaces, orchestration\n\n4. **Plan storage**: Save to `.claude/plan/multi-workflow-TIMESTAMP.md`\n\n5. **Quality gates**: Requirement completeness scoring at each phase (>=7 to proceed)",
@@ -646,7 +648,7 @@
         "updatedAt": "2026-02-18T22:13:23.956Z"
       },
       {
-        "id": "3",
+        "id": 3,
         "title": "Create strategic-compact skill SKILL.md",
         "description": "Create the strategic-compact skill that documents tactical compaction patterns and decision guides for when to manually /compact during workflow transitions.",
         "details": "Create `.claude/skills/strategic-compact/SKILL.md` based on ECC's strategic-compact skill.\n\nThis skill complements our existing `context-management.md` rule by providing actionable tactical patterns vs the rule's theory.\n\nSkill content structure:\n\n```yaml\n---\nname: strategic-compact\ndescription: Tactical compaction patterns with suggest-compact hook\n---\n```\n\n1. **Compaction Decision Guide Table**:\n| Phase Transition | Compact? | Rationale |\n|-----------------|----------|----------|\n| Research → Implementation | YES | Exploration context no longer needed |\n| Mid-implementation | NO | Preserves variable names, file paths |\n| Feature complete → next feature | YES | Fresh context for new work |\n| Debugging → fixed | YES | Debug traces are noise |\n| Planning → building | CONSIDER | If plan is persisted to file |\n| After major milestone | YES | Natural breakpoint |\n\n2. **What Survives Compaction**:\n- CLAUDE.md, rules, MCP definitions\n- Git state, Task Master tasks\n- Files on disk (can re-read)\n- Session summaries in .claude/sessions/\n\n3. **What's Lost**:\n- Conversation history and reasoning chains\n- Previously read file contents\n- Intermediate exploration findings\n\n4. **Hook Integration**:\n- Reference existing `.claude/hooks/suggest-compact.sh`\n- Thresholds: 50 (reminder), 75 (note), 100 (strong suggestion)\n- Hook is advisory, not blocking\n\n5. **Manual Trigger Patterns**:\n```\n- Before risky refactoring: /compact to preserve clean state\n- After completing sub-agent research: /compact to clear exploration\n- When Claude contradicts itself: Fresh session better than compact\n```",
@@ -720,7 +722,7 @@
         "updatedAt": "2026-02-18T22:14:57.321Z"
       },
       {
-        "id": "4",
+        "id": 4,
         "title": "Verify and enhance suggest-compact.sh hook",
         "description": "Compare existing suggest-compact.sh hook against ECC's implementation and enhance if needed. Ensure configurable thresholds and proper advisory messaging.",
         "details": "The hook already exists at `.claude/hooks/suggest-compact.sh`. Compare against ECC's version and enhance.\n\nCurrent implementation analysis:\n- Uses SESSIONS_DIR for state storage\n- Tracks tool calls via counter file\n- Thresholds at 50, 75, 100\n- Advisory messaging (not blocking)\n\nEnhancements to consider from ECC:\n\n1. **Configurable thresholds** via environment variables:\n```bash\nTHRESHOLD_FIRST=${COMPACT_THRESHOLD_FIRST:-50}\nTHRESHOLD_SECOND=${COMPACT_THRESHOLD_SECOND:-75}\nTHRESHOLD_THIRD=${COMPACT_THRESHOLD_THIRD:-100}\n```\n\n2. **Phase transition detection** (optional, if ECC has it):\n```bash\n# Detect if we just completed a major phase\n# Could check for recent commit, file creation patterns, etc.\n```\n\n3. **Better messaging format** (consistent with other hooks):\n```bash\nif [ \"$TOOL_CALLS\" -eq $THRESHOLD_FIRST ]; then\n    echo \"💡 [suggest-compact] ~$TOOL_CALLS tool calls. Quality declining? Consider /compact or fresh session.\"\nfi\n```\n\n4. **Reset mechanism documentation**:\nEnsure the hook documents how counter resets (on session end or when state file is deleted).\n\nIf ECC's version has additional features, adopt them. If ours is functionally equivalent, document the comparison.",
@@ -734,7 +736,7 @@
         "updatedAt": "2026-02-18T22:15:40.515Z"
       },
       {
-        "id": "5",
+        "id": 5,
         "title": "Create comprehensive django-patterns skill",
         "description": "Replace the thin python-django skill with ECC's comprehensive django-patterns skill covering project structure, split settings, ORM optimization, custom managers, DRF patterns, service layer, caching, signals, and middleware.",
         "details": "Create `.claude/skills/django-patterns/SKILL.md` based on ECC's comprehensive implementation.\n\nNote: We have an existing `.claude/skills/python-django/SKILL.md` that covers basic patterns. The new django-patterns skill should be MORE comprehensive. Decision: Keep python-django as-is (it's in our additions list) and add django-patterns as a deeper reference.\n\nSkill content structure:\n\n```yaml\n---\nname: django-patterns\ndescription: Comprehensive Django development patterns - ORM, DRF, caching, signals, middleware\n---\n```\n\n1. **Project Structure**:\n```\nproject/\n├── config/              # Settings module\n│   ├── settings/\n│   │   ├── base.py\n│   │   ├── development.py\n│   │   └── production.py\n├── apps/\n│   ├── users/\n│   ├── orders/\n├── core/               # Shared utilities\n└── manage.py\n```\n\n2. **Split Settings Pattern**:\n```python\n# config/settings/base.py\nfrom pathlib import Path\nBASE_DIR = Path(__file__).resolve().parent.parent.parent\n\n# config/settings/development.py\nfrom .base import *\nDEBUG = True\n```\n\n3. **Model Best Practices**:\n- Abstract base models for timestamps\n- Custom QuerySet and Manager patterns\n- `get_absolute_url()` convention\n\n4. **Custom QuerySet/Manager**:\n```python\nclass OrderQuerySet(models.QuerySet):\n    def pending(self):\n        return self.filter(status='pending')\n    \n    def for_user(self, user):\n        return self.filter(customer=user)\n\nclass Order(models.Model):\n    objects = OrderQuerySet.as_manager()\n```\n\n5. **DRF Serializers with Nested Writes**:\n```python\nclass OrderSerializer(serializers.ModelSerializer):\n    items = OrderItemSerializer(many=True)\n    \n    def create(self, validated_data):\n        items_data = validated_data.pop('items')\n        order = Order.objects.create(**validated_data)\n        for item in items_data:\n            OrderItem.objects.create(order=order, **item)\n        return order\n```\n\n6. **Service Layer Pattern**:\n```python\n# services/orders.py\nclass OrderService:\n    @staticmethod\n    def create_order(user, items):\n        with transaction.atomic():\n            order = Order.objects.create(customer=user)\n            # Business logic here\n            return order\n```\n\n7. **Caching Strategies**:\n- Per-view caching with `@cache_page`\n- Template fragment caching\n- Low-level cache API for complex queries\n\n8. **Signals Best Practices** (when to use/avoid)\n\n9. **Middleware Patterns** (request/response lifecycle)\n\n10. **N+1 Prevention** (deeper than python-django's coverage)",
@@ -808,7 +810,7 @@
         "updatedAt": "2026-02-18T22:17:44.354Z"
       },
       {
-        "id": "6",
+        "id": 6,
         "title": "Update ECC_COMPARISON.md with implemented gaps",
         "description": "Update docs/ECC_COMPARISON.md to move implemented Phase 1 items from 'gaps' to 'matched' sections and update summary counts.",
         "details": "After all components are implemented, update the comparison document:\n\n1. **Update Summary Table**:\n- Commands: Update ECC-only Gaps count (was 5, should reflect closed gaps)\n- Skills: Update gap count (was 14)\n\n2. **Move to Matched Commands**:\n- /multi-backend ✓\n- /multi-frontend ✓\n- /multi-workflow ✓\n\n3. **Move to Matched Skills**:\n- strategic-compact ✓\n- django-patterns ✓\n\n4. **Update Implementation Priority Queue**:\n- Phase 1 items marked complete with date\n- Note any adaptations from ECC source\n\n5. **Add to Decisions Log** if any adaptations were made:\n```markdown\n### Adopted ECC's Implementation (Phase 1 Gap Closure)\n\n| Component | Adaptation | Why |\n|-----------|-----------|-----|\n| /multi-workflow | Renamed from /workflow | Naming consistency with multi-* pattern |\n| strategic-compact | Integrated with existing suggest-compact.sh | Our hook was already bash-based |\n| django-patterns | Added alongside python-django | python-django is lightweight, django-patterns is comprehensive |\n```",
@@ -825,7 +827,7 @@
         "updatedAt": "2026-02-18T22:19:11.899Z"
       },
       {
-        "id": "7",
+        "id": 7,
         "title": "Update CLAUDE.md slash commands table",
         "description": "Add the new /multi-workflow command to the slash commands table in CLAUDE.md.",
         "details": "Update CLAUDE.md's Slash Commands table to include:\n\n```markdown\n| `/multi-workflow` | Full-stack multi-model workflow (Codex backend + Gemini frontend + Claude orchestrator) |\n```\n\nPlace it near the existing multi-* commands:\n- /multi-plan\n- /multi-execute\n- /multi-backend (already listed)\n- /multi-frontend (already listed)\n- /multi-workflow (new)\n\nThe table should remain alphabetically or grouped by category. If grouped, these belong in the \"Multi-Model\" or \"Orchestration\" category.",
@@ -839,7 +841,7 @@
         "updatedAt": "2026-02-18T22:19:46.346Z"
       },
       {
-        "id": "8",
+        "id": 8,
         "title": "Update TEMPLATE_OVERVIEW.md skill/command counts",
         "description": "Update TEMPLATE_OVERVIEW.md to reflect the new skill and command counts after Phase 1 gap closure.",
         "details": "After implementation, update TEMPLATE_OVERVIEW.md:\n\n1. Locate the stats section showing skill/command counts\n2. Increment counts:\n   - Commands: +1 (multi-workflow)\n   - Skills: +2 (strategic-compact, django-patterns)\n\n3. Update any feature list sections that enumerate capabilities\n\n4. If there's a version or changelog section, note the Phase 1 gap closure\n\nPseudo-code:\n```bash\n# Find and update counts in TEMPLATE_OVERVIEW.md\ngrep -n \"commands\\|skills\" TEMPLATE_OVERVIEW.md\n# Update the numbers found\n```",
@@ -853,7 +855,7 @@
         "updatedAt": "2026-02-18T22:20:51.733Z"
       },
       {
-        "id": "9",
+        "id": 9,
         "title": "Create conventional commits for all changes",
         "description": "Create individual conventional commits for each component following the commit message format. One commit per new file/feature.",
         "details": "Commit strategy:\n\n1. **Commit 1**: multi-workflow command\n```bash\ngit add .claude/commands/multi-workflow.md\ngit commit -m \"feat: Add /multi-workflow command from ECC\n\nMeta-orchestration for full-stack development with Codex (backend),\nGemini (frontend), and Claude (orchestrator). Includes parallel\nmodel execution and quality gates.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\"\n```\n\n2. **Commit 2**: strategic-compact skill\n```bash\ngit add .claude/skills/strategic-compact/\ngit add .claude/hooks/suggest-compact.sh  # if modified\ngit commit -m \"feat: Add strategic-compact skill from ECC\n\nTactical compaction patterns and decision guide. Complements\nexisting context-management rule with actionable patterns.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\"\n```\n\n3. **Commit 3**: django-patterns skill\n```bash\ngit add .claude/skills/django-patterns/\ngit commit -m \"feat: Add django-patterns skill from ECC\n\nComprehensive Django patterns: project structure, split settings,\ncustom managers, DRF, service layer, caching, signals, middleware.\nCompletes Django coverage alongside django-security/tdd/verification.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\"\n```\n\n4. **Commit 4**: Documentation updates\n```bash\ngit add docs/ECC_COMPARISON.md CLAUDE.md TEMPLATE_OVERVIEW.md\ngit commit -m \"docs: Update docs for ECC Gap Phase 1 closure\n\nMove implemented items from gaps to matched sections in\nECC_COMPARISON.md. Update slash commands table and counts.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\"\n```",
@@ -873,7 +875,7 @@
         "updatedAt": "2026-02-18T22:20:56.840Z"
       },
       {
-        "id": "10",
+        "id": 10,
         "title": "Validate all Phase 1 components work together",
         "description": "Final validation that all implemented components integrate correctly and Claude Code recognizes the new commands and skills.",
         "details": "Validation checklist:\n\n1. **Command Recognition**:\n   - Claude Code shows /multi-workflow in command suggestions\n   - Command markdown is syntactically correct\n\n2. **Skill Loading**:\n   - Skills can be referenced in conversations\n   - YAML frontmatter parses correctly\n   - No syntax errors in skill content\n\n3. **Hook Functionality**:\n   - suggest-compact.sh executes without errors\n   - Thresholds trigger at correct counts\n\n4. **Documentation Consistency**:\n   - ECC_COMPARISON.md summary counts match actual files\n   - CLAUDE.md commands table complete\n   - No broken links or references\n\n5. **Git State**:\n   - All changes committed\n   - On feature/ecc-gap-phase1 branch\n   - Clean working tree\n\nValidation commands:\n```bash\n# Check file existence\nls -la .claude/commands/multi-workflow.md\nls -la .claude/skills/strategic-compact/SKILL.md\nls -la .claude/skills/django-patterns/SKILL.md\n\n# Validate YAML frontmatter\nhead -10 .claude/skills/*/SKILL.md\n\n# Git status\ngit status\ngit log --oneline -5\n```",
@@ -894,13 +896,15 @@
       "completedCount": 10,
       "tags": [
         "ecc-gap-p1"
-      ]
+      ],
+      "created": "2026-02-20T05:20:06.053Z",
+      "description": "Tasks for ecc-gap-p1 context"
     }
   },
   "ecc-gap-p2": {
     "tasks": [
       {
-        "id": "1",
+        "id": 1,
         "title": "Enrich Python coding-standards.md with ECC security and patterns content",
         "description": "Fetch ECC's python/patterns.md, python/security.md, and python/hooks.md from the ECC GitHub repo, then merge relevant content INTO the existing .claude/rules/python/coding-standards.md file. Keep total file under ~2K tokens. Only add content not already covered by existing rules or on-demand skills.",
         "details": "Implementation steps:\n\n1. WebFetch ECC's Python rule files from github.com/affaan-m/everything-claude-code:\n   - skills/python/patterns.md\n   - skills/python/security.md\n   - skills/python/hooks.md (if exists)\n\n2. Read existing .claude/rules/python/coding-standards.md (~400 lines, ~1.5K tokens)\n\n3. Identify content gaps - ECC content NOT already in our file or covered by skills:\n   - Security patterns (input validation, SQL injection prevention, secrets handling)\n   - Advanced patterns (metaclasses, descriptors, async context managers)\n   - Framework hooks (Django signals, FastAPI dependencies)\n\n4. Merge using sections that maintain structure:\n   ```markdown\n   ## Security Patterns\n   ### Input Validation\n   ### SQL Safety\n   ### Secrets Handling\n   \n   ## Advanced Patterns\n   ### Async Context Managers\n   ### Protocol Classes (3.8+)\n   ```\n\n5. Token budget: Current ~1.5K, target <2K after enrichment (~500 tokens to add)\n\n6. Do NOT add content that duplicates:\n   - python-testing skill\n   - python-patterns skill\n   - security-scan skill\n   - django-security skill",
@@ -912,7 +916,7 @@
         "updatedAt": "2026-02-18T23:46:48.532Z"
       },
       {
-        "id": "2",
+        "id": 2,
         "title": "Enrich TypeScript coding-standards.md with ECC security and patterns content",
         "description": "Fetch ECC's typescript/patterns.md, typescript/security.md, and typescript/hooks.md from the ECC GitHub repo, then merge relevant content INTO the existing .claude/rules/typescript/coding-standards.md file. Keep total file under ~2K tokens.",
         "details": "Implementation steps:\n\n1. WebFetch ECC's TypeScript rule files from github.com/affaan-m/everything-claude-code:\n   - skills/typescript/patterns.md\n   - skills/typescript/security.md\n   - skills/typescript/hooks.md (if exists)\n\n2. Read existing .claude/rules/typescript/coding-standards.md (~186 lines)\n\n3. Identify content gaps - ECC content NOT already covered:\n   - Security patterns (XSS prevention in React, sanitization, CSP headers)\n   - Advanced patterns (conditional types, mapped types, template literals)\n   - React hooks patterns (useCallback, useMemo, custom hooks)\n   - Node.js patterns (if present)\n\n4. Merge using sections:\n   ```markdown\n   ## Security Patterns\n   ### XSS Prevention\n   ### Input Sanitization\n   \n   ## Advanced Type Patterns\n   ### Conditional Types\n   ### Template Literal Types\n   \n   ## React Hooks Best Practices\n   ### Dependency Arrays\n   ### Custom Hook Patterns\n   ```\n\n5. Token budget: Current ~700 tokens, target <2K after enrichment\n\n6. Do NOT add content that duplicates:\n   - typescript-patterns skill\n   - frontend-patterns skill\n   - e2e-testing skill",
@@ -924,7 +928,7 @@
         "updatedAt": "2026-02-18T23:48:07.592Z"
       },
       {
-        "id": "3",
+        "id": 3,
         "title": "Enrich Go coding-standards.md with ECC security and patterns content",
         "description": "Fetch ECC's golang/patterns.md, golang/security.md, and golang/hooks.md from the ECC GitHub repo, then merge relevant content INTO the existing .claude/rules/golang/coding-standards.md file. Keep total file under ~2K tokens.",
         "details": "Implementation steps:\n\n1. WebFetch ECC's Go rule files from github.com/affaan-m/everything-claude-code:\n   - skills/golang/patterns.md\n   - skills/golang/security.md\n   - skills/golang/hooks.md (if exists)\n\n2. Read existing .claude/rules/golang/coding-standards.md (~228 lines)\n\n3. Identify content gaps - ECC content NOT already covered:\n   - Security patterns (input validation, SQL injection with database/sql, secrets)\n   - Advanced patterns (generics 1.18+, error wrapping strategies)\n   - HTTP middleware patterns\n   - Graceful shutdown patterns\n\n4. Merge using sections:\n   ```markdown\n   ## Security Patterns\n   ### SQL Parameter Binding\n   ### Input Validation\n   ### Secrets Management\n   \n   ## Generics Patterns (Go 1.18+)\n   ### Type Constraints\n   ### Generic Data Structures\n   \n   ## HTTP Middleware\n   ### Chi/Gorilla Patterns\n   ### Context Propagation\n   ```\n\n5. Token budget: Current ~850 tokens, target <2K after enrichment\n\n6. Do NOT add content that duplicates:\n   - golang-patterns skill\n   - golang-testing skill\n   - api-design skill",
@@ -936,7 +940,7 @@
         "updatedAt": "2026-02-18T23:49:20.827Z"
       },
       {
-        "id": "4",
+        "id": 4,
         "title": "Create cpp-coding-standards skill",
         "description": "Fetch ECC's skills/cpp-coding-standards/SKILL.md and create .claude/skills/cpp-coding-standards/SKILL.md. We have cpp-testing but lack C++ coding standards, so this completes C++ language coverage.",
         "details": "Implementation steps:\n\n1. WebFetch ECC's cpp-coding-standards skill from:\n   github.com/affaan-m/everything-claude-code/blob/main/skills/cpp-coding-standards/SKILL.md\n\n2. Create directory: .claude/skills/cpp-coding-standards/\n\n3. Adapt to our skill format:\n   ```markdown\n   ---\n   name: cpp-coding-standards\n   description: Modern C++ idioms, memory management, RAII, smart pointers, move semantics, const correctness\n   ---\n   # C++ Coding Standards Skill\n   \n   ## Modern C++ (C++17/20)\n   ### Smart Pointers\n   ### Move Semantics\n   ### std::optional and std::variant\n   \n   ## Memory Safety\n   ### RAII Pattern\n   ### Resource Ownership\n   \n   ## Const Correctness\n   ### Member Functions\n   ### References and Pointers\n   ```\n\n4. Ensure content complements cpp-testing skill (no overlap on testing patterns)\n\n5. Focus on coding standards, not testing (testing is in cpp-testing skill)",
@@ -948,7 +952,7 @@
         "updatedAt": "2026-02-18T23:55:18.170Z"
       },
       {
-        "id": "5",
+        "id": 5,
         "title": "Create cost-aware-llm-pipeline skill",
         "description": "Fetch ECC's skills/cost-aware-llm-pipeline/SKILL.md and create .claude/skills/cost-aware-llm-pipeline/SKILL.md. Covers prompt optimization, model selection/routing, caching, rate limiting, budget tracking for LLM-powered applications.",
         "details": "Implementation steps:\n\n1. WebFetch ECC's cost-aware-llm-pipeline skill from:\n   github.com/affaan-m/everything-claude-code/blob/main/skills/cost-aware-llm-pipeline/SKILL.md\n\n2. Create directory: .claude/skills/cost-aware-llm-pipeline/\n\n3. Adapt to our skill format:\n   ```markdown\n   ---\n   name: cost-aware-llm-pipeline\n   description: Prompt optimization, model selection/routing, caching, rate limiting, budget tracking for LLM-powered applications\n   ---\n   # Cost-Aware LLM Pipeline Skill\n   \n   ## Prompt Optimization\n   ### Token Reduction Strategies\n   ### Prompt Caching\n   ### System Prompt Efficiency\n   \n   ## Model Selection & Routing\n   ### Task-to-Model Mapping\n   ### Fallback Chains\n   ### Quality vs Cost Trade-offs\n   \n   ## Caching Strategies\n   ### Semantic Caching\n   ### Response Caching\n   ### Embedding Caches\n   \n   ## Rate Limiting\n   ### Token Budgets\n   ### Request Throttling\n   ### Circuit Breakers\n   \n   ## Budget Tracking\n   ### Cost Attribution\n   ### Usage Monitoring\n   ### Alerts and Limits\n   ```\n\n4. Relevant for our AI/ML audience building LLM applications\n\n5. Complements our existing context-management.md rule (which focuses on Claude Code context, not application LLM pipelines)",
@@ -960,7 +964,7 @@
         "updatedAt": "2026-02-18T23:55:34.101Z"
       },
       {
-        "id": "6",
+        "id": 6,
         "title": "Create regex-vs-llm-structured-text skill",
         "description": "Fetch ECC's skills/regex-vs-llm-structured-text/SKILL.md and create .claude/skills/regex-vs-llm-structured-text/SKILL.md. Decision framework for when to use regex vs LLM for text processing.",
         "details": "Implementation steps:\n\n1. WebFetch ECC's regex-vs-llm-structured-text skill from:\n   github.com/affaan-m/everything-claude-code/blob/main/skills/regex-vs-llm-structured-text/SKILL.md\n\n2. Create directory: .claude/skills/regex-vs-llm-structured-text/\n\n3. Adapt to our skill format:\n   ```markdown\n   ---\n   name: regex-vs-llm-structured-text\n   description: Decision framework for when to use regex vs LLM for text processing tasks\n   ---\n   # Regex vs LLM Decision Framework\n   \n   ## When to Use Regex\n   ### Structured Formats (JSON, XML, CSV)\n   ### Known Patterns (emails, URLs, dates)\n   ### Performance-Critical Paths\n   ### Deterministic Requirements\n   \n   ## When to Use LLM\n   ### Natural Language Understanding\n   ### Ambiguous Formats\n   ### Classification Tasks\n   ### Entity Extraction from Prose\n   \n   ## Decision Matrix\n   | Characteristic | Regex | LLM |\n   |---------------|-------|-----|\n   | Structured input | ✓ | |\n   | Ambiguous input | | ✓ |\n   | Speed critical | ✓ | |\n   | Semantic understanding | | ✓ |\n   \n   ## Hybrid Approaches\n   ### Regex Pre-filtering + LLM\n   ### LLM Extraction + Regex Validation\n   ```\n\n4. Novel and practical skill for the AI/ML audience\n\n5. Include concrete code examples showing both approaches",
@@ -972,7 +976,7 @@
         "updatedAt": "2026-02-18T23:55:50.401Z"
       },
       {
-        "id": "7",
+        "id": 7,
         "title": "Create springboot-verification skill",
         "description": "Fetch ECC's skills/springboot-verification/SKILL.md and create .claude/skills/springboot-verification/SKILL.md. We have django-verification but no Spring Boot equivalent, completing Java/Spring Boot coverage.",
         "details": "Implementation steps:\n\n1. WebFetch ECC's springboot-verification skill from:\n   github.com/affaan-m/everything-claude-code/blob/main/skills/springboot-verification/SKILL.md\n\n2. Create directory: .claude/skills/springboot-verification/\n\n3. Adapt to our skill format, mirroring django-verification structure:\n   ```markdown\n   ---\n   name: springboot-verification\n   description: Spring Boot health checks, actuator endpoints, configuration validation, migration verification, startup validation\n   ---\n   # Spring Boot Verification Skill\n   \n   ## Actuator Health Checks\n   ### Built-in Health Indicators\n   ### Custom Health Indicators\n   ### Readiness vs Liveness Probes\n   \n   ## Configuration Validation\n   ### @ConfigurationProperties Validation\n   ### Profile-Specific Settings\n   ### Required Properties Check\n   \n   ## Database Migration Verification\n   ### Flyway Migration Checks\n   ### Liquibase Validation\n   ### Schema Verification Tests\n   \n   ## Startup Validation\n   ### ApplicationRunner Checks\n   ### Bean Validation\n   ### Dependency Injection Verification\n   \n   ## Full Verification Pipeline\n   ```\n\n4. Complements existing spring-boot-tdd and spring-boot-security skills",
@@ -984,7 +988,7 @@
         "updatedAt": "2026-02-18T23:56:06.587Z"
       },
       {
-        "id": "8",
+        "id": 8,
         "title": "Create PR URL extraction hook",
         "description": "Implement a PostToolUse hook for Bash commands matching git push that extracts PR creation URL from output and provides review commands. Simple bash implementation in .claude/hooks/.",
         "details": "Implementation steps:\n\n1. Create .claude/hooks/pr-url-extract.sh:\n   ```bash\n   #!/bin/bash\n   # pr-url-extract.sh - Extract PR URL from git push output\n   # Hook type: PostToolUse (matcher: \"Bash\")\n   # Triggers when: After Bash command completes\n   #\n   # Extracts PR creation URLs from git push output and provides\n   # helpful review commands.\n   \n   INPUT=$(cat)\n   \n   COMMAND=$(echo \"$INPUT\" | jq -r '.tool_input.command // empty')\n   OUTPUT=$(echo \"$INPUT\" | jq -r '.output // empty')\n   \n   # Only process git push commands\n   [[ \"$COMMAND\" != *\"git push\"* ]] && exit 0\n   \n   # Extract PR URL patterns:\n   # GitHub: \"Create a pull request for 'branch' on GitHub by visiting:\"\n   # GitLab: \"To create a merge request for...\"\n   PR_URL=$(echo \"$OUTPUT\" | grep -oE 'https://github\\.com/[^/]+/[^/]+/pull/new/[^[:space:]]+' | head -1)\n   if [ -z \"$PR_URL\" ]; then\n     PR_URL=$(echo \"$OUTPUT\" | grep -oE 'https://github\\.com/[^/]+/[^/]+/compare/[^[:space:]]+' | head -1)\n   fi\n   if [ -z \"$PR_URL\" ]; then\n     PR_URL=$(echo \"$OUTPUT\" | grep -oE 'https://gitlab\\.com/[^[:space:]]+merge_requests/new[^[:space:]]*' | head -1)\n   fi\n   \n   [ -z \"$PR_URL\" ] && exit 0\n   \n   # Output helpful message\n   echo \"PR creation URL detected: $PR_URL\"\n   echo \"\"\n   echo \"Review commands:\"\n   echo \"  gh pr create --web     # Open PR creation in browser\"\n   echo \"  gh pr view --web       # View existing PR\"\n   echo \"  /pr                    # Create PR via Claude Code\"\n   \n   exit 0\n   ```\n\n2. Make executable: chmod +x .claude/hooks/pr-url-extract.sh\n\n3. Add to settings-presets.json for safe, thorough, and optimized presets",
@@ -996,7 +1000,7 @@
         "updatedAt": "2026-02-18T23:57:43.029Z"
       },
       {
-        "id": "9",
+        "id": 9,
         "title": "Create long-running command tmux reminder hook",
         "description": "Implement a PreToolUse advisory hook for Bash commands matching long-running patterns (npm install, pip install, pytest, cargo build, make, docker build). Warns user to consider tmux if not already in a tmux session.",
         "details": "Implementation steps:\n\n1. Create .claude/hooks/long-running-tmux-hint.sh:\n   ```bash\n   #!/bin/bash\n   # long-running-tmux-hint.sh - Advisory tmux reminder for long commands\n   # Hook type: PreToolUse (matcher: \"Bash\")\n   # Triggers when: Claude attempts to run a Bash command\n   #\n   # Detects potentially long-running commands and suggests tmux\n   # if not already in a tmux session. Complements dev-server-blocker.sh.\n   #\n   # Exit codes:\n   #   0 = Allow the command (advisory only, never blocks)\n   \n   INPUT=$(cat)\n   \n   COMMAND=$(echo \"$INPUT\" | jq -r '.tool_input.command // empty')\n   [ -z \"$COMMAND\" ] && exit 0\n   \n   # Already in tmux? No reminder needed.\n   [ -n \"$TMUX\" ] && exit 0\n   \n   # Detect long-running command patterns\n   IS_LONG_RUNNING=false\n   REASON=\"\"\n   case \"$COMMAND\" in\n     *\"npm install\"*|*\"npm ci\"*|*\"pnpm install\"*|*\"yarn install\"*)\n       IS_LONG_RUNNING=true; REASON=\"Package installation can take several minutes\" ;;\n     *\"pip install\"*|*\"poetry install\"*|*\"pdm install\"*)\n       IS_LONG_RUNNING=true; REASON=\"Python dependency installation can be slow\" ;;\n     *\"pytest\"*|*\"python -m pytest\"*)\n       IS_LONG_RUNNING=true; REASON=\"Test suites can run for minutes\" ;;\n     *\"cargo build\"*|*\"cargo test\"*)\n       IS_LONG_RUNNING=true; REASON=\"Rust compilation can be slow\" ;;\n     *\"make\"*|*\"cmake --build\"*)\n       IS_LONG_RUNNING=true; REASON=\"Build processes can take time\" ;;\n     *\"docker build\"*|*\"docker-compose up\"*)\n       IS_LONG_RUNNING=true; REASON=\"Container builds can be slow\" ;;\n     *\"go build\"*|*\"go test\"*)\n       IS_LONG_RUNNING=true; REASON=\"Go builds with dependencies can take time\" ;;\n   esac\n   \n   [ \"$IS_LONG_RUNNING\" = false ] && exit 0\n   \n   # Advisory message (never blocks)\n   echo \"ADVISORY: This command may take a while.\"\n   echo \"$REASON.\"\n   echo \"\"\n   echo \"Consider running in tmux for session persistence:\"\n   echo \"  tmux new-session -d '$COMMAND'\"\n   echo \"  tmux attach\"\n   echo \"\"\n   echo \"(This is just a suggestion - the command will proceed.)\"\n   \n   exit 0\n   ```\n\n2. Make executable: chmod +x .claude/hooks/long-running-tmux-hint.sh\n\n3. Add to settings-presets.json for safe, thorough, and optimized presets\n\n4. Note: Unlike dev-server-blocker.sh (exit 2 to block), this hook is advisory only (always exit 0)",
@@ -1008,7 +1012,7 @@
         "updatedAt": "2026-02-18T23:57:47.533Z"
       },
       {
-        "id": "10",
+        "id": 10,
         "title": "Update settings presets with new hooks",
         "description": "Add the new PR URL extraction and long-running tmux reminder hooks to the safe, thorough, and optimized presets in .claude/settings-presets.json.",
         "details": "Implementation steps:\n\n1. Read .claude/settings-presets.json\n\n2. Add PostToolUse hook for pr-url-extract.sh to safe, thorough, and optimized presets:\n   ```json\n   \"PostToolUse\": [\n     {\n       \"matcher\": \"Bash\",\n       \"hooks\": [\n         {\n           \"type\": \"command\",\n           \"command\": \"$CLAUDE_PROJECT_DIR/.claude/hooks/pr-url-extract.sh\"\n         }\n       ]\n     }\n   ]\n   ```\n\n3. Add PreToolUse hook for long-running-tmux-hint.sh to safe, thorough, and optimized presets:\n   - Must be added to existing PreToolUse array alongside pre-commit-check.sh\n   ```json\n   \"PreToolUse\": [\n     {\n       \"matcher\": \"Bash\",\n       \"hooks\": [\n         {\n           \"type\": \"command\",\n           \"command\": \"$CLAUDE_PROJECT_DIR/.claude/hooks/long-running-tmux-hint.sh\"\n         }\n       ]\n     }\n   ]\n   ```\n\n4. Ensure hooks are in correct order:\n   - PreToolUse: protect-sensitive-files, pre-commit-check, long-running-tmux-hint\n   - PostToolUse: pr-url-extract",
@@ -1023,7 +1027,7 @@
         "updatedAt": "2026-02-18T23:58:08.613Z"
       },
       {
-        "id": "11",
+        "id": 11,
         "title": "Update ECC_COMPARISON.md with Phase 2 completion",
         "description": "Update docs/ECC_COMPARISON.md to mark Phase 2 items as DONE, update summary counts, and adjust the implementation priority queue.",
         "details": "Implementation steps:\n\n1. Update Summary table:\n   - Skills: Update count from 35 to 39 (adding 4 new skills)\n   - Hooks: Update hook behaviors count (adding 2 new behaviors)\n\n2. Update SKILLS section:\n   - Add cpp-coding-standards to \"Matched\" table\n   - Add cost-aware-llm-pipeline to \"Matched\" table\n   - Add regex-vs-llm-structured-text to \"Matched\" table\n   - Add springboot-verification to \"Matched\" table\n   - Mark these as DONE in \"ECC Has, We Don't\" section\n\n3. Update Skill Gap Action Summary:\n   - Move cpp-coding-standards from IMPLEMENT to DONE\n   - Move cost-aware-llm-pipeline from IMPLEMENT to DONE\n   - Move regex-vs-llm-structured-text from IMPLEMENT to DONE\n   - Move springboot-verification from IMPLEMENT to DONE\n\n4. Update HOOKS section:\n   - Add PR URL extraction to \"Our Hook Additions\" (if ECC doesn't have it) or \"Matched\"\n   - Add Long-running tmux reminder to appropriate section\n   - Mark these as DONE in Hook Behavior Gaps table\n\n5. Update RULES section:\n   - Note that Python, TypeScript, Go rules have been enriched with ECC content\n   - Update Rule Gap Action Plan status\n\n6. Update Implementation Priority Queue:\n   - Mark Phase 2 items 7-12 as DONE\n   - Move Rule enrichment item 6 from \"Remaining\" to DONE\n\n7. Update \"Last updated\" date at top of file",
@@ -1046,7 +1050,7 @@
         "updatedAt": "2026-02-19T00:07:18.205Z"
       },
       {
-        "id": "12",
+        "id": 12,
         "title": "Update TEMPLATE_OVERVIEW.md with new counts",
         "description": "Update docs/TEMPLATE_OVERVIEW.md to reflect the new skill count (39 skills) and hook count (17 hooks with 2 new behaviors).",
         "details": "Implementation steps:\n\n1. Update \"By the numbers\" section:\n   - Skills: 35 → 39 skills\n   - Update hooks count if changed\n\n2. Update Architecture Overview section:\n   - Skills count in the tree structure\n   - Any hook-related counts\n\n3. Update Token Budget Awareness table if skill loading description changes\n\n4. Update Component Deep Dive sections:\n   - Add new skills to Skills list (Section 3)\n   - Add new hooks to Hooks list if enumerated\n\n5. Update version number if this constitutes a minor release\n\n6. Update the footer:\n   - \"Template version X.X.X | 13 agents, 39 skills, ...\"",
@@ -1065,7 +1069,7 @@
         "updatedAt": "2026-02-19T00:07:23.902Z"
       },
       {
-        "id": "13",
+        "id": 13,
         "title": "Update CLAUDE.md if slash commands were added",
         "description": "Review CLAUDE.md to verify all new skills are properly referenced and no new slash commands need documentation. Update the slash commands table if any new commands were added as part of Phase 2.",
         "details": "Implementation steps:\n\n1. Read CLAUDE.md and review the Slash Commands table\n\n2. Check if any new skills require associated slash commands:\n   - cpp-coding-standards: No (coding standards are auto-loaded rules pattern, not slash commands)\n   - cost-aware-llm-pipeline: No (skill loaded on-demand, no dedicated command)\n   - regex-vs-llm-structured-text: No (decision framework skill, no dedicated command)\n   - springboot-verification: Consider if /verify-spring command is needed\n\n3. If any new commands are added, update the Slash Commands table\n\n4. Verify skills are listed in appropriate sections if the document has a skills inventory\n\n5. Update any counts in CLAUDE.md that reference skill or hook totals\n\n6. Note: The PRD specifies \"Update CLAUDE.md if any new slash commands are added\" - most Phase 2 items are skills/hooks, not commands, so this may be a no-op",
@@ -1089,6 +1093,373 @@
       "completedCount": 13,
       "tags": [
         "ecc-gap-p2"
+      ],
+      "created": "2026-02-20T05:20:06.053Z",
+      "description": "Tasks for ecc-gap-p2 context"
+    }
+  },
+  "overlay-fixes": {
+    "tasks": [
+      {
+        "id": "1",
+        "title": "Create init-project.sh Script Foundation",
+        "description": "Create the core scripts/init-project.sh script with argument parsing, template auto-detection, and help documentation. This is the foundational script that will fix the CRITICAL inheritance gap.",
+        "details": "Implementation steps:\n\n1. Create `scripts/init-project.sh` with proper bash shebang and set -e\n2. Define constants for the 5 target directories: commands/, skills/, agents/, contexts/, hooks/\n3. Implement argument parsing for:\n   - `--template PATH` (source template directory)\n   - `--mode symlink|copy` (override auto-detection)\n   - `--force` (recreate existing)\n   - `--dry-run` (preview without changes)\n   - `--help` (show usage)\n4. Support `$TEMPLATE_PATH` env var fallback (default: ~/projects/project-template)\n5. Add color constants for output formatting\n6. Create helper functions:\n   - `show_usage()` - display help\n   - `log_info()`, `log_warn()`, `log_error()` - colored output\n   - `ensure_claude_dir()` - create .claude/ if missing\n\nPseudo-code:\n```bash\n#!/bin/bash\nset -e\n\nTARGET_DIRS=(\"commands\" \"skills\" \"agents\" \"contexts\" \"hooks\")\nTEMPLATE_PATH=\"${TEMPLATE_PATH:-$HOME/projects/project-template}\"\nMODE=\"auto\"\nFORCE=false\nDRY_RUN=false\n\nwhile [[ \"$#\" -gt 0 ]]; do\n  case $1 in\n    --template) TEMPLATE_PATH=\"$2\"; shift ;;\n    --mode) MODE=\"$2\"; shift ;;\n    --force) FORCE=true ;;\n    --dry-run) DRY_RUN=true ;;\n    --help|-h) show_usage; exit 0 ;;\n    *) log_error \"Unknown: $1\"; exit 1 ;;\n  esac\n  shift\ndone\n```",
+        "testStrategy": "1. Run `./scripts/init-project.sh --help` and verify help output appears\n2. Run with invalid flag and verify error message\n3. Test that TEMPLATE_PATH env var is respected\n4. Verify script exits cleanly with missing template directory error when no template found",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "complexity": 4,
+        "recommendedSubtasks": 3,
+        "expansionPrompt": "Break down into: 1) Create script skeleton with shebang, color constants, and TARGET_DIRS array, 2) Implement argument parsing using the same pattern as sync-template.sh (lines 154-177), 3) Implement helper functions (show_usage, log_info, log_warn, log_error, ensure_claude_dir). Reference sync-template.sh for consistent patterns.",
+        "updatedAt": "2026-02-20T05:35:08.158Z"
+      },
+      {
+        "id": "2",
+        "title": "Implement Template Auto-Detection Logic",
+        "description": "Add the logic to auto-detect whether the current project is nested under a template parent directory by walking parent directories.",
+        "details": "Implementation steps:\n\n1. Create `detect_template_parent()` function that:\n   - Starts from current directory\n   - Walks up parent directories (../, ../../, etc.)\n   - Looks for `.claude/commands/` with >10 command files\n   - Returns the template path if found, empty string if not\n\n2. Create `count_files()` helper function to count files in a directory\n\n3. Implement auto-detection in main logic:\n   - If MODE=auto, call detect_template_parent()\n   - If found, set MODE=symlink and store relative path\n   - If not found, set MODE=copy\n\n4. Use relative paths for detection (via realpath --relative-to)\n\nPseudo-code:\n```bash\ndetect_template_parent() {\n    local current=\"$PWD\"\n    local max_depth=5\n    local depth=0\n    \n    while [ $depth -lt $max_depth ]; do\n        local check_dir=\"$(realpath \"$current/..\")\"  # Parent\n        if [ -d \"$check_dir/.claude/commands\" ]; then\n            local cmd_count=$(ls -1 \"$check_dir/.claude/commands/\"*.md 2>/dev/null | wc -l)\n            if [ \"$cmd_count\" -ge 10 ]; then\n                echo \"$check_dir\"\n                return 0\n            fi\n        fi\n        current=\"$check_dir\"\n        ((depth++))\n    done\n    return 1\n}\n```\n\n5. Store the detected/specified template path and calculated relative path for symlinks",
+        "testStrategy": "1. From a project UNDER ~/projects/project-template/test-projects/, verify detect returns ~/projects/project-template\n2. From a standalone project NOT under template, verify detect returns empty/fails\n3. Test max_depth limit (shouldn't search infinitely)\n4. Verify relative path calculation is correct (../../../.claude/commands not absolute)",
+        "priority": "high",
+        "dependencies": [
+          "1"
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create detect_template_parent() function with parent directory traversal",
+            "description": "Implement a bash function that walks up parent directories (max 5 levels) searching for a template directory identified by having .claude/commands/ with 10+ markdown files.",
+            "dependencies": [],
+            "details": "Implementation steps:\n\n1. Create the function signature: `detect_template_parent() { ... }`\n\n2. Initialize variables:\n   - `local current=\"$PWD\"` - start from current working directory\n   - `local max_depth=5` - cap traversal to prevent infinite loops\n   - `local depth=0` - counter\n\n3. Loop while depth < max_depth:\n   - Calculate parent: `local check_dir=\"$(realpath \"$current/..\")\"` \n   - Avoid infinite loop at root: `[ \"$check_dir\" = \"$current\" ] && break`\n   - Check if .claude/commands/ exists in parent\n   - If found, count .md files and check if >= 10\n   - If threshold met, echo the path and return 0\n   - Otherwise, move current up: `current=\"$check_dir\"`\n   - Increment depth\n\n4. Return 1 if no template found after max_depth\n\n5. Edge cases to handle:\n   - At filesystem root (/ or C:\\)\n   - Symlinked project directories\n   - Permission denied on parent directories",
+            "status": "pending",
+            "testStrategy": "Test cases:\n1. Run from project-template/test-projects/myproject/ - should return project-template path\n2. Run from /tmp/standalone-project/ - should return 1 (not found)\n3. Run from project-template/ itself - should return 1 (no parent template)\n4. Run from root (/) - should return 1 without hanging\n5. Create symlinked project under template, verify detection works through symlink",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "Implement file counting helper to identify template directories",
+            "description": "Create a count_files() helper function and integrate the counting logic to reliably identify template directories by checking for .claude/commands/ presence with >10 command files.",
+            "dependencies": [
+              1
+            ],
+            "details": "Implementation steps:\n\n1. Create count_files() helper:\n   ```bash\n   count_files() {\n       local dir=\"$1\"\n       local pattern=\"${2:-*}\"  # Default: all files\n       ls -1 \"$dir\"/$pattern 2>/dev/null | wc -l\n   }\n   ```\n\n2. Integrate into detect_template_parent():\n   - Check directory exists: `[ -d \"$check_dir/.claude/commands\" ]`\n   - Count markdown files: `local cmd_count=$(count_files \"$check_dir/.claude/commands\" \"*.md\")`\n   - Template threshold: `[ \"$cmd_count\" -ge 10 ]`\n\n3. Why 10 files threshold:\n   - Template has 50+ commands\n   - Regular projects typically have 0-5 custom commands\n   - 10 is a safe heuristic to distinguish\n\n4. Handle globbing edge cases:\n   - Empty directory returns 0 (correct behavior)\n   - No *.md files returns 0 (correct behavior)\n   - Pattern with spaces/special chars (use quotes)",
+            "status": "pending",
+            "testStrategy": "Test cases:\n1. count_files on template .claude/commands/ returns 50+\n2. count_files on empty directory returns 0\n3. count_files on directory with mixed file types filters correctly\n4. Verify detection rejects dirs with only 5 commands\n5. Verify detection accepts dirs with exactly 10 commands",
+            "parentId": "undefined"
+          },
+          {
+            "id": 3,
+            "title": "Integrate auto-detection into main script flow and set MODE/TEMPLATE_PATH",
+            "description": "Wire the detection function into the main init-project.sh logic to set MODE=symlink or MODE=copy and store the TEMPLATE_PATH and RELATIVE_PATH variables for downstream use.",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "Implementation steps:\n\n1. Add MODE handling at script start:\n   ```bash\n   MODE=\"${MODE:-auto}\"  # auto|symlink|copy\n   TEMPLATE_PATH=\"\"\n   RELATIVE_PATH=\"\"\n   ```\n\n2. Implement auto-detection logic:\n   ```bash\n   if [ \"$MODE\" = \"auto\" ]; then\n       detected=$(detect_template_parent)\n       if [ -n \"$detected\" ]; then\n           MODE=\"symlink\"\n           TEMPLATE_PATH=\"$detected\"\n           log_info \"Detected template parent: $TEMPLATE_PATH\"\n       else\n           MODE=\"copy\"\n           # Use --template arg, $TEMPLATE_PATH env, or default\n           TEMPLATE_PATH=\"${TEMPLATE_PATH:-$HOME/projects/project-template}\"\n           log_info \"No template parent found, using copy mode\"\n       fi\n   fi\n   ```\n\n3. Calculate relative path (for symlinks):\n   ```bash\n   calc_relative_path() {\n       python3 -c \"import os; print(os.path.relpath('$1', '$2'))\"\n   }\n   # Usage: RELATIVE_PATH=$(calc_relative_path \"$TEMPLATE_PATH/.claude\" \"$PROJECT_DIR/.claude\")\n   ```\n\n4. Validate template path exists before proceeding:\n   - Check TEMPLATE_PATH/.claude/commands/ exists\n   - Exit with error if not found\n\n5. Export variables for use by create_symlinks() or copy_directories()",
+            "status": "pending",
+            "testStrategy": "Test cases:\n1. MODE=auto in nested project → sets MODE=symlink, correct TEMPLATE_PATH\n2. MODE=auto in standalone → sets MODE=copy, uses default/env TEMPLATE_PATH\n3. MODE=symlink (explicit) → skips detection, uses provided path\n4. MODE=copy (explicit) → skips detection, uses provided path\n5. Invalid TEMPLATE_PATH → exits with error and helpful message\n6. Verify RELATIVE_PATH calculation: from test-projects/myproject to template is '../..'",
+            "parentId": "undefined"
+          }
+        ],
+        "complexity": 5,
+        "recommendedSubtasks": 3,
+        "expansionPrompt": "Break down into: 1) Create detect_template_parent() function that walks parent directories (max 5 levels), 2) Implement file counting logic to identify template by .claude/commands/ presence with >10 files, 3) Integrate auto-detection into main script flow and set MODE/TEMPLATE_PATH variables accordingly. Test edge cases: at root, exactly at template, symlinked paths.",
+        "updatedAt": "2026-02-20T05:35:22.475Z"
+      },
+      {
+        "id": "3",
+        "title": "Implement Symlink Creation Mode",
+        "description": "Add the symlink creation logic for nested projects, using relative paths and handling existing directories.",
+        "details": "Implementation steps:\n\n1. Create `create_symlinks()` function that:\n   - Iterates over TARGET_DIRS array\n   - Calculates relative path from project .claude/ to template .claude/subdir\n   - Creates symlink using `ln -s`\n\n2. Use Python's os.path.relpath for accurate relative path calculation:\n   ```bash\n   calc_relative_path() {\n       python3 -c \"import os; print(os.path.relpath('$1', '$2'))\"\n   }\n   ```\n\n3. Handle existing directories/symlinks:\n   - If symlink exists and points to correct target: skip with info message\n   - If symlink exists but wrong target: warn (or recreate with --force)\n   - If real directory exists: WARN (suggests pre-existing content that may shadow)\n   - If nothing exists: create symlink\n\n4. Support --force flag:\n   - Remove existing symlink/directory before creating new\n   - Use `rm -f` for symlinks, warn before `rm -rf` for directories\n\n5. Support --dry-run flag:\n   - Print what would be done without doing it\n\nPseudo-code:\n```bash\ncreate_symlinks() {\n    local template_claude=\"$TEMPLATE_PATH/.claude\"\n    local project_claude=\"$PROJECT_DIR/.claude\"\n    \n    for dir in \"${TARGET_DIRS[@]}\"; do\n        local target=\"$project_claude/$dir\"\n        local source=\"$template_claude/$dir\"\n        local relative=$(calc_relative_path \"$source\" \"$project_claude\")\n        \n        if [ -L \"$target\" ]; then\n            log_info \"Skip: $dir (symlink exists)\"\n        elif [ -d \"$target\" ]; then\n            log_warn \"Skip: $dir (real directory exists - may shadow template)\"\n        else\n            [ \"$DRY_RUN\" = true ] && log_info \"Would create: $dir -> $relative\" && continue\n            ln -s \"$relative\" \"$target\"\n            log_info \"Created: $dir -> $relative\"\n        fi\n    done\n}\n```",
+        "testStrategy": "1. Run in a child directory and verify 5 symlinks are created\n2. Verify symlinks use relative paths (check with `readlink`)\n3. Run again - should skip existing with info messages\n4. Run with --dry-run - should show what would happen without creating\n5. Create a real directory for one target, run script - should warn about shadowing\n6. Test --force flag removes existing symlink and recreates",
+        "priority": "high",
+        "dependencies": [
+          "1",
+          "2"
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create calc_relative_path() Helper Using Python os.path.relpath",
+            "description": "Implement a shell helper function that uses Python's os.path.relpath to calculate accurate relative paths from the project .claude/ directory to template .claude/ subdirectories.",
+            "dependencies": [],
+            "details": "Create the calc_relative_path() function that wraps Python's os.path.relpath for accurate cross-platform relative path calculation:\n\n```bash\ncalc_relative_path() {\n    local source=\"$1\"  # Template source path (e.g., /path/to/template/.claude/commands)\n    local from_dir=\"$2\" # Project .claude/ directory (e.g., /path/to/project/.claude)\n    python3 -c \"import os; print(os.path.relpath('$source', '$from_dir'))\"\n}\n```\n\nKey implementation details:\n1. Function takes two arguments: source path and from_dir (the directory the relative path is calculated FROM)\n2. Uses python3 for consistency (available on all target systems)\n3. Returns relative path like '../../../project-template/.claude/commands'\n4. Handle edge cases: spaces in paths (quote variables), missing python3 (fail with clear error)\n5. Add validation that both paths are absolute before calculation",
+            "status": "pending",
+            "testStrategy": "Test with various directory depths: 1) Project one level under template, 2) Project three levels deep, 3) Project in completely separate tree. Verify output matches expected relative paths. Test with paths containing spaces. Verify python3 availability check works.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "Implement create_symlinks() Function with Status Tracking",
+            "description": "Create the main create_symlinks() function that iterates over TARGET_DIRS, calculates relative paths, creates symlinks, and tracks operation counts (created/skipped/warned).",
+            "dependencies": [
+              1
+            ],
+            "details": "Implement the core symlink creation function with comprehensive status tracking:\n\n```bash\nCREATED_COUNT=0\nSKIPPED_COUNT=0\nWARNED_COUNT=0\n\ncreate_symlinks() {\n    local template_claude=\"$TEMPLATE_PATH/.claude\"\n    local project_claude=\"$PROJECT_DIR/.claude\"\n    \n    # Ensure project .claude/ directory exists\n    mkdir -p \"$project_claude\"\n    \n    for dir in \"${TARGET_DIRS[@]}\"; do\n        local target=\"$project_claude/$dir\"\n        local source=\"$template_claude/$dir\"\n        \n        # Skip if source doesn't exist in template\n        if [ ! -d \"$source\" ]; then\n            log_warn \"Template missing: $dir\"\n            ((WARNED_COUNT++))\n            continue\n        fi\n        \n        local relative=$(calc_relative_path \"$source\" \"$project_claude\")\n        \n        # Dry-run mode check\n        if [ \"$DRY_RUN\" = true ]; then\n            log_info \"Would create: $dir -> $relative\"\n            continue\n        fi\n        \n        # Create symlink\n        ln -s \"$relative\" \"$target\"\n        log_info \"Created: $dir -> $relative\"\n        ((CREATED_COUNT++))\n    done\n}\n```\n\nIncrement appropriate counters for each operation type. Ensure mkdir -p creates parent .claude/ if needed.",
+            "status": "pending",
+            "testStrategy": "Run in fresh project directory and verify 5 symlinks created. Check counts match expected values. Verify symlinks resolve correctly using 'readlink -f'. Test --dry-run shows operations without creating. Verify ln -s uses relative path (not absolute).",
+            "parentId": "undefined"
+          },
+          {
+            "id": 3,
+            "title": "Handle Existing Symlinks vs Real Directories with Appropriate Warnings",
+            "description": "Add logic to detect and handle existing symlinks (correct/wrong target) and real directories, providing appropriate skip/warning messages for each case.",
+            "dependencies": [
+              2
+            ],
+            "details": "Extend create_symlinks() with comprehensive existing path handling:\n\n```bash\n# Inside the for loop, before creating symlink:\nif [ -L \"$target\" ]; then\n    # Existing symlink - check if it points to correct target\n    local current_target=$(readlink \"$target\")\n    if [ \"$current_target\" = \"$relative\" ]; then\n        log_info \"Skip: $dir (symlink correct)\"\n        ((SKIPPED_COUNT++))\n    else\n        log_warn \"Skip: $dir (symlink exists but points to: $current_target, expected: $relative)\"\n        ((WARNED_COUNT++))\n    fi\n    continue\nelif [ -d \"$target\" ]; then\n    # Real directory exists - this is important because it may shadow template content\n    log_warn \"Skip: $dir (real directory exists - may shadow template content)\"\n    ((WARNED_COUNT++))\n    continue\nelif [ -e \"$target\" ]; then\n    # Some other file type exists\n    log_warn \"Skip: $dir (file exists but is not symlink or directory)\"\n    ((WARNED_COUNT++))\n    continue\nfi\n```\n\nKey behaviors:\n- Correct symlink: skip silently (info level)\n- Wrong symlink target: warn with both paths shown\n- Real directory: warn about shadowing (template updates won't propagate)\n- Other file types: warn and skip",
+            "status": "pending",
+            "testStrategy": "1) Create correct symlink, run again - verify skip with info. 2) Create symlink to wrong target, verify warning shows both paths. 3) Create real directory, verify shadowing warning. 4) Verify counts are accurate for mixed scenarios. 5) Test with mix of correct symlinks, wrong symlinks, and real directories.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 4,
+            "title": "Implement --force Flag Behavior for Symlink Recreation",
+            "description": "Add --force flag handling that removes existing symlinks safely (rm -f) and handles real directories with extra caution (warning before rm -rf or requiring confirmation).",
+            "dependencies": [
+              3
+            ],
+            "details": "Add force mode handling to create_symlinks():\n\n```bash\n# Inside the for loop, when handling existing paths with FORCE=true:\nif [ \"$FORCE\" = true ]; then\n    if [ -L \"$target\" ]; then\n        # Symlinks are safe to remove\n        rm -f \"$target\"\n        log_info \"Removed existing symlink: $dir\"\n    elif [ -d \"$target\" ]; then\n        # Real directories need extra caution - they may contain user content\n        log_warn \"Force removing directory: $dir (contained $(find \"$target\" -type f | wc -l) files)\"\n        rm -rf \"$target\"\n    fi\n    # Fall through to create new symlink\nfi\n```\n\nFor --dry-run + --force combination:\n```bash\nif [ \"$DRY_RUN\" = true ] && [ \"$FORCE\" = true ]; then\n    if [ -L \"$target\" ]; then\n        log_info \"Would remove and recreate symlink: $dir\"\n    elif [ -d \"$target\" ]; then\n        log_warn \"Would remove directory: $dir ($(find \"$target\" -type f | wc -l) files)\"\n    fi\n    continue\nfi\n```\n\nSafety: Always show file count when removing real directories. Consider requiring explicit confirmation for non-empty directories unless --force --force (double force) is used.",
+            "status": "pending",
+            "testStrategy": "1) Create wrong symlink, run with --force - verify removed and recreated. 2) Create real directory with files, run with --force - verify warning shows file count. 3) Test --dry-run --force shows what would be removed. 4) Verify CREATED_COUNT reflects recreations. 5) Test that correct symlinks are still recreated with --force (useful for updating relative paths).",
+            "parentId": "undefined"
+          }
+        ],
+        "complexity": 5,
+        "recommendedSubtasks": 4,
+        "expansionPrompt": "Break down into: 1) Create calc_relative_path() helper using Python os.path.relpath, 2) Implement create_symlinks() function with status tracking (created/skipped/warned counts), 3) Handle existing symlinks vs. real directories with appropriate warnings, 4) Implement --force flag behavior for symlink recreation. Test symlinks resolve correctly from project .claude/ to template .claude/ subdirs.",
+        "updatedAt": "2026-02-20T05:35:26.672Z"
+      },
+      {
+        "id": "4",
+        "title": "Implement Copy Mode for Standalone Projects",
+        "description": "Add the directory copy logic for standalone projects not under the template tree, copying entire subdirectory contents.",
+        "details": "Implementation steps:\n\n1. Create `copy_directories()` function that:\n   - Verifies template source exists\n   - Copies entire .claude/<subdir>/ contents to project\n   - Preserves directory structure (for skills/debugging/SKILL.md etc.)\n   - Counts files copied for summary\n\n2. Use `cp -r` with proper source/destination:\n   ```bash\n   cp -r \"$TEMPLATE_PATH/.claude/$dir/\" \"$PROJECT_DIR/.claude/$dir/\"\n   ```\n\n3. Handle existing directories:\n   - If exists and --force: remove and copy fresh\n   - If exists and not --force: skip with count info\n   - If not exists: create and copy\n\n4. Count files for summary output:\n   ```bash\n   count=$(find \"$PROJECT_DIR/.claude/$dir\" -type f | wc -l)\n   ```\n\n5. Support --dry-run:\n   - Show file counts without copying\n   - List first few files that would be copied\n\nPseudo-code:\n```bash\ncopy_directories() {\n    local template_claude=\"$TEMPLATE_PATH/.claude\"\n    local project_claude=\"$PROJECT_DIR/.claude\"\n    \n    for dir in \"${TARGET_DIRS[@]}\"; do\n        local source=\"$template_claude/$dir\"\n        local target=\"$project_claude/$dir\"\n        \n        if [ ! -d \"$source\" ]; then\n            log_warn \"Source not found: $source\"\n            continue\n        fi\n        \n        local count=$(find \"$source\" -type f | wc -l)\n        \n        if [ -d \"$target\" ] && [ \"$FORCE\" = false ]; then\n            log_info \"Skip: $dir (exists, $count files in template)\"\n            continue\n        fi\n        \n        [ \"$DRY_RUN\" = true ] && log_info \"Would copy: $dir ($count files)\" && continue\n        \n        [ \"$FORCE\" = true ] && rm -rf \"$target\"\n        cp -r \"$source\" \"$target\"\n        log_info \"Copied: $dir ($count files)\"\n    done\n}\n```",
+        "testStrategy": "1. Run with --mode copy in a standalone directory\n2. Verify all 5 directories are created with full contents\n3. Verify nested structures preserved (e.g., skills/debugging/SKILL.md)\n4. Test --dry-run shows counts without copying\n5. Test existing directory is skipped without --force\n6. Test --force removes and recreates",
+        "priority": "high",
+        "dependencies": [
+          "1"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "complexity": 4,
+        "recommendedSubtasks": 3,
+        "expansionPrompt": "Break down into: 1) Create copy_directories() function with file counting and progress output, 2) Handle nested directory structures (preserve skills/debugging/SKILL.md hierarchy), 3) Implement --dry-run and --force flag behavior with appropriate warnings. Verify cp -r preserves structure without flattening.",
+        "updatedAt": "2026-02-20T05:35:31.262Z"
+      },
+      {
+        "id": "5",
+        "title": "Add Idempotency and Summary Output",
+        "description": "Make the script idempotent (safe to run multiple times) and add clear summary output showing what was created.",
+        "details": "Implementation steps:\n\n1. Track operations performed:\n   ```bash\n   CREATED_COUNT=0\n   SKIPPED_COUNT=0\n   WARNED_COUNT=0\n   ```\n\n2. Create summary output function:\n   ```bash\n   show_summary() {\n       echo \"\"\n       echo \"Summary:\"\n       echo \"  Created: $CREATED_COUNT\"\n       echo \"  Skipped: $SKIPPED_COUNT\"\n       [ $WARNED_COUNT -gt 0 ] && echo \"  Warnings: $WARNED_COUNT\"\n       echo \"\"\n       echo \"Mode: $MODE\"\n       [ \"$MODE\" = \"symlink\" ] && echo \"Template: $TEMPLATE_PATH\"\n   }\n   ```\n\n3. Add detailed output for each directory:\n   - For symlinks: show relative path target\n   - For copies: show file count\n   - For skips: show reason\n\n4. Final status message:\n   ```bash\n   if [ $CREATED_COUNT -gt 0 ]; then\n       echo \"✅ Local .claude/ structure ready. Slash commands should now work.\"\n   else\n       echo \"ℹ️  No changes made (already configured)\"\n   fi\n   ```\n\n5. Exit codes:\n   - 0: Success (created or skipped)\n   - 1: Error (template not found, etc.)\n   - 2: Nothing to do but warnings present\n\n6. Req 1.12: Ensure non-zero exit if template source cannot be found:\n   ```bash\n   if [ ! -d \"$TEMPLATE_PATH/.claude\" ]; then\n       log_error \"Template not found: $TEMPLATE_PATH\"\n       exit 1\n   fi\n   ```",
+        "testStrategy": "1. Run fresh - verify counts show 5 created\n2. Run again - verify counts show 5 skipped, 0 created\n3. Mix scenario (some exist, some don't) - verify accurate counts\n4. Verify exit code 0 on success\n5. Test exit code 1 when template path doesn't exist\n6. Verify summary shows mode and template path",
+        "priority": "medium",
+        "dependencies": [
+          "3",
+          "4"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "complexity": 3,
+        "recommendedSubtasks": 0,
+        "expansionPrompt": "Implement summary tracking (CREATED_COUNT, SKIPPED_COUNT, WARNED_COUNT) and show_summary() function. Add exit codes (0=success, 1=error, 2=warnings). This is straightforward enhancement to existing functions.",
+        "updatedAt": "2026-02-20T05:35:35.729Z"
+      },
+      {
+        "id": "6",
+        "title": "Enhance session-init.sh with Local Presence Checks",
+        "description": "Add checks to session-init.sh that detect missing LOCAL .claude/commands/ and .claude/skills/ directories and warn users with actionable fix commands.",
+        "details": "Implementation steps:\n\n1. Add new check function in session-init.sh after existing checks (~line 88):\n   ```bash\n   # Check LOCAL .claude/ presence for commands/skills\n   # Parent inheritance doesn't work - must be local directory or symlink\n   check_local_claude_dirs() {\n       local claude_dir=\"$PROJECT_DIR/.claude\"\n       \n       # Check commands - can be directory (-d) OR symlink (-L)\n       if [ ! -d \"$claude_dir/commands\" ] && [ ! -L \"$claude_dir/commands\" ]; then\n           CRITICAL_ISSUES+=(\"Slash commands not registered (no local .claude/commands/)\")\n           SETUP_NEEDED+=(\"Run: ./scripts/init-project.sh\")\n       fi\n       \n       # Check skills - can be directory (-d) OR symlink (-L)\n       if [ ! -d \"$claude_dir/skills\" ] && [ ! -L \"$claude_dir/skills\" ]; then\n           CRITICAL_ISSUES+=(\"Skills not registered (no local .claude/skills/)\")\n           # Don't duplicate the fix suggestion\n       fi\n   }\n   ```\n\n2. Call the function early in the script (before scenario detection)\n\n3. Add fallback for when init-project.sh doesn't exist:\n   ```bash\n   if [ ! -f \"$PROJECT_DIR/scripts/init-project.sh\" ]; then\n       SETUP_NEEDED+=(\"Or run: /setup\")\n   fi\n   ```\n\n4. Ensure existing behavior is NOT changed - only ADD new checks\n\n5. The check must work for both:\n   - Real directories: `-d \"$path\"` returns true\n   - Symlinks to directories: `-L \"$path\"` returns true\n   - Use `[ -d \"$path\" ] || [ -L \"$path\" ]` for robust check\n\n6. Req 2.6: Both real dirs and symlinks should pass the check",
+        "testStrategy": "1. Remove .claude/commands/ from a test project - verify CRITICAL warning appears\n2. Add symlink for commands/ - verify no warning\n3. Add real directory for commands/ - verify no warning\n4. Verify existing session-init.sh functionality still works\n5. Verify the fix suggestion includes ./scripts/init-project.sh\n6. Test that startup time increase is <0.5s (just 2 stat calls)",
+        "priority": "high",
+        "dependencies": [
+          "5"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "complexity": 3,
+        "recommendedSubtasks": 0,
+        "expansionPrompt": "Add check_local_claude_dirs() function after line 88 in session-init.sh. Check for .claude/commands/ and .claude/skills/ as directories OR symlinks. Add to CRITICAL_ISSUES and SETUP_NEEDED arrays. Pattern already exists in the script for MISSING_COMPONENTS checks (lines 89-93).",
+        "updatedAt": "2026-02-20T05:36:41.396Z"
+      },
+      {
+        "id": "7",
+        "title": "Update setup.md Command with Step 0",
+        "description": "Add 'Step 0: Initialize Local .claude/ Structure' to the setup wizard that runs init-project.sh before other setup steps.",
+        "details": "Implementation steps:\n\n1. Add new 'Step 0' section at the beginning of setup.md (before current Step 1):\n   ```markdown\n   ### Step 0: Initialize Local .claude/ Structure\n\n   Claude Code's parent-directory traversal inherits rules and CLAUDE.md, but \n   commands, skills, and hooks must exist locally (as directories or symlinks).\n\n   Check for local structure:\n   ```bash\n   # Check if commands/ and skills/ exist locally\n   ls -la .claude/commands/ .claude/skills/ 2>/dev/null || echo \"Missing local .claude/ structure\"\n   ```\n\n   If missing, initialize:\n   ```bash\n   # If script exists\n   ./scripts/init-project.sh\n\n   # If script doesn't exist (standalone project without scripts/)\n   # Create minimal structure manually or copy from template\n   ```\n\n   **Why this step is needed:** Claude Code walks parent directories for rules\n   and CLAUDE.md, but does NOT register commands/skills from parent `.claude/`\n   directories. Without local copies or symlinks, all 50 slash commands fail.\n   ```\n\n2. Add automatic detection and execution:\n   ```markdown\n   If `.claude/commands/` is missing (check with `-d` or `-L`):\n   - If `./scripts/init-project.sh` exists: run it automatically\n   - If not: provide manual instructions for creating symlinks or copying\n   ```\n\n3. Update 'For Adopting Template' section to include init-project.sh step\n\n4. Renumber existing steps (Step 1 becomes Step 2, etc.)",
+        "testStrategy": "1. Review updated setup.md for clarity and completeness\n2. Follow the manual instructions in a test project - verify they work\n3. Verify the explanation of WHY is clear and accurate\n4. Test that existing setup flow still works with new step inserted",
+        "priority": "medium",
+        "dependencies": [
+          "5"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "complexity": 2,
+        "recommendedSubtasks": 0,
+        "expansionPrompt": "Add Step 0 section to .claude/commands/setup.md before current Step 1. Document the init-project.sh script, when to run it, and why local .claude/ is required. Update step numbering throughout the document.",
+        "updatedAt": "2026-02-20T05:37:27.943Z"
+      },
+      {
+        "id": "8",
+        "title": "Add sync_full_directories to sync-template.sh",
+        "description": "Enhance sync-template.sh with a sync_full_directories() function for the adopt command that copies ALL files from template .claude/ subdirectories.",
+        "details": "Implementation steps:\n\n1. Add new function after existing `ensure_directories()` (~line 356):\n   ```bash\n   # Full directory sync for adopt mode\n   # Copies ALL files, not just curated lists\n   sync_full_directories() {\n       local dirs=(\"commands\" \"skills\" \"agents\" \"contexts\" \"hooks\")\n       \n       for dir in \"${dirs[@]}\"; do\n           local source=\"$TEMPLATE_PATH/.claude/$dir\"\n           local target=\"./.claude/$dir\"\n           \n           if [ ! -d \"$source\" ]; then\n               echo -e \"${YELLOW}Skip: .claude/$dir (not in template)${NC}\"\n               continue\n           fi\n           \n           # Count files for reporting\n           local file_count=$(find \"$source\" -type f | wc -l)\n           \n           if [ \"$DRY_RUN\" = true ]; then\n               echo -e \"${BLUE}Would copy: .claude/$dir/ ($file_count files)${NC}\"\n               # Show first few files\n               find \"$source\" -type f | head -5 | sed 's|.*/||' | sed 's/^/  /' \n               continue\n           fi\n           \n           # Create target and copy\n           mkdir -p \"$target\"\n           cp -r \"$source/\"* \"$target/\" 2>/dev/null || true\n           echo -e \"${GREEN}Copied: .claude/$dir/ ($file_count files)${NC}\"\n       done\n   }\n   ```\n\n2. Modify `adopt` command logic to call sync_full_directories():\n   - After building FILES_TO_SYNC array\n   - Call sync_full_directories() to copy full directories\n   - Then continue with individual file sync for rules, docs, etc.\n\n3. Update dry-run mode to show:\n   - File counts per directory\n   - List of new/changed files (first N)\n\n4. Preserve existing curated lists (STOCK_COMMANDS, etc.) for selective `sync` command\n\n5. Ensure subdirectory structure is preserved:\n   - skills/debugging/SKILL.md → skills/debugging/SKILL.md\n   - Not flattened",
+        "testStrategy": "1. Run `sync-template.sh adopt --dry-run` - verify shows file counts\n2. Run `sync-template.sh adopt` - verify ALL files are copied (not just curated)\n3. Verify skills/ subdirectory structure preserved\n4. Verify selective `sync --commands` still uses curated list\n5. Run adopt twice - verify idempotent (no errors on second run)\n6. Count: should have ~50 commands, ~40 skill dirs, 13 agents, 3 contexts, 17+ hooks",
+        "priority": "medium",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "complexity": 4,
+        "recommendedSubtasks": 3,
+        "expansionPrompt": "Break down into: 1) Create sync_full_directories() function that copies entire .claude subdirectories (commands, skills, agents, contexts, hooks), 2) Modify adopt command logic (around line 228-235) to call sync_full_directories() in addition to existing file sync, 3) Update dry-run mode to show directory file counts and sample files. Keep existing STOCK_* arrays intact for selective sync command.",
+        "updatedAt": "2026-02-20T05:41:41.794Z"
+      },
+      {
+        "id": "9",
+        "title": "Create smoke-test.sh Verification Script",
+        "description": "Create scripts/smoke-test.sh that verifies LOCAL .claude/ presence and reports PASS/FAIL with counts, catching the false-positive problem.",
+        "details": "Implementation steps:\n\n1. Create `scripts/smoke-test.sh` with structure:\n   ```bash\n   #!/bin/bash\n   # smoke-test.sh - Verify template overlay is working\n   # Checks LOCAL presence, not just file existence\n   \n   PROJECT_DIR=\"${1:-.}\"\n   PASS=0\n   FAIL=0\n   WARN=0\n   ```\n\n2. Implement check functions for each component:\n   ```bash\n   check_local_dir() {\n       local name=\"$1\"\n       local path=\"$PROJECT_DIR/.claude/$name\"\n       local critical=\"$2\"  # true/false\n       \n       if [ -d \"$path\" ] || [ -L \"$path\" ]; then\n           local count=$(find \"$path\" -type f 2>/dev/null | wc -l)\n           echo \"✅ PASS: $name/ ($count files)\"\n           ((PASS++))\n           return 0\n       else\n           if [ \"$critical\" = true ]; then\n               echo \"❌ FAIL: $name/ (missing - slash commands won't work)\"\n               ((FAIL++))\n           else\n               echo \"⚠️  WARN: $name/ (missing)\"\n               ((WARN++))\n           fi\n           return 1\n       fi\n   }\n   ```\n\n3. Check each required component:\n   - commands/ - CRITICAL (Req 5.2)\n   - skills/ - CRITICAL (Req 5.3)\n   - agents/ - warning (Req 5.4)\n   - contexts/ - warning (Req 5.5)\n   - hooks/ - warning (Req 5.6)\n\n4. Check rules with parent walk-up (Req 5.7):\n   ```bash\n   check_rules() {\n       local dir=\"$PROJECT_DIR\"\n       while [ \"$dir\" != \"/\" ]; do\n           if [ -d \"$dir/.claude/rules\" ]; then\n               local count=$(ls -1 \"$dir/.claude/rules/\"*.md 2>/dev/null | wc -l)\n               echo \"✅ PASS: rules/ ($count files at $dir)\"\n               return 0\n           fi\n           dir=$(dirname \"$dir\")\n       done\n       echo \"❌ FAIL: rules/ (not found in any parent)\"\n       return 1\n   }\n   ```\n\n5. Check CLAUDE.md customization (Req 5.8)\n\n6. Check .gitignore entries (Req 5.9)\n\n7. Output summary (Req 5.10, 5.11):\n   ```bash\n   echo \"\"\n   echo \"Summary: $PASS passed, $FAIL failed, $WARN warnings\"\n   [ $FAIL -gt 0 ] && exit 1 || exit 0\n   ```",
+        "testStrategy": "1. Run in project WITH local .claude/ - all should pass\n2. Run in project WITHOUT local .claude/ - commands/skills should FAIL\n3. Verify exit code is non-zero when CRITICAL checks fail\n4. Verify rules check walks parent directories correctly\n5. Test CLAUDE.md customization detection\n6. Test .gitignore entry detection\n7. Verify output format is clear and counts are accurate",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [],
+        "complexity": 4,
+        "recommendedSubtasks": 3,
+        "expansionPrompt": "Break down into: 1) Create script skeleton with check_local_dir() function that verifies directory/symlink presence and counts files, 2) Add specialized checks: rules (parent walk-up), CLAUDE.md customization, .gitignore entries, 3) Implement summary output with PASS/FAIL/WARN counts and appropriate exit codes. Mark commands/ and skills/ as CRITICAL failures.",
+        "updatedAt": "2026-02-20T05:41:45.970Z"
+      },
+      {
+        "id": "10",
+        "title": "Update Documentation with Fix Status",
+        "description": "Update TEMPLATE_OVERLAY_FRICTION.md friction tracker with fix status and update CLAUDE.md if component counts changed.",
+        "details": "Implementation steps:\n\n1. Update Friction Pattern Tracker in `docs/TEMPLATE_OVERLAY_FRICTION.md`:\n   ```markdown\n   | Pattern | Occurrences | Severity | Status |\n   |---------|-------------|----------|--------|\n   | Commands/skills don't inherit | 1/3 | CRITICAL | **FIXED** via init-project.sh |\n   | Smoke test false positives | 1/3 | High | **FIXED** via smoke-test.sh |\n   | Hooks not auto-wired | 3/3 | Medium | **MITIGATED** via session-init.sh warning |\n   | No onboarding prompt | 1/3 | Medium | **MITIGATED** via session-init.sh detection |\n   ```\n\n2. Add a new section describing the fix:\n   ```markdown\n   ## Resolution: init-project.sh\n   \n   The CRITICAL inheritance gap was resolved by creating `scripts/init-project.sh`\n   which:\n   - Auto-detects nested vs standalone projects\n   - Creates symlinks for nested projects (in sync with template)\n   - Copies full directories for standalone projects\n   \n   Run `./scripts/smoke-test.sh` to verify your project is correctly configured.\n   ```\n\n3. Update CLAUDE.md if needed:\n   - Check current rules count - if superpowers-integration.md was added, update \"7 core rules\" to \"8 core rules\"\n   - Update any component counts that changed\n\n4. Add references to new scripts in relevant sections:\n   - scripts/ section should mention init-project.sh and smoke-test.sh\n   - Setup section should reference init-project.sh\n\n5. Cross-reference from `docs/ECC_INTEGRATION.md` or other relevant docs",
+        "testStrategy": "1. Review TEMPLATE_OVERLAY_FRICTION.md - verify status column is accurate\n2. Review CLAUDE.md - verify counts match reality\n3. Verify new scripts are documented where appropriate\n4. Run a final smoke-test.sh on the template itself - should pass",
+        "priority": "low",
+        "dependencies": [
+          "5",
+          "6",
+          "9"
+        ],
+        "status": "in-progress",
+        "subtasks": [],
+        "complexity": 2,
+        "recommendedSubtasks": 0,
+        "expansionPrompt": "Update TEMPLATE_OVERLAY_FRICTION.md friction tracker table with fix status. Update CLAUDE.md if rule counts changed. Add references to new scripts. Verify all component counts are accurate.",
+        "updatedAt": "2026-02-20T05:42:12.072Z"
+      },
+      {
+        "id": "11",
+        "title": "Integration Testing Across Test Projects",
+        "description": "Run comprehensive integration tests across all 3 test projects to verify the fixes work in real scenarios.",
+        "details": "Implementation steps:\n\n1. Test analog_image_generator (existing project, has local .claude/):\n   - Run smoke-test.sh - should PASS\n   - Verify existing commands still work\n   - Run init-project.sh - should skip (already configured)\n\n2. Test rideshare-rescue (child of template, has pre-existing .claude/):\n   - Run smoke-test.sh - should PASS (has local copies)\n   - Test that skill/command shadowing behavior is unchanged\n   - Document any new warnings from session-init.sh\n\n3. Test postiz-social-automation (greenfield, no local .claude/ initially):\n   - Remove existing symlinks if present\n   - Run smoke-test.sh - should FAIL (missing commands/skills)\n   - Run init-project.sh - should create 5 symlinks\n   - Run smoke-test.sh again - should PASS\n   - Start new Claude Code session - verify session-init.sh shows no CRITICAL warnings\n   - Test a slash command (e.g., /health) - should work\n\n4. Test standalone scenario:\n   - Create temp project outside template tree\n   - Run init-project.sh --mode copy\n   - Run smoke-test.sh - should PASS\n   - Verify full directory contents were copied\n\n5. Document results:\n   - Update friction log with final test results\n   - Note any unexpected behaviors",
+        "testStrategy": "This IS the test strategy - run the tests and document results:\n1. All 3 test projects pass smoke-test.sh\n2. init-project.sh creates correct structure based on mode\n3. session-init.sh shows no CRITICAL warnings after init\n4. At least one slash command works after init\n5. Standalone copy mode creates full directory contents",
+        "priority": "high",
+        "dependencies": [
+          "5",
+          "6",
+          "8",
+          "9"
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Test analog_image_generator (Existing Project with Local .claude/)",
+            "description": "Run comprehensive tests on analog_image_generator, an existing project that already has a local .claude/ directory. This tests the 'already configured' scenario where smoke-test should PASS and init-project should skip all operations.",
+            "dependencies": [],
+            "details": "Execute the following test sequence:\n\n1. Navigate to analog_image_generator project directory\n2. Run `./scripts/smoke-test.sh` and verify:\n   - All CRITICAL checks pass (commands/, skills/, etc. exist locally)\n   - Exit code is 0\n   - Output shows green PASS indicators\n3. Test existing slash commands still work (e.g., /health or /test)\n4. Run `./scripts/init-project.sh` and verify:\n   - Script detects existing configuration\n   - Outputs 'Already configured' or 'Skipping' messages for all 5 directories\n   - Does NOT overwrite or modify existing files\n   - Exit code is 0 (graceful skip)\n5. Run smoke-test.sh again post-init to confirm nothing was broken\n6. Document: Number of checks passed/failed, any warnings from session-init.sh",
+            "status": "pending",
+            "testStrategy": "Success criteria:\n- smoke-test.sh returns exit code 0 with all checks passing\n- init-project.sh recognizes existing setup and skips without errors\n- At least one slash command executes successfully\n- No regression in existing functionality\n- session-init.sh produces no CRITICAL warnings",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "Test rideshare-rescue (Pre-existing .claude/ Content with Shadowing)",
+            "description": "Test rideshare-rescue project which is a child of the template and has pre-existing .claude/ content. This validates that skill/command shadowing behavior (local files override template) remains unchanged after the fixes.",
+            "dependencies": [
+              1
+            ],
+            "details": "Execute the following test sequence:\n\n1. Navigate to rideshare-rescue project directory\n2. Identify any local overrides in .claude/ (commands, skills, or rules that shadow template versions)\n3. Run `./scripts/smoke-test.sh` and verify:\n   - PASS result (has local copies)\n   - Correct detection of local vs inherited content\n4. Test shadowing behavior:\n   - If a local skill exists, verify it takes precedence over template version\n   - Document which files are shadows vs inherited\n5. Run a Claude Code session and capture session-init.sh output:\n   - Note any new warnings introduced by the fixes\n   - Document the inheritance hierarchy shown\n6. Run `./scripts/init-project.sh` and verify:\n   - Respects existing local files (doesn't overwrite shadows)\n   - Handles hybrid state correctly (some local, some symlinked)\n7. Compare before/after behavior - shadowing must work identically",
+            "status": "pending",
+            "testStrategy": "Success criteria:\n- smoke-test.sh passes with correct local detection\n- Shadowing behavior unchanged: local files still override template files\n- session-init.sh warnings are informational only, not CRITICAL\n- init-project.sh respects existing local overrides\n- No functional regression in project-specific customizations",
+            "parentId": "undefined"
+          },
+          {
+            "id": 3,
+            "title": "Test postiz-social-automation (Greenfield FAIL-to-PASS Cycle)",
+            "description": "Test postiz-social-automation as a greenfield project without local .claude/ initially. This is the most critical test as it replicates the exact bug scenario - must demonstrate FAIL before init, then PASS after init-project.sh creates the symlinks.",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "Execute the following test sequence:\n\n1. Navigate to postiz-social-automation project directory\n2. SETUP: Remove any existing symlinks if present:\n   - `rm -rf .claude/commands .claude/skills .claude/agents .claude/contexts .claude/hooks` (only symlinks)\n   - Verify .claude/ is now missing the 5 key directories\n3. Run `./scripts/smoke-test.sh` (EXPECT FAILURE):\n   - Should report FAIL for commands/, skills/, etc.\n   - Exit code should be non-zero\n   - Document the specific failures\n4. Run `./scripts/init-project.sh`:\n   - Should detect template parent automatically\n   - Should create exactly 5 symlinks\n   - Verify symlinks use relative paths (`readlink -f` to confirm)\n5. Run `./scripts/smoke-test.sh` again (EXPECT SUCCESS):\n   - All checks should now pass\n   - Exit code should be 0\n6. Start a new Claude Code session:\n   - Verify session-init.sh shows NO CRITICAL warnings\n   - Test a slash command (e.g., /health) - must execute successfully\n7. This is the canonical reproduction of the original bug and its fix",
+            "status": "pending",
+            "testStrategy": "Success criteria:\n- First smoke-test.sh FAILS (exit code non-zero) - proves detection works\n- init-project.sh creates exactly 5 symlinks with relative paths\n- Second smoke-test.sh PASSES (exit code 0) - proves init fixed the gap\n- New Claude session has zero CRITICAL warnings\n- At least one slash command (/health, /test, etc.) executes successfully\n- This test MUST pass - it's the primary bug reproduction",
+            "parentId": "undefined"
+          },
+          {
+            "id": 4,
+            "title": "Test Standalone Project with Copy Mode (Outside Template Tree)",
+            "description": "Create a temporary project completely outside the template directory tree and test init-project.sh with --mode copy to verify full directory contents are copied rather than symlinked.",
+            "dependencies": [
+              1,
+              2,
+              3
+            ],
+            "details": "Execute the following test sequence:\n\n1. Create a temporary project directory outside template tree:\n   - `mkdir -p /tmp/standalone-test-project`\n   - `cd /tmp/standalone-test-project`\n   - `git init` (minimal git setup)\n2. Run init-project.sh with explicit copy mode:\n   - `~/projects/project-template/scripts/init-project.sh --mode copy --template ~/projects/project-template`\n   - Should copy (not symlink) all 5 directories\n3. Verify copy mode behavior:\n   - `ls -la .claude/` - entries should NOT be symlinks\n   - `file .claude/commands` - should report 'directory' not 'symbolic link'\n   - Count files in each directory matches template source\n4. Run smoke-test.sh:\n   - Copy smoke-test.sh to the project first\n   - Execute and verify PASS\n5. Verify files are independent (not linked):\n   - Modify a copied file\n   - Confirm template original is unchanged\n6. Clean up: `rm -rf /tmp/standalone-test-project`\n7. Document: File counts, copy time, disk usage",
+            "status": "pending",
+            "testStrategy": "Success criteria:\n- init-project.sh with --mode copy creates real directories (not symlinks)\n- All 5 directories are populated with content matching template\n- smoke-test.sh passes in the standalone location\n- Files are truly independent (edits don't affect template)\n- Template auto-detection correctly identifies 'not under template' scenario",
+            "parentId": "undefined"
+          },
+          {
+            "id": 5,
+            "title": "Document Integration Test Results and Edge Cases",
+            "description": "Compile comprehensive documentation of all test results, unexpected behaviors discovered, edge cases encountered, and update the friction log with final outcomes.",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "details": "Create documentation covering:\n\n1. Update friction log (`.taskmaster/docs/prd_overlay_friction_fixes.txt` or similar):\n   - Final test results table: Project | smoke-test | init-project | session-init | slash-cmd\n   - Mark each as PASS/FAIL with timestamps\n\n2. Document unexpected behaviors:\n   - Any warnings that appeared unexpectedly\n   - Edge cases where behavior differed from expectations\n   - Race conditions or timing issues observed\n   - Permission or path resolution quirks\n\n3. Create test summary in docs/:\n   - Test matrix: all project types × all test scenarios\n   - Known limitations discovered during testing\n   - Recommendations for future test automation\n\n4. Edge cases to specifically document:\n   - What happens with broken symlinks?\n   - What if template is moved after init?\n   - Behavior with read-only file systems\n   - Handling of .gitignore conflicts\n\n5. Update CLAUDE.md if any workflow changes discovered\n\n6. Final sign-off: All tests pass, or list of open issues requiring follow-up",
+            "status": "pending",
+            "testStrategy": "Success criteria:\n- Friction log updated with complete test results\n- All 4 project tests documented with PASS/FAIL status\n- Edge cases listed with observed behavior\n- No undocumented failures or warnings\n- Clear sign-off statement on overall fix status",
+            "parentId": "undefined"
+          }
+        ],
+        "complexity": 6,
+        "recommendedSubtasks": 5,
+        "expansionPrompt": "Break down into: 1) Test analog_image_generator (existing project with local .claude/ - smoke-test should PASS, init-project should skip), 2) Test rideshare-rescue (pre-existing .claude/ content - verify shadowing behavior unchanged), 3) Test postiz-social-automation (remove symlinks, verify FAIL, run init-project, verify PASS), 4) Create and test standalone project (outside template tree, verify copy mode), 5) Document all results and edge cases discovered."
+      },
+      {
+        "id": "12",
+        "title": "Add Security Checks to init-project.sh",
+        "description": "Add security checks to prevent symlink attacks and ensure safe operation.",
+        "details": "Implementation steps:\n\n1. Prevent symlinks outside template tree (Req 1 from Security Considerations):\n   ```bash\n   validate_template_path() {\n       local resolved=$(realpath \"$TEMPLATE_PATH\" 2>/dev/null)\n       \n       # Ensure template path is a real directory, not a symlink to unknown location\n       if [ -L \"$TEMPLATE_PATH\" ]; then\n           log_warn \"Template path is a symlink - validating target\"\n           # Check that resolved path exists and contains expected structure\n       fi\n       \n       # Ensure .claude/ exists in resolved path\n       if [ ! -d \"$resolved/.claude\" ]; then\n           log_error \"Template .claude/ not found at $resolved\"\n           return 1\n       fi\n       \n       return 0\n   }\n   ```\n\n2. Use relative paths only for symlinks (Req 2):\n   - Already implemented in Task 3 via calc_relative_path()\n   - Add validation that result doesn't start with /\n\n3. Add check for sensitive files in settings.local.json:\n   ```bash\n   check_sensitive_files() {\n       local settings=\"$PROJECT_DIR/.claude/settings.local.json\"\n       if [ -f \"$settings\" ]; then\n           if grep -qE '(token|key|secret|password)' \"$settings\"; then\n               log_warn \"settings.local.json may contain tokens - ensure it's in .gitignore\"\n           fi\n       fi\n   }\n   ```\n\n4. Validate that symlink targets don't escape expected boundaries:\n   ```bash\n   # After creating symlink, verify it resolves within template\n   validate_symlink() {\n       local link=\"$1\"\n       local resolved=$(realpath \"$link\" 2>/dev/null)\n       local template_resolved=$(realpath \"$TEMPLATE_PATH\" 2>/dev/null)\n       \n       if [[ \"$resolved\" != \"$template_resolved\"* ]]; then\n           log_error \"Symlink resolves outside template tree: $resolved\"\n           rm \"$link\"\n           return 1\n       fi\n   }\n   ```",
+        "testStrategy": "1. Try to trick script with symlinked template path - should warn or error\n2. Verify created symlinks only use relative paths (no absolute paths starting with /)\n3. Test with settings.local.json containing 'token' - should warn about .gitignore\n4. Attempt to create symlink that escapes template tree - should be caught",
+        "priority": "medium",
+        "dependencies": [
+          "3"
+        ],
+        "status": "done",
+        "subtasks": [],
+        "complexity": 4,
+        "recommendedSubtasks": 3,
+        "expansionPrompt": "Break down into: 1) Create validate_template_path() to verify template is a real directory or safe symlink, 2) Add symlink boundary validation to ensure links don't escape template tree, 3) Add settings.local.json token warning check. All security checks should warn/error but not over-block legitimate use cases.",
+        "updatedAt": "2026-02-20T05:35:40.124Z"
+      }
+    ],
+    "metadata": {
+      "version": "1.0.0",
+      "lastModified": "2026-02-20T05:42:12.073Z",
+      "taskCount": 12,
+      "completedCount": 10,
+      "tags": [
+        "overlay-fixes"
       ]
     }
   }

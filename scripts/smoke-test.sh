@@ -92,10 +92,10 @@ if [ -d "$PROJECT_DIR/.claude/commands" ] || [ -L "$PROJECT_DIR/.claude/commands
     cmd_dir="$PROJECT_DIR/.claude/commands"
     if [ -L "$cmd_dir" ]; then
         target=$(readlink "$cmd_dir")
-        cmd_count=$(find "$cmd_dir" -maxdepth 1 -name "*.md" -type f 2>/dev/null | wc -l)
+        cmd_count=$(find -L "$cmd_dir" -maxdepth 1 -name "*.md" -type f 2>/dev/null | wc -l)
         pass "Commands: $cmd_count files (symlink -> $target)"
     else
-        cmd_count=$(find "$cmd_dir" -maxdepth 1 -name "*.md" -type f 2>/dev/null | wc -l)
+        cmd_count=$(find -L "$cmd_dir" -maxdepth 1 -name "*.md" -type f 2>/dev/null | wc -l)
         pass "Commands: $cmd_count files (local directory)"
     fi
 else
@@ -109,11 +109,11 @@ if [ -d "$PROJECT_DIR/.claude/skills" ] || [ -L "$PROJECT_DIR/.claude/skills" ];
     skill_dir="$PROJECT_DIR/.claude/skills"
     if [ -L "$skill_dir" ]; then
         target=$(readlink "$skill_dir")
-        skill_count=$(find "$skill_dir" -maxdepth 1 -type d 2>/dev/null | wc -l)
+        skill_count=$(find -L "$skill_dir" -maxdepth 1 -type d 2>/dev/null | wc -l)
         skill_count=$((skill_count - 1))  # Subtract the directory itself
         pass "Skills: $skill_count skill dirs (symlink -> $target)"
     else
-        skill_count=$(find "$skill_dir" -maxdepth 1 -type d 2>/dev/null | wc -l)
+        skill_count=$(find -L "$skill_dir" -maxdepth 1 -type d 2>/dev/null | wc -l)
         skill_count=$((skill_count - 1))
         pass "Skills: $skill_count skill dirs (local directory)"
     fi
@@ -126,7 +126,7 @@ fi
 echo -e "${BOLD}4. Agents${NC}"
 if [ -d "$PROJECT_DIR/.claude/agents" ] || [ -L "$PROJECT_DIR/.claude/agents" ]; then
     agent_dir="$PROJECT_DIR/.claude/agents"
-    agent_count=$(find "$agent_dir" -maxdepth 1 -name "*.md" -type f 2>/dev/null | wc -l)
+    agent_count=$(find -L "$agent_dir" -maxdepth 1 -name "*.md" -type f 2>/dev/null | wc -l)
     pass "Agents: $agent_count definitions (local)"
 else
     # Check parent inheritance
@@ -135,7 +135,7 @@ else
     while [ "$check_dir" != "/" ]; do
         check_dir="$(dirname "$check_dir")"
         if [ -d "$check_dir/.claude/agents" ]; then
-            agent_count=$(find "$check_dir/.claude/agents" -maxdepth 1 -name "*.md" -type f 2>/dev/null | wc -l)
+            agent_count=$(find -L "$check_dir/.claude/agents" -maxdepth 1 -name "*.md" -type f 2>/dev/null | wc -l)
             warn "Agents: $agent_count definitions (inherited from $check_dir — consider local symlink)"
             found_agents=true
             break
@@ -149,7 +149,7 @@ fi
 # --- Check 5: Contexts ---
 echo -e "${BOLD}5. Contexts${NC}"
 if [ -d "$PROJECT_DIR/.claude/contexts" ] || [ -L "$PROJECT_DIR/.claude/contexts" ]; then
-    ctx_count=$(find "$PROJECT_DIR/.claude/contexts" -maxdepth 1 -name "*.md" -type f 2>/dev/null | wc -l)
+    ctx_count=$(find -L "$PROJECT_DIR/.claude/contexts" -maxdepth 1 -name "*.md" -type f 2>/dev/null | wc -l)
     pass "Contexts: $ctx_count modes available"
 else
     warn "Contexts: Not locally available (context modes won't work without local dir)"
@@ -158,7 +158,7 @@ fi
 # --- Check 6: Hooks ---
 echo -e "${BOLD}6. Hooks${NC}"
 if [ -d "$PROJECT_DIR/.claude/hooks" ] || [ -L "$PROJECT_DIR/.claude/hooks" ]; then
-    hook_count=$(find "$PROJECT_DIR/.claude/hooks" -maxdepth 1 -name "*.sh" -type f 2>/dev/null | wc -l)
+    hook_count=$(find -L "$PROJECT_DIR/.claude/hooks" -maxdepth 1 -name "*.sh" -type f 2>/dev/null | wc -l)
     pass "Hooks: $hook_count scripts on disk"
 
     # Check if hooks are wired (settings.local.json exists with hooks config)
