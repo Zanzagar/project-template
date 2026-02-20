@@ -418,7 +418,7 @@ done
 # Copies ALL files from template .claude/ subdirectories (not just curated lists)
 sync_full_directories() {
     local template="$1"
-    local subdirs=("commands" "skills" "agents" "contexts" "hooks")
+    local subdirs=("rules" "commands" "skills" "agents" "contexts" "hooks")
 
     echo ""
     echo -e "${BOLD}Syncing full .claude/ directories...${NC}"
