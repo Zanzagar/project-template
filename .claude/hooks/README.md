@@ -23,7 +23,14 @@ Hooks are shell scripts that run automatically at specific points in Claude's wo
 
 ## How to Enable Hooks
 
-Hooks are configured in `.claude/settings.json` or `.claude/settings.local.json`:
+Hooks are configured in Claude Code settings files:
+
+- **`.claude/settings.json`** — Shared hook config (committed to git, team-visible)
+- **`.claude/settings.local.json`** — Personal overrides (gitignored, user-specific)
+
+**Use `settings.json` for hooks the whole team should run.** Only use `settings.local.json` for personal preferences or overrides.
+
+Example `settings.json`:
 
 ```json
 {

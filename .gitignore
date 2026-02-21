@@ -68,6 +68,7 @@ node_modules/
 # Instincts (personal learned patterns, not shared by default)
 .claude/instincts/*.json
 !.claude/instincts/example.json
+!.claude/instincts/export-*.json
 
 # AgentShield scan marker
 .claude/agentshield-last-run
@@ -84,7 +85,9 @@ node_modules/
 # Project-specific MCP configuration (user preference)
 .claude/mcp-project.json
 
-# Local settings (not committed)
+# Local settings override (personal, not committed)
+# NOTE: Shared hook config goes in .claude/settings.json (tracked).
+#       Only use settings.local.json for personal overrides.
 .claude/settings.local.json
 
 # Template testing directory
