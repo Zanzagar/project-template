@@ -1,5 +1,7 @@
 Generate a plan using multiple AI models in parallel for diverse perspectives.
 
+> **SIMULATED**: Currently, Claude generates all perspectives itself — no actual Gemini or Codex API calls are made. The multi-model output format is used to structure diverse thinking, but all reasoning comes from Claude. Real multi-model integration is planned (requires GOOGLE_AI_KEY and OPENAI_API_KEY in `.env`).
+
 Usage: `/multi-plan <requirements>`
 
 Arguments: $ARGUMENTS

@@ -176,11 +176,11 @@ Available commands for common tasks:
 | `/github-sync [action]` | Sync tasks with GitHub Issues |
 | `/research <topic>` | Structured research (papers, docs, exploration) |
 | `/orchestrate <pipeline>` | Multi-agent analysis pipeline (review, security, refactor) |
-| `/multi-plan <requirements>` | Parallel planning with Claude + Gemini + Codex |
-| `/multi-execute <task>` | Parallel implementation with multiple models |
-| `/multi-backend <task>` | Backend-focused development (Codex-led, 6-phase) |
-| `/multi-frontend <task>` | Frontend-focused development (Gemini-led, 6-phase) |
-| `/multi-workflow <task>` | Full-stack multi-model collaborative workflow |
+| `/multi-plan <requirements>` | Multi-perspective planning (SIMULATED — Claude generates all views) |
+| `/multi-execute <task>` | Multi-perspective implementation (SIMULATED — Claude generates all views) |
+| `/multi-backend <task>` | Backend-focused development (NOT IMPLEMENTED — needs codeagent-wrapper) |
+| `/multi-frontend <task>` | Frontend-focused development (NOT IMPLEMENTED — needs codeagent-wrapper) |
+| `/multi-workflow <task>` | Full-stack collaborative workflow (NOT IMPLEMENTED — needs codeagent-wrapper) |
 | `/checkpoint [label]` | Manual session state save |
 | `/skill-create` | Auto-generate skills from git history |
 | `/update-codemaps` | Generate architecture docs in `docs/CODEMAPS/` |
@@ -314,21 +314,23 @@ See `.claude/instincts/README.md` for format and `.claude/rules/authority-hierar
 
 ## Multi-Model Collaboration
 
-Use multiple AI models in parallel for diverse perspectives:
+> **Status**: SIMULATED. Currently Claude generates all perspectives itself — no actual API calls to Gemini or Codex. Real multi-model integration is planned.
+
+Use structured multi-perspective analysis during planning:
 
 ```bash
-# Plan with Claude + Gemini + Codex
+# Get diverse perspectives on a design (Claude simulates all views)
 /multi-plan "Design authentication system"
 
-# Implement with parallel model execution
+# Get diverse implementation approaches (Claude simulates all views)
 /multi-execute "Build JWT auth with refresh tokens"
 ```
 
-Requires API keys in `.env` (optional — gracefully degrades to Claude-only):
+Future: Real multi-model support will require API keys in `.env`:
 - `GOOGLE_AI_KEY` — Gemini (alternative perspectives)
 - `OPENAI_API_KEY` — Codex/GPT (implementation patterns)
 
-See `.claude/examples/multi-model-config.json` for setup.
+See `.claude/examples/multi-model-config.json` for planned setup.
 
 ## Security
 

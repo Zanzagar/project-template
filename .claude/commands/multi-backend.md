@@ -1,5 +1,7 @@
 # Multi-Backend - Backend-Focused Development
 
+> **NOT IMPLEMENTED**: This command requires `codeagent-wrapper` (from ECC) which is not included in this template. The workflow described below is a design spec for future implementation. For now, use `/plan` + `/tdd` for backend work.
+
 Backend-focused workflow (Research → Ideation → Plan → Execute → Optimize → Review), Codex-led.
 
 ## Usage

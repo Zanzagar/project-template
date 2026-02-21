@@ -1,5 +1,7 @@
 # Multi-Frontend - Frontend-Focused Development
 
+> **NOT IMPLEMENTED**: This command requires `codeagent-wrapper` (from ECC) which is not included in this template. The workflow described below is a design spec for future implementation. For now, use `/plan` + `/tdd` for frontend work.
+
 Frontend-focused workflow (Research → Ideation → Plan → Execute → Optimize → Review), Gemini-led.
 
 ## Usage

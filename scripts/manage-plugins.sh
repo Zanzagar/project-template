@@ -146,6 +146,10 @@ plugin_info() {
 }
 
 # Download plugin files
+# STUB: This function creates a pointer file (SOURCE.md) instead of downloading
+# actual plugin files. Real download would require GitHub API enumeration of the
+# plugin directory contents. For now, users should follow the SOURCE.md instructions
+# or use Claude Code's built-in plugin system when available.
 download_plugin() {
     local plugin_id="$1"
     local target_dir="$PLUGINS_DIR/$plugin_id"
@@ -163,9 +167,10 @@ download_plugin() {
     local skills_url="$GITHUB_RAW/$plugin_id/skills"
 
     echo -e "  Downloading plugin files..."
+    echo -e "  ${YELLOW}[STUB] Creating reference file — actual files not downloaded${NC}"
 
-    # Note: In production, we'd enumerate the actual files. For now, we create placeholders
-    # that point to the source for manual or Claude-assisted installation
+    # STUB: In production, we'd enumerate the actual files via GitHub API.
+    # For now, we create a pointer that documents where to get the real files.
     cat > "$target_dir/SOURCE.md" << EOF
 # Plugin: $plugin_id
 

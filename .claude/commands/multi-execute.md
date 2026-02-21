@@ -1,5 +1,7 @@
 Execute implementation tasks using multiple AI models in parallel.
 
+> **SIMULATED**: Currently, Claude generates all implementations itself — no actual Gemini or Codex API calls are made. The multi-model output format structures the work, but all code comes from Claude. Real multi-model integration is planned (requires GOOGLE_AI_KEY and OPENAI_API_KEY in `.env`).
+
 Usage: `/multi-execute <task-description>`
 
 Arguments: $ARGUMENTS

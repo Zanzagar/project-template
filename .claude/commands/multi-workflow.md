@@ -1,5 +1,7 @@
 # Multi-Workflow - Multi-Model Collaborative Development
 
+> **NOT IMPLEMENTED**: This command requires `codeagent-wrapper` (from ECC) which is not included in this template. The workflow described below is a design spec for future implementation. For now, use `/plan` + `/tdd` for full-stack work.
+
 Multi-model collaborative development workflow (Research → Ideation → Plan → Execute → Optimize → Review), with intelligent routing: Frontend → Gemini, Backend → Codex.
 
 Structured development workflow with quality gates, MCP services, and multi-model collaboration.
