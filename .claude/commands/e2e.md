@@ -114,7 +114,7 @@ npx playwright show-report                       # View report
 - Use `/plan` to identify critical journeys to test
 - Use `/tdd` for unit tests (faster, more granular)
 - Use `/e2e` for integration and user journey tests
-- Part of `/orchestrate feature` pipeline
+- Can be included in custom `/orchestrate` pipelines
 
 ## Agent
 

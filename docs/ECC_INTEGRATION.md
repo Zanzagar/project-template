@@ -132,8 +132,8 @@ Instincts are lightweight JSON in `.claude/instincts/` with confidence scoring (
 ### Multi-Agent Orchestration
 
 ```bash
-/orchestrate feature     # Plan → Implement → Review → Security pipeline
-/orchestrate review      # Code review → Security audit pipeline
+/orchestrate review      # Code review → Security → Database analysis pipeline
+/orchestrate security    # Security-focused analysis pipeline
 /orchestrate refactor    # Review → Refactor → Verify pipeline
 ```
 

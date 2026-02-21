@@ -175,7 +175,7 @@ Available commands for common tasks:
 | `/brainstorm <topic>` | Structured brainstorming with approaches |
 | `/github-sync [action]` | Sync tasks with GitHub Issues |
 | `/research <topic>` | Structured research (papers, docs, exploration) |
-| `/orchestrate <pipeline>` | Multi-agent pipeline (feature, review, refactor) |
+| `/orchestrate <pipeline>` | Multi-agent analysis pipeline (review, security, refactor) |
 | `/multi-plan <requirements>` | Parallel planning with Claude + Gemini + Codex |
 | `/multi-execute <task>` | Parallel implementation with multiple models |
 | `/multi-backend <task>` | Backend-focused development (Codex-led, 6-phase) |

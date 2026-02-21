@@ -73,7 +73,7 @@ After planning:
 - Use `/tdd` to implement with test-driven development
 - Use `/build-fix` if build errors occur
 - Use `/code-review` to review completed implementation
-- Use `/orchestrate feature` for the full pipeline
+- Use `/orchestrate review` after implementation for comprehensive review
 
 ## Agent
 

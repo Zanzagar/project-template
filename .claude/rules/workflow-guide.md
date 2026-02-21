@@ -158,9 +158,10 @@ START: What does the user need?
 │
 ├─► Review code? ────────────► /code-review, /security-audit
 │
-├─► Full feature cycle? ─────► /orchestrate feature
-│   ├─ Just review? ─────────► /orchestrate review
-│   └─ Just refactor? ───────► /orchestrate refactor
+├─► Post-implementation analysis?
+│   ├─ Code review? ─────────► /orchestrate review
+│   ├─ Security scan? ───────► /orchestrate security
+│   └─ Refactoring? ─────────► /orchestrate refactor
 │
 ├─► Multi-model input? ──────► /multi-plan, /multi-execute
 │

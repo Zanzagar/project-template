@@ -75,7 +75,7 @@ I notice we might be stuck. Let me help:
 | Ready to merge | /pr |
 | Need current library docs | Context7 (tier 3, use sparingly) |
 | Exploring unfamiliar code | Project index, then targeted reads |
-| Full feature cycle | Suggest `/orchestrate feature` |
+| Post-implementation review | Suggest `/orchestrate review` |
 | "review this thoroughly" | `/orchestrate review` |
 | Multi-model planning needed | `/multi-plan` |
 
@@ -175,20 +175,20 @@ Suggested next step: [specific action]
 Ready to continue, or take a break here?
 ```
 
-### Pattern: Full Feature Cycle
+### Pattern: Post-Implementation Review
 
-When user requests end-to-end feature work:
+When user requests comprehensive review of existing code:
 
-1. Detect scope — is this a complete feature, not just a quick fix?
-2. Suggest: "This looks like a full feature cycle. Want me to run `/orchestrate feature`?"
+1. Detect scope — is this a review/analysis pass on existing code?
+2. Suggest: "This looks like it needs a thorough review. Want me to run `/orchestrate review`?"
 3. If accepted, execute the agent pipeline
 4. Present aggregated report
 
 **Signals for orchestration:**
-- "Build this feature from scratch"
-- "Implement X end-to-end"
-- "Add full support for Y"
-- Multiple aspects mentioned (design + tests + security)
+- "Review this thoroughly"
+- "Check this code for security issues"
+- "Refactor this module safely"
+- Multiple review aspects mentioned (quality + security + database)
 
 ### Pattern: Session Wrap-Up
 

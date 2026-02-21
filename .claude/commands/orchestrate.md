@@ -1,26 +1,17 @@
-Execute a multi-agent pipeline for comprehensive task handling.
+Execute a multi-agent pipeline for post-implementation analysis and review.
+
+> **For feature implementation**, follow the Superpowers pipeline: brainstorm → PRD → Task Master → TDD.
+> Use `/orchestrate` for review and analysis passes *after* implementation is complete.
 
 Usage:
-- `/orchestrate feature` — Full feature pipeline
 - `/orchestrate review` — Comprehensive review pipeline
 - `/orchestrate refactor` — Safe refactoring pipeline
+- `/orchestrate security` — Security-focused analysis pipeline
 - `/orchestrate agent1 agent2 agent3` — Custom pipeline
 
 Arguments: $ARGUMENTS
 
 ## Default Pipelines
-
-### feature
-```
-planner → tdd-guide → [implement] → code-reviewer → security-reviewer
-```
-Full feature cycle: plan it, write tests, implement, review.
-
-### bugfix
-```
-planner → tdd-guide → [implement fix] → code-reviewer
-```
-Bug investigation and fix: understand the problem, write regression test, fix, review.
 
 ### review
 ```
@@ -137,11 +128,10 @@ All intermediate outputs survive context compaction and enable:
 
 After the pipeline completes, the orchestrate directory contains the full record:
 ```
-.claude/orchestrate/feature/
-  1-planner.md
-  2-tdd-guide.md
-  3-code-reviewer.md
-  4-security-reviewer.md
+.claude/orchestrate/review/
+  1-code-reviewer.md
+  2-security-reviewer.md
+  3-database-reviewer.md
   REPORT.md
 ```
 
@@ -154,25 +144,24 @@ After all agents complete, produce an aggregated report and **persist it** to `.
 ║                  ORCHESTRATION REPORT                     ║
 ╠══════════════════════════════════════════════════════════╣
 
-Pipeline: feature (4 agents)
+Pipeline: review (3 agents)
 Duration: ~X minutes
 
 Agent Results:
-  [1] planner ............... ✓ Complete (3 findings)
-  [2] tdd-guide ............. ✓ Complete (5 test suggestions)
-  [3] code-reviewer ......... ✓ Complete (2 HIGH, 4 MEDIUM)
-  [4] security-reviewer ..... ✓ Complete (1 CRITICAL)
+  [1] code-reviewer ......... ✓ Complete (2 HIGH, 4 MEDIUM)
+  [2] security-reviewer ..... ✓ Complete (1 CRITICAL)
+  [3] database-reviewer ..... ✓ Complete (1 HIGH)
 
 Aggregated Findings (by severity):
   CRITICAL: 1
-  HIGH: 2
+  HIGH: 3
   MEDIUM: 4
-  LOW: 3
+  LOW: 2
 
 Top Issues:
 1. [CRITICAL] security-reviewer: SQL injection in user input handler
 2. [HIGH] code-reviewer: Missing error handling in API client
-3. [HIGH] code-reviewer: Race condition in cache invalidation
+3. [HIGH] database-reviewer: N+1 query in user listing endpoint
 
 Conflicts Between Agents:
   (none — or list where agents disagreed)
@@ -185,13 +174,12 @@ For independent checks, run agents in parallel rather than sequentially:
 
 ```
 ### Sequential (default)
-planner → tdd-guide → code-reviewer → security-reviewer
+code-reviewer → security-reviewer → database-reviewer
 
 ### Parallel phase (when agents don't depend on each other)
-planner → tdd-guide → [implement] → ┬─ code-reviewer    ──┐
-                                     └─ security-reviewer ──┤→ Merge Results
-                                                            │
-                                        database-reviewer ──┘
+┬─ code-reviewer    ──┐
+├─ security-reviewer ──┤→ Merge Results
+└─ database-reviewer ──┘
 ```
 
 Use parallel execution when agents are doing independent reviews of the same code. The final report merges all parallel outputs.
@@ -202,6 +190,5 @@ Use parallel execution when agents are doing independent reviews of the same cod
 - Agent outputs are persisted to `.claude/orchestrate/<pipeline>/` for auditability and resumption
 - Each agent is evaluated before acceptance; re-invoked up to 3 times if output is insufficient
 - Pipeline stops on CRITICAL findings (unless `--continue` flag)
-- Implement steps (marked with `[]`) are manual — you write the code
 - Use `/orchestrate --dry-run` to preview pipeline without executing
 - Clean up old orchestration outputs: `rm -rf .claude/orchestrate/` between unrelated runs
