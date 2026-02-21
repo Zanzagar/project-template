@@ -411,6 +411,22 @@ case $MODE in
         ;;
 esac
 
+# Ensure Task Master directory structure exists
+# The CLI expects .taskmaster/tasks/ and .taskmaster/reports/ but doesn't auto-create them.
+# Without these, `task-master tags add` and `task-master analyze-complexity` fail.
+if [ -d "$PROJECT_DIR/.taskmaster" ]; then
+    for tm_dir in "tasks" "reports" "docs"; do
+        if [ ! -d "$PROJECT_DIR/.taskmaster/$tm_dir" ]; then
+            if [ "$DRY_RUN" = true ]; then
+                log_dry "Would create .taskmaster/$tm_dir/"
+            else
+                mkdir -p "$PROJECT_DIR/.taskmaster/$tm_dir"
+                log_info "Created .taskmaster/$tm_dir/"
+            fi
+        fi
+    done
+fi
+
 # Security verification for symlinks
 if [ "$MODE" = "symlink" ] && [ "$DRY_RUN" = false ]; then
     echo ""

@@ -9,14 +9,21 @@ Perform the following checks and report results:
 ### 1. Template Configuration
 
 ```bash
-# Check template status
-./scripts/sync-template.sh status
+# Check template status (script may not exist in copy-mode bootstraps)
+if [ -f ./scripts/sync-template.sh ]; then
+    ./scripts/sync-template.sh status
+elif [ -f .template/source ]; then
+    echo "Template source: $(cat .template/source)"
+    [ -f .template/version ] && echo "Version: $(cat .template/version)"
+else
+    echo "Template: bootstrapped (no sync tracking)"
+fi
 ```
 
 Report:
-- Template source (local/git)
-- Last sync date
-- Files needing updates
+- Template source (local/git/bootstrapped)
+- Last sync date (if available)
+- Files needing updates (if sync script available)
 
 ### 2. CLAUDE.md Status
 

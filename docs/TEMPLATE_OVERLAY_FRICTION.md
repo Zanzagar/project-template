@@ -187,6 +187,83 @@ Parent-directory traversal does **NOT** work for:
 
 ---
 
+## Test 4: Workflow Pipeline Test (postiz-social-automation)
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-02-20 |
+| **Project** | Postiz Social Automation (Docker/Postiz/n8n, bootstrapped via `init-project.sh` copy mode) |
+| **Location** | `~/projects/ISKCON-GN/postiz_social_automation` (standalone project, NOT under template tree) |
+| **Bootstrap** | `init-project.sh --mode copy` — 136 files across 6 directories |
+| **Tester** | Claude Opus 4.6 |
+| **Result** | **24/25 PASS, 1 PARTIAL** — full pipeline works end-to-end |
+
+### What Was Tested
+
+This was a **full workflow pipeline test**, not just an overlay check. It validated the complete sequence: bootstrap → verify → PRD parse → complexity analysis → task expansion → TDD implementation → superpowers routing.
+
+**Phase 1: Bootstrap Verification**
+
+| # | Check | Status | Notes |
+|---|-------|--------|-------|
+| 1.1 | Rules loaded | **PARTIAL** | 8 core rules auto-loaded. 5 language rules in subdirs exist but not auto-loaded (need matching file edits to trigger). |
+| 1.2 | Commands registered | **PASS** | 48 commands found, `/health` executes successfully. |
+| 1.3 | Skills available | **PASS** | 39 skills listed and invocable. |
+| 1.4 | Agents visible | **PASS** | 13/13 agents defined. |
+| 1.5 | CLAUDE.md parsed | **PASS** | "Postiz Social Media Automation" recognized in context. |
+| 1.6 | CLAUDE.md parent merge | **PASS** | Parent ISKCON-GN CLAUDE.md merges cleanly with child postiz CLAUDE.md. |
+| 1.7 | Task Master config | **PASS** | CLI and MCP both functional, empty task list. |
+| 1.8 | MCPs available | **PASS** | task-master-ai + context7 loaded (plus IDE extras). |
+
+**Phase 2: Commit Bootstrap** — 2/2 PASS (146 files committed cleanly)
+
+**Phase 3: PRD Parse Pipeline**
+
+| # | Step | Status | Notes |
+|---|------|--------|-------|
+| 3.1 | Create tag | **PASS** (after fix) | Failed initially: `.taskmaster/tasks/` dir missing. Manual `mkdir -p` required. |
+| 3.2 | Switch tag | **PASS** | Worked after tag creation. |
+| 3.3 | Parse PRD (CLI) | **PASS** | 9 tasks generated. CLI used successfully (not MCP). |
+| 3.4 | Analyze complexity | **PASS** (after fix) | Failed initially: `.taskmaster/reports/` dir missing. Manual `mkdir -p` required. |
+| 3.5 | Expand complex tasks | **PASS** | Task 8 expanded to 4 subtasks based on complexity report. |
+
+**Phase 4: TDD Implementation** — 7/7 PASS (12 tests: RED → GREEN → committed)
+
+**Phase 5: Superpowers Routing** — 3/3 PASS (override rules work as designed)
+
+### Friction Found
+
+| ID | Severity | Issue | Template Fix |
+|----|----------|-------|-------------|
+| F1 | MEDIUM | Language rules in subdirs not auto-loaded by Claude Code | Investigate: may need matching file edits to trigger `paths:` frontmatter |
+| F4 | LOW | `sync-template.sh` missing in copy-mode bootstraps; `/health` fails on template status check | **FIXED**: `/health` now handles missing script gracefully |
+| F5 | LOW | Dual `tasks.json` paths — seed file at `.taskmaster/tasks.json` vs CLI-expected `.taskmaster/tasks/tasks.json` | Seed file removed; init creates CLI-expected paths |
+| F6 | **HIGH** | `.taskmaster/tasks/` directory missing after init — `task-master tags add` fails | **FIXED**: `init-project.sh` now creates `.taskmaster/tasks/`, `.taskmaster/reports/`, `.taskmaster/docs/` |
+| F7 | **HIGH** | `.taskmaster/reports/` directory missing — `analyze-complexity` fails | **FIXED**: same as F6 |
+| F8 | INFO | CLI `parse-prd` runs AI call twice (token waste ~344k extra) | Task Master CLI bug — not fixable at template level |
+| F9 | LOW | First available task is scaffolding, not TDD-friendly | Test plan updated to suggest picking a task with testable logic |
+
+### Key Findings
+
+1. **The core pipeline works end-to-end.** brainstorm → PRD → parse-prd → analyze-complexity → expand → TDD is validated. Superpowers routing overrides function correctly.
+2. **Two missing directories were the only blockers.** Both were Task Master CLI expectations that `init-project.sh` didn't satisfy. Fixed by adding `.taskmaster/tasks/`, `.taskmaster/reports/`, `.taskmaster/docs/` creation.
+3. **Copy mode is a viable distribution mechanism.** 136 files copied from template work correctly. Commands, skills, and agents all register properly when present locally.
+4. **Parent CLAUDE.md merge is robust.** ISKCON-GN's donor automation context merges cleanly alongside postiz's social media context.
+5. **The auto-detection fix (from earlier this session) was validated.** ISKCON-GN's partial `.claude/` (11 commands, 2 skills) correctly rejected as a template. Copy mode from `~/projects/project-template` used instead.
+
+### Comparison with Previous Tests
+
+| Dimension | Test 1-3 (Overlay) | Test 4 (Pipeline) |
+|-----------|-------------------|-------------------|
+| Test type | Static infrastructure check | Full workflow execution |
+| Scope | "Do files load?" | "Does the entire pipeline work?" |
+| PRD → Tasks | Not tested | **Validated** |
+| TDD cycle | Not tested | **Validated** (12 tests) |
+| Superpowers routing | Not tested | **Validated** (override confirmed) |
+| Blocking friction | Commands/skills inheritance (CRITICAL) | Missing Task Master dirs (HIGH, fixable) |
+
+---
+
 ## Fixes Applied (2026-02-20)
 
 Branch: `fix/workflow-integration-and-overlay-friction`
@@ -241,17 +318,24 @@ Tracks recurring themes across multiple tests. Update counts as new tests are ad
 | Pattern | Occurrences | Severity | Status |
 |---------|-------------|----------|--------|
 | **Commands/skills don't inherit from parent** | **1/3 (but masked in 2/3)** | **CRITICAL** | **FIXED** — `init-project.sh` creates local symlinks/copies |
-| Hooks not auto-wired | 3/3 | Medium | **MITIGATED** — `init-project.sh` creates hooks dir; `/settings safe` still required for activation |
-| No onboarding/discovery prompt | 1/3 | Medium | **FIXED** — `session-init.sh` warns when commands/skills missing |
-| `.gitignore` missing template entries | 1/3 | Low | **FIXED** — template `.gitignore` includes `settings.local.json`, `.claude/sessions/`, `.claude/instincts/` |
-| Smoke test false positives (file presence ≠ runtime) | 1/3 | High | **FIXED** — `smoke-test.sh` checks LOCAL presence with `find -L` |
-| Skill/command shadowing (child overrides parent) | 1/3 | Medium | **Open** — Claude Code behavior, not fixable at template level |
-| Duplicate entries in listing | 1/3 | Low | **Open** — Claude Code behavior |
-| Sensitive data in `settings.local.json` | 1/3 | High | **MITIGATED** — in `.gitignore`; `protect-sensitive-files.sh` hook catches if enabled |
-| Command namespace collision | 0/3 | — | No issue |
-| CLAUDE.md section conflicts | 0/3 | — | No issue |
-| Rule loading failures | 0/3 | — | No issue |
-| Agent spawn failures | 0/3 | — | No issue |
+| **Task Master dirs missing after init** | **1/4** | **HIGH** | **FIXED** — `init-project.sh` now creates `.taskmaster/tasks/`, `.taskmaster/reports/`, `.taskmaster/docs/` |
+| **Language rules not auto-loaded from subdirs** | **1/4** | **MEDIUM** | **Investigating** — subdirectory rules may need matching file edits to trigger `paths:` frontmatter |
+| Hooks not auto-wired | 3/4 | Medium | **MITIGATED** — `init-project.sh` creates hooks dir; `/settings safe` still required for activation |
+| No onboarding/discovery prompt | 1/4 | Medium | **FIXED** — `session-init.sh` warns when commands/skills missing |
+| `/health` fails on copy-mode bootstraps | 1/4 | Low | **FIXED** — `/health` handles missing `sync-template.sh` gracefully |
+| `.gitignore` missing template entries | 1/4 | Low | **FIXED** — template `.gitignore` includes `settings.local.json`, `.claude/sessions/`, `.claude/instincts/` |
+| Smoke test false positives (file presence ≠ runtime) | 1/4 | High | **FIXED** — `smoke-test.sh` checks LOCAL presence with `find -L` |
+| Task Master CLI double AI call | 1/4 | Info | **Open** — `parse-prd` runs AI twice; not fixable at template level |
+| Skill/command shadowing (child overrides parent) | 1/4 | Medium | **Open** — Claude Code behavior, not fixable at template level |
+| Duplicate entries in listing | 1/4 | Low | **Open** — Claude Code behavior |
+| Sensitive data in `settings.local.json` | 1/4 | High | **MITIGATED** — in `.gitignore`; `protect-sensitive-files.sh` hook catches if enabled |
+| Command namespace collision | 0/4 | — | No issue |
+| CLAUDE.md section conflicts | 0/4 | — | No issue |
+| Rule loading failures | 0/4 | — | No issue |
+| Agent spawn failures | 0/4 | — | No issue |
+| PRD → Tasks pipeline failure | 0/4 | — | **No issue** — validated in Test 4 |
+| TDD cycle failure | 0/4 | — | **No issue** — validated in Test 4 |
+| Superpowers routing bypass | 0/4 | — | **No issue** — override rule validated in Test 4 |
 
 ---
 
