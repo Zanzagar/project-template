@@ -28,6 +28,7 @@ REGISTRY_FILE="$PROJECT_ROOT/.claude/plugins/registry.json"
 INSTALLED_FILE="$PROJECT_ROOT/.claude/plugins/installed.json"
 PLUGINS_DIR="$PROJECT_ROOT/.claude/plugins/installed"
 GITHUB_RAW="https://raw.githubusercontent.com/wshobson/agents/main/plugins"
+GITHUB_API="https://api.github.com/repos/wshobson/agents/contents/plugins"
 
 # Colors
 RED='\033[0;31m'
@@ -145,54 +146,131 @@ plugin_info() {
     echo "$found" | jq -r '"Name: \(.name)\nDescription: \(.description)\nEstimated Tokens: \(.tokens)\n\nAgents:\n\(.agents | map("  - " + .) | join("\n"))\n\nSkills:\n\(.skills | map("  - " + .) | join("\n"))"'
 }
 
-# Download plugin files
-# STUB: This function creates a pointer file (SOURCE.md) instead of downloading
-# actual plugin files. Real download would require GitHub API enumeration of the
-# plugin directory contents. For now, users should follow the SOURCE.md instructions
-# or use Claude Code's built-in plugin system when available.
+# Download a single file from GitHub raw URL
+download_file() {
+    local url="$1"
+    local dest="$2"
+    local http_code
+
+    http_code=$(curl -sL -w "%{http_code}" -o "$dest" "$url")
+    if [ "$http_code" = "200" ]; then
+        return 0
+    else
+        rm -f "$dest"
+        return 1
+    fi
+}
+
+# Enumerate files in a GitHub directory via the Contents API
+# Outputs one "name type" pair per line (e.g. "python-pro.md file")
+enumerate_github_dir() {
+    local api_path="$1"
+    local response
+
+    response=$(curl -sL "$api_path")
+
+    # Check for API errors (rate limit, 404, etc.)
+    if echo "$response" | jq -e '.message' &>/dev/null; then
+        local msg
+        msg=$(echo "$response" | jq -r '.message')
+        echo -e "  ${YELLOW}GitHub API: $msg${NC}" >&2
+        return 1
+    fi
+
+    echo "$response" | jq -r '.[] | "\(.name) \(.type)"'
+}
+
+# Download plugin files from wshobson/agents via GitHub API enumeration
 download_plugin() {
     local plugin_id="$1"
     local target_dir="$PLUGINS_DIR/$plugin_id"
+    local file_count=0
+    local fail_count=0
 
     if [ "$DRY_RUN" = true ]; then
         echo -e "${YELLOW}[DRY RUN] Would download: $plugin_id${NC}"
         return
     fi
 
-    mkdir -p "$target_dir/agents" "$target_dir/commands" "$target_dir/skills"
-
-    # Download agents
-    local agents_url="$GITHUB_RAW/$plugin_id/agents"
-    local commands_url="$GITHUB_RAW/$plugin_id/commands"
-    local skills_url="$GITHUB_RAW/$plugin_id/skills"
+    mkdir -p "$target_dir"
 
     echo -e "  Downloading plugin files..."
-    echo -e "  ${YELLOW}[STUB] Creating reference file — actual files not downloaded${NC}"
 
-    # STUB: In production, we'd enumerate the actual files via GitHub API.
-    # For now, we create a pointer that documents where to get the real files.
-    cat > "$target_dir/SOURCE.md" << EOF
-# Plugin: $plugin_id
+    # --- Agents (flat .md files) ---
+    local agents_api="$GITHUB_API/$plugin_id/agents"
+    local agents_listing
+    if agents_listing=$(enumerate_github_dir "$agents_api" 2>/dev/null); then
+        mkdir -p "$target_dir/agents"
+        while IFS=' ' read -r name type; do
+            [ -z "$name" ] && continue
+            if [ "$type" = "file" ]; then
+                local url="$GITHUB_RAW/$plugin_id/agents/$name"
+                if download_file "$url" "$target_dir/agents/$name"; then
+                    file_count=$((file_count + 1))
+                else
+                    echo -e "  ${YELLOW}Warning: Failed to download agents/$name${NC}"
+                    fail_count=$((fail_count + 1))
+                fi
+            fi
+        done <<< "$agents_listing"
+    fi
 
-Source: https://github.com/wshobson/agents/tree/main/plugins/$plugin_id
+    # --- Commands (flat .md files) ---
+    local commands_api="$GITHUB_API/$plugin_id/commands"
+    local commands_listing
+    if commands_listing=$(enumerate_github_dir "$commands_api" 2>/dev/null); then
+        mkdir -p "$target_dir/commands"
+        while IFS=' ' read -r name type; do
+            [ -z "$name" ] && continue
+            if [ "$type" = "file" ]; then
+                local url="$GITHUB_RAW/$plugin_id/commands/$name"
+                if download_file "$url" "$target_dir/commands/$name"; then
+                    file_count=$((file_count + 1))
+                else
+                    echo -e "  ${YELLOW}Warning: Failed to download commands/$name${NC}"
+                    fail_count=$((fail_count + 1))
+                fi
+            fi
+        done <<< "$commands_listing"
+    fi
 
-## Installation
+    # --- Skills (directories containing SKILL.md) ---
+    local skills_api="$GITHUB_API/$plugin_id/skills"
+    local skills_listing
+    if skills_listing=$(enumerate_github_dir "$skills_api" 2>/dev/null); then
+        mkdir -p "$target_dir/skills"
+        while IFS=' ' read -r name type; do
+            [ -z "$name" ] && continue
+            if [ "$type" = "dir" ]; then
+                mkdir -p "$target_dir/skills/$name"
+                local url="$GITHUB_RAW/$plugin_id/skills/$name/SKILL.md"
+                if download_file "$url" "$target_dir/skills/$name/SKILL.md"; then
+                    file_count=$((file_count + 1))
+                else
+                    echo -e "  ${YELLOW}Warning: Failed to download skills/$name/SKILL.md${NC}"
+                    fail_count=$((fail_count + 1))
+                fi
+            fi
+        done <<< "$skills_listing"
+    fi
 
-This plugin's agents, commands, and skills are available from the wshobson/agents repository.
+    # --- Plugin metadata (.claude-plugin/plugin.json) ---
+    mkdir -p "$target_dir/.claude-plugin"
+    local meta_url="$GITHUB_RAW/$plugin_id/.claude-plugin/plugin.json"
+    if download_file "$meta_url" "$target_dir/.claude-plugin/plugin.json"; then
+        file_count=$((file_count + 1))
+    fi
 
-To fully activate this plugin, use Claude Code's built-in plugin system:
-\`\`\`
-/plugin marketplace add wshobson/agents
-/plugin install $plugin_id
-\`\`\`
-
-Or manually copy the files from the repository to:
-- Agents: .claude/plugins/installed/$plugin_id/agents/
-- Commands: .claude/plugins/installed/$plugin_id/commands/
-- Skills: .claude/plugins/installed/$plugin_id/skills/
-EOF
-
-    echo -e "  ${GREEN}Plugin reference created${NC}"
+    # Report results
+    if [ "$file_count" -gt 0 ]; then
+        echo -e "  ${GREEN}Downloaded $file_count file(s)${NC}"
+    fi
+    if [ "$fail_count" -gt 0 ]; then
+        echo -e "  ${YELLOW}$fail_count file(s) failed — check network or GitHub rate limits${NC}"
+    fi
+    if [ "$file_count" -eq 0 ] && [ "$fail_count" -eq 0 ]; then
+        echo -e "  ${YELLOW}No files found for plugin '$plugin_id' — verify plugin exists in registry${NC}"
+    fi
 }
 
 # Install a plugin
