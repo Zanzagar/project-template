@@ -267,18 +267,18 @@ Specialized sub-agent definitions in `.claude/agents/`:
 Follow the 10/80 rule: max 10 MCP servers, 80 tools. Run `./scripts/manage-mcps.sh audit` to check.
 See `docs/MCP_SETUP.md` for configuration by project type.
 
-## Hooks (Optional)
+## Hooks (Enabled by Default)
 
-Automate validation and formatting with hooks. See `.claude/hooks/README.md` for details.
+All 17 hooks are enabled by default via the tracked `.claude/settings.json`. Use presets to slim down:
 
-Quick setup:
 ```bash
-# Use a preset (safe mode enables file protection + pre-commit checks)
-/settings safe
-
-# Or copy example settings manually
-cp .claude/hooks/settings-example.json .claude/settings.local.json
+# Slim down with a preset (writes to settings.local.json, overrides tracked config)
+/settings fast        # Disables all hooks
+/settings optimized   # Lightweight subset + token savings
+/settings safe        # Safety hooks only (no formatting/analysis)
 ```
+
+See `.claude/hooks/README.md` for details.
 
 Available hooks:
 - **session-init.sh** - Detects project phase, loads context, reloads session summaries

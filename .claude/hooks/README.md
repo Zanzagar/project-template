@@ -1,6 +1,6 @@
 # Claude Code Hooks
 
-This directory contains example hook scripts for automating Claude Code workflows.
+All hooks are **enabled by default** via the tracked `.claude/settings.json`. Language-specific hooks (TypeScript, formatters) self-guard and no-op when they don't apply. Use `/settings fast` to disable all hooks, or other presets to slim down.
 
 ## What Are Hooks?
 
@@ -11,15 +11,25 @@ Hooks are shell scripts that run automatically at specific points in Claude's wo
 
 ## Available Hooks
 
-| Script | Event | Purpose |
-|--------|-------|---------|
-| `session-init.sh` | SessionStart | Project state detection, session reload (<24h), phase guidance |
-| `pre-commit-check.sh` | PreToolUse (Bash) | Validates code before git commits |
-| `post-edit-format.sh` | PostToolUse (Edit\|Write) | Auto-formats files after edits |
-| `protect-sensitive-files.sh` | PreToolUse (Edit\|Write) | Blocks edits to .env, keys, etc. |
-| `session-summary.sh` | Stop | Logs session activity (lightweight) |
-| `session-end.sh` | Stop | Generates detailed session summary for cross-session continuity |
-| `pre-compact.sh` | Manual/UserPromptSubmit | Saves working state before context compaction |
+| Script | Event | Blocks? | Purpose |
+|--------|-------|---------|---------|
+| `session-init.sh` | SessionStart | No | Project state detection, session reload (<24h), phase guidance |
+| `project-index.sh` | SessionStart | No | Generates codebase structure index for sub-agents |
+| `pre-commit-check.sh` | PreToolUse (Bash) | **Yes** | Validates code before git commits (lint, tests, secrets) |
+| `dev-server-blocker.sh` | PreToolUse (Bash) | **Yes** | Blocks dev servers outside tmux to prevent terminal capture |
+| `long-running-tmux-hint.sh` | PreToolUse (Bash) | No | Advisory tmux reminder for long-running commands |
+| `protect-sensitive-files.sh` | PreToolUse (Edit\|Write) | **Yes** | Blocks edits to .env, keys, credentials |
+| `doc-file-blocker.sh` | PreToolUse (Write) | **Yes** | Prevents .md creation outside approved locations |
+| `post-edit-format.sh` | PostToolUse (Edit\|Write) | No | Auto-formats files (ruff, prettier, gofmt, etc.) |
+| `console-log-audit.sh` | PostToolUse (Edit) | No | Warns about debug statements (print, console.log) |
+| `typescript-check.sh` | PostToolUse (Edit) | No | Runs tsc --noEmit on .ts/.tsx files |
+| `build-analysis.sh` | PostToolUse (Bash) | No | Advisory error/warning analysis after builds |
+| `pr-url-extract.sh` | PostToolUse (Bash) | No | Extracts PR URL from git push output |
+| `pre-compact.sh` | UserPromptSubmit | No | Saves working state before context compaction |
+| `suggest-compact.sh` | UserPromptSubmit | No | Suggests compaction at 50+ tool calls |
+| `session-end.sh` | Stop | No | Generates detailed per-session summary for cross-session continuity |
+| `session-summary.sh` | Stop | No | Appends lightweight entry to rolling session log |
+| `pattern-extraction.sh` | Stop | No | Auto-extracts instinct candidates from git history |
 
 ## How to Enable Hooks
 
@@ -121,21 +131,29 @@ Hooks receive JSON via stdin with event-specific data:
 }
 ```
 
-## Quick Start
+## Customizing Hooks
 
-1. **Copy the example settings:**
+All hooks are enabled by default in `.claude/settings.json` (tracked). To customize:
+
+1. **Use a preset** (writes to `settings.local.json`, overrides tracked config):
    ```bash
-   cp .claude/hooks/settings-example.json .claude/settings.local.json
+   /settings fast        # Disables all hooks
+   /settings optimized   # Lightweight subset + token savings
+   /settings safe        # Safety hooks only
    ```
 
-2. **Or enable individual hooks using `/hooks`:**
-   - Type `/hooks` in Claude Code
-   - Select which hooks to enable
+2. **Manual override** (copy and edit):
+   ```bash
+   cp .claude/settings.json .claude/settings.local.json
+   # Edit settings.local.json to remove unwanted hooks
+   ```
 
 3. **Test a hook manually:**
    ```bash
    echo '{"tool_input":{"file_path":".env"}}' | .claude/hooks/protect-sensitive-files.sh
    ```
+
+**Note:** `settings.local.json` completely overrides `settings.json` for hooks (no merging). If you define `hooks` in your local file, it replaces the entire tracked hook config.
 
 ## Creating Custom Hooks
 
