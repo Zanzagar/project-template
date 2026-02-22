@@ -578,7 +578,7 @@ The difference isn't just quality — it's **reproducibility**. The template pro
 | Methodology review | None | Planner catches spatial CV issues before coding |
 | Session continuity | None | Summaries, work log, instincts |
 | Context efficiency | ~50K wasted on unused tools | <35K startup, 165K working |
-| Specialization | 1 general model | 13 specialized agents |
+| Specialization | 1 general model | 14 specialized agents |
 | Documentation | Manual or forgotten | Auto-generated codemaps, session summaries |
 | Learning | Starts fresh every session | Persistent instinct system, cross-session memory |
 | Reproducibility | Hardcoded paths, no seeds | Verified by `/verify` pipeline |
@@ -601,7 +601,7 @@ With the template:
 
 **The result isn't just a better pipeline — it's a better researcher.** The template's enforced workflows become muscle memory. Students who use it for a semester internalize TDD, version control discipline, reproducibility practices, and code review habits that distinguish reliable research from one-off scripts.
 
-Beyond enforcement, the template provides **domain expertise on demand.** Need to configure a PostgreSQL spatial database? The `postgresql-patterns` skill knows about GiST indexing for geometry columns, PostGIS query optimization, and migration safety. Need Python testing patterns? The `python-testing` skill provides pytest fixtures, parametrization, and mocking strategies. The 33 skills act as an always-available senior engineer across every domain the student might encounter — without requiring the student to know the right questions to ask.
+Beyond enforcement, the template provides **domain expertise on demand.** Need to configure a PostgreSQL spatial database? The `postgresql-patterns` skill knows about GiST indexing for geometry columns, PostGIS query optimization, and migration safety. Need Python testing patterns? The `python-testing` skill provides pytest fixtures, parametrization, and mocking strategies. The 39 skills act as an always-available senior engineer across every domain the student might encounter — without requiring the student to know the right questions to ask.
 
 Critically, **quality scales with the project.** A thesis codebase that grows to 10,000+ lines maintains the same quality standards as the first 100 lines, because the template's enforcement doesn't fatigue. The TDD guide is just as strict on line 10,000 as on line 1. The security reviewer doesn't get tired of scanning. This is where AI-assisted development fundamentally differs from manual discipline — the template never has a bad day.
 
@@ -938,4 +938,4 @@ Any student using this template starts their project with the workflow enforceme
 ---
 
 *Built with Claude Code (Anthropic) | Informed by Everything Claude Code (45K+ stars)*
-*Template version 2.3.0 | 14 agents, 39 skills, 49 commands, 13 rules, 18 hooks | 5 project-type presets*
+*Template version 2.2.0 | 14 agents, 39 skills, 49 commands, 13 rules, 18 hooks | 5 project-type presets*
