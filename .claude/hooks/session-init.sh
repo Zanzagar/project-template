@@ -72,10 +72,12 @@ fi
 [ -d "$PROJECT_DIR/src" ] && HAS_SRC=true
 [ -f "$SYNC_SCRIPT" ] && HAS_SYNC_SCRIPT=true
 
-# Check for Superpowers plugin (marker file or common locations)
-# Users can create .superpowers-installed to confirm installation
+# Check for Superpowers plugin (marker file or plugin cache locations)
+# Users can also create .superpowers-installed to confirm installation
 if [ -f "$PROJECT_DIR/.superpowers-installed" ] || \
    [ -d "$HOME/.claude/plugins/superpowers" ] || \
+   [ -d "$HOME/.claude/plugins/cache/superpowers-marketplace/superpowers" ] || \
+   [ -d "$HOME/.claude/plugins/marketplaces/superpowers-marketplace" ] || \
    [ -f "$PROJECT_DIR/.claude/superpowers.json" ]; then
     HAS_SUPERPOWERS=true
 fi
