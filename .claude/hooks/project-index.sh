@@ -14,6 +14,9 @@
 #
 # Based on: "Project Index" concept from Claude Code expert discussions
 
+# Best-effort: never block session start on index failures
+set +e
+
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 INDEX_FILE="$PROJECT_DIR/.claude/project-index.json"
 INDEX_DIR="$PROJECT_DIR/.claude"

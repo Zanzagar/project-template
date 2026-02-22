@@ -8,7 +8,8 @@
 #   2 = Block the commit (shows reason to Claude)
 #   1 = Warning only (doesn't block)
 
-set -e
+# Best-effort: never silently skip checks
+set +e
 
 # Read the input JSON from stdin
 INPUT=$(cat)

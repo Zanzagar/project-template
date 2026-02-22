@@ -6,7 +6,8 @@
 # This hook runs formatters automatically after file changes.
 # Exit code doesn't block (PostToolUse can't block), but feedback is shown.
 
-set -e
+# Best-effort: never fail if a formatter is missing
+set +e
 
 # Read the input JSON from stdin
 INPUT=$(cat)
