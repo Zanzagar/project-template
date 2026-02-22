@@ -437,4 +437,34 @@ case $SCENARIO in
         ;;
 esac
 
+# Auto-start observer daemon for continuous learning
+OBSERVER_SCRIPT="$PROJECT_DIR/scripts/start-observer.sh"
+OBSERVER_CONFIG="$PROJECT_DIR/.claude/instincts/config.json"
+OBSERVER_PID_FILE="$PROJECT_DIR/.claude/instincts/.observer.pid"
+
+if [ -f "$OBSERVER_SCRIPT" ] && [ -f "$OBSERVER_CONFIG" ]; then
+    # Check if observer is enabled in config
+    OBSERVER_ENABLED=$(python3 -c "import json; print(json.load(open('$OBSERVER_CONFIG')).get('observer', {}).get('enabled', False))" 2>/dev/null || echo "false")
+
+    if [ "$OBSERVER_ENABLED" = "True" ] || [ "$OBSERVER_ENABLED" = "true" ]; then
+        # Check if already running
+        OBSERVER_RUNNING=false
+        if [ -f "$OBSERVER_PID_FILE" ]; then
+            observer_pid=$(cat "$OBSERVER_PID_FILE" 2>/dev/null)
+            if [ -n "$observer_pid" ] && kill -0 "$observer_pid" 2>/dev/null; then
+                OBSERVER_RUNNING=true
+            fi
+        fi
+
+        if [ "$OBSERVER_RUNNING" = false ]; then
+            # Start observer in background (suppress output)
+            bash "$OBSERVER_SCRIPT" start >/dev/null 2>&1
+            if [ -f "$OBSERVER_PID_FILE" ]; then
+                echo ""
+                echo "🧠 Observer started (continuous learning active)"
+            fi
+        fi
+    fi
+fi
+
 exit 0

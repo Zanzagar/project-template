@@ -4,105 +4,187 @@ description: Instinct-based pattern extraction, confidence scoring, skill evolut
 ---
 # Continuous Learning v2
 
-## Overview
+Adapted from [ECC](https://github.com/affaan-m/everything-claude-code) continuous-learning-v2.
 
-This skill enables Claude to learn from your working patterns over time. It extracts recurring behaviors into "instincts" — scored suggestions that improve with use.
+## Architecture
+
+```
+Session Activity
+      |
+      | observe.sh hooks (PreToolUse/PostToolUse)
+      v
+observations.jsonl
+      |
+      | Analyzed by:
+      |   - Observer daemon (background, Haiku, every 5 min)
+      |   - /learn command (manual, in-session)
+      |   - pattern-extraction.sh (Stop event, git-based)
+      v
+instincts/personal/*.md
+      |
+      | /evolve clusters related instincts
+      v
+instincts/evolved/ (skills, commands, agents)
+```
 
 **Authority**: Instincts never override rules. See `.claude/rules/authority-hierarchy.md`.
 
-## Pattern Extraction
+## Three Learning Paths
 
-### When to Extract
-After completing significant tasks, identify recurring patterns in:
-- Tool usage (which tools you prefer, in what order)
-- Coding style (naming, structure, documentation approach)
-- Testing strategy (what you test, how you organize tests)
-- Debugging approach (where you start, what you check)
-- Architecture preferences (module layout, dependency patterns)
+| Path | Trigger | Source | Output |
+|------|---------|--------|--------|
+| **observe.sh + observer** | Automatic (every tool call) | Tool usage patterns | `personal/*.md` |
+| **pattern-extraction.sh** | Automatic (Stop event) | Git commit history | `candidates/*.json` |
+| **`/learn`** | Manual (user invokes) | Session insights | `personal/*.md` |
 
-### Extraction Rules
-- Require **2+ occurrences** before creating an instinct
-- Pattern must be specific enough to be actionable
-- Don't extract patterns that match existing rules (redundant)
-- Don't extract one-time decisions (context-dependent, not a pattern)
+## Instinct Format (YAML Frontmatter Markdown)
 
-### Extraction Prompt
-After significant work, reflect:
-```
-Patterns observed this session:
-1. [Pattern] — Confidence: [initial score] — Category: [category]
-2. [Pattern] — Confidence: [initial score] — Category: [category]
+Each instinct is a `.md` file in `personal/` or `inherited/`:
 
-New instincts to create: [list]
-Existing instincts reinforced: [list]
-```
+```markdown
+---
+id: prefer-grep-before-edit
+trigger: "when searching for code to modify"
+confidence: 0.65
+domain: "workflow"
+source: "session-observation"
+---
 
-## Instinct Format
+# Prefer Grep Before Edit
 
-```json
-{
-  "pattern": "Description of the learned behavior",
-  "confidence": 0.0,
-  "category": "coding-style|testing-strategy|debugging-approach|architecture-preference|tool-usage",
-  "source_sessions": ["session-id-1", "session-id-2"],
-  "last_reinforced": "2024-01-18T00:00:00Z",
-  "active": true
-}
+## Action
+Always use Grep to find the exact location before using Edit.
+
+## Evidence
+- Observed 8 times across 3 sessions
+- Pattern: Grep -> Read -> Edit sequence
+- Last observed: 2026-02-22
 ```
 
-### Fields
-| Field | Type | Description |
-|-------|------|-------------|
-| `pattern` | string | Human-readable description of the behavior |
-| `confidence` | float | 0.0–1.0 confidence score |
-| `category` | string | One of the five categories |
-| `source_sessions` | string[] | Session IDs where pattern was observed |
-| `last_reinforced` | string | ISO date of last positive reinforcement |
-| `active` | bool | Whether instinct is currently applied |
+### Domains
+| Domain | Examples |
+|--------|----------|
+| `code-style` | Naming conventions, formatting preferences |
+| `testing` | Test patterns, fixture preferences |
+| `debugging` | Debugging workflow, log placement |
+| `workflow` | Tool usage, command patterns |
+| `architecture` | Module organization, dependency patterns |
+| `git` | Commit patterns, branch strategies |
 
 ## Confidence Management
 
 ### Thresholds
-| Range | Status | Action |
-|-------|--------|--------|
-| < 0.3 | Noise | Discard — too unreliable to keep |
-| 0.3–0.7 | Candidate | Keep but don't auto-apply — needs reinforcement |
-| > 0.7 | Active | Apply automatically as suggestion |
+| Range | Status | Behavior |
+|-------|--------|----------|
+| < 0.3 | Noise | Discard — too unreliable |
+| 0.3-0.7 | Candidate | Keep but don't auto-apply |
+| > 0.7 | Active | Auto-approved for application |
+| > 0.9 | Near-certain | Core behavior |
 
 ### Score Dynamics
-| Event | Change | Example |
-|-------|--------|---------|
-| Pattern confirmed | +0.1 | User follows the suggested approach |
-| Pattern reinforced | +0.1 | Same pattern observed in new context |
-| Week unused | -0.05 | Natural decay of stale patterns |
-| User rejects | -0.2 | Explicit contradiction by user |
-| Rule conflict | Set to 0 | Instinct contradicts a rule — deactivate |
+| Event | Change |
+|-------|--------|
+| Pattern confirmed | +0.05 |
+| User rejects | -0.1 |
+| Week unused | -0.02 (decay) |
+| Rule conflict | Deactivate (rules always win) |
 
-### Initial Confidence
-- First observation: 0.4 (candidate)
-- Second observation: 0.5 (candidate, strengthening)
-- Third observation: 0.6 (approaching active)
-- With explicit user confirmation: +0.2 bonus
+### Initial Confidence (observer)
+- 1-2 observations: 0.3 (tentative)
+- 3-5 observations: 0.5 (moderate)
+- 6-10 observations: 0.7 (strong)
+- 11+ observations: 0.85 (very strong)
+
+## Observation Hook
+
+`observe.sh` runs on every PreToolUse and PostToolUse event:
+- Captures tool name, truncated input/output (5KB max), session ID, timestamp
+- Writes JSONL to `.claude/instincts/observations.jsonl`
+- Archives when file exceeds 10MB
+- Signals observer daemon via SIGUSR1 if running
+- Uses `$1` CLI arg for phase detection (PR #242 fix)
+
+## Observer Daemon
+
+Background process (`scripts/start-observer.sh`) that:
+- Spawns `claude --model haiku --max-turns 3` every 5 minutes
+- Analyzes observations for patterns (user corrections, error resolutions, repeated workflows, tool preferences)
+- Creates instinct files in `personal/`
+- Archives processed observations
+
+```bash
+scripts/start-observer.sh        # Start
+scripts/start-observer.sh stop   # Stop
+scripts/start-observer.sh status # Check
+```
 
 ## Skill Evolution
 
-When 3+ related instincts cluster in the same category with confidence >0.7:
+When 3+ related instincts cluster with confidence >0.7, `/evolve` promotes them:
 
-1. **Detection**: `/evolve` scans instincts for clusters
-2. **Proposal**: Suggests a new SKILL.md combining the patterns
-3. **Review**: User approves or rejects the proposed skill
-4. **Creation**: Approved clusters become skills in `.claude/skills/`
-5. **Cleanup**: Source instincts are archived (marked inactive)
+| Source | Target | Criteria |
+|--------|--------|----------|
+| 2+ related instincts | Skill | Similar triggers, any confidence |
+| Workflow instinct (>=70%) | Command | High-confidence workflow patterns |
+| 3+ instincts (>=75% avg) | Agent | Complex multi-step patterns |
 
-### Clustering Criteria
-- Same category
-- Conceptually related (similar domain/context)
-- All confidence >0.7
-- At least 3 instincts in the cluster
+Generated structures go to `instincts/evolved/skills/`, `evolved/commands/`, `evolved/agents/`.
+
+## CLI Tool
+
+`scripts/instinct-cli.py` provides programmatic access:
+
+```bash
+python3 scripts/instinct-cli.py status                    # Show all instincts
+python3 scripts/instinct-cli.py export -o instincts.yaml  # Export for sharing
+python3 scripts/instinct-cli.py import instincts.yaml     # Import from others
+python3 scripts/instinct-cli.py evolve                    # Analyze clusters
+python3 scripts/instinct-cli.py evolve --generate         # Create evolved structures
+```
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `/instinct-status` | View all instincts with confidence scores |
+| `/learn` | Manually extract patterns from current session |
+| `/evolve` | Cluster related instincts into skills/commands |
+| `/instinct-export` | Export instincts for sharing |
+| `/instinct-import <file>` | Import instincts from others |
 
 ## Storage
 
-- Location: `.claude/instincts/*.json`
-- One file per instinct (named by pattern slug)
-- Personal by default (`.gitignore` excludes JSON files)
-- Share via `/instinct-export` and `/instinct-import`
+```
+.claude/instincts/
+├── config.json              # Learning system configuration
+├── README.md                # Architecture documentation
+├── observations.jsonl       # Raw tool use observations (gitignored)
+├── personal/                # Auto-learned instincts (gitignored)
+├── inherited/               # Imported from others (optionally committed)
+├── candidates/              # Git-based session summaries (gitignored)
+├── evolved/                 # Graduated to skills/commands/agents (committed)
+│   ├── skills/
+│   ├── commands/
+│   └── agents/
+└── observations.archive/    # Processed observations (gitignored)
+```
+
+## Sharing Instincts
+
+Export project-level instincts for sharing or global use:
+
+```bash
+# Export all high-confidence instincts
+/instinct-export --min-confidence=0.7 --output=team-instincts.yaml
+
+# Import into another project
+/instinct-import team-instincts.yaml
+
+# Filter by domain
+/instinct-export --domain=workflow --output=workflow-patterns.yaml
+```
+
+Exported instincts go to `inherited/` in the target project with source attribution.
+To make instincts available globally across all projects, export and import into
+each project — instincts are intentionally project-scoped so different projects
+can learn different patterns.

@@ -49,3 +49,9 @@ fi
 if [ "$TOOL_CALLS" -gt "$THRESHOLD" ] && [ $(( TOOL_CALLS % REPEAT_INTERVAL )) -eq 0 ]; then
     echo "[StrategicCompact] ${TOOL_CALLS} tool calls — good checkpoint for /compact if context is stale" >&2
 fi
+
+# Suggest /learn after significant sessions (one-time at 75 tool calls)
+LEARN_THRESHOLD=75
+if [ "$TOOL_CALLS" -eq "$LEARN_THRESHOLD" ]; then
+    echo "[ContinuousLearning] Significant session activity — consider /learn to capture reusable patterns" >&2
+fi

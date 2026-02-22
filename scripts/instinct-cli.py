@@ -56,6 +56,11 @@ CANDIDATES_DIR = INSTINCTS_DIR / "candidates"
 EVOLVED_DIR = INSTINCTS_DIR / "evolved"
 OBSERVATIONS_FILE = INSTINCTS_DIR / "observations.jsonl"
 
+# Global instinct store (user-level, shared across all projects)
+GLOBAL_INSTINCTS_DIR = Path.home() / ".claude" / "instincts"
+GLOBAL_PERSONAL_DIR = GLOBAL_INSTINCTS_DIR / "personal"
+GLOBAL_INHERITED_DIR = GLOBAL_INSTINCTS_DIR / "inherited"
+
 # Ensure directories exist
 for d in [
     PERSONAL_DIR,
@@ -249,8 +254,35 @@ def cmd_status(args):
 
 
 def cmd_import(args):
-    """Import instincts from file or URL."""
+    """Import instincts from file, URL, or global store."""
+    # Handle --from-global flag: import all global instincts
+    if getattr(args, "from_global", False):
+        if not GLOBAL_PERSONAL_DIR.exists():
+            print(f"No global instinct store found at {GLOBAL_PERSONAL_DIR}")
+            print("Export instincts to global first: instinct-cli.py export --to-global")
+            return 1
+        global_files = list(GLOBAL_PERSONAL_DIR.glob("*.md"))
+        if not global_files:
+            print("Global instinct store is empty.")
+            return 1
+        # Concatenate all global instincts into one source
+        content = f"# Global instincts from {GLOBAL_PERSONAL_DIR}\n\n"
+        for f in global_files:
+            content += f.read_text() + "\n\n"
+        args.source = str(GLOBAL_PERSONAL_DIR)
+        # Fall through to normal import logic with this content
+        new_instincts = parse_instinct_file(content)
+        if not new_instincts:
+            print("No valid instincts found in global store.")
+            return 1
+        print(f"\nFound {len(new_instincts)} global instincts to import.\n")
+        # Skip the fetch section, go straight to categorization
+        return _do_import(args, new_instincts, str(GLOBAL_PERSONAL_DIR))
+
     source = args.source
+    if not source:
+        print("Error: source file/URL required (or use --from-global)")
+        return 1
 
     # Fetch content
     if source.startswith("http://") or source.startswith("https://"):
@@ -275,7 +307,11 @@ def cmd_import(args):
         return 1
 
     print(f"\nFound {len(new_instincts)} instincts to import.\n")
+    return _do_import(args, new_instincts, source)
 
+
+def _do_import(args, new_instincts: list[dict], source: str) -> int:
+    """Shared import logic for file/URL and global sources."""
     # Load existing
     existing = load_all_instincts()
     existing_ids = {i.get("id") for i in existing}
@@ -298,7 +334,7 @@ def cmd_import(args):
             to_add.append(inst)
 
     # Filter by minimum confidence
-    min_conf = args.min_confidence or 0.0
+    min_conf = getattr(args, "min_confidence", None) or 0.0
     to_add = [i for i in to_add if i.get("confidence", 0.5) >= min_conf]
     to_update = [i for i in to_update if i.get("confidence", 0.5) >= min_conf]
 
@@ -320,7 +356,7 @@ def cmd_import(args):
         if len(duplicates) > 5:
             print(f"  ... and {len(duplicates) - 5} more")
 
-    if args.dry_run:
+    if getattr(args, "dry_run", False):
         print("\n[DRY RUN] No changes made.")
         return 0
 
@@ -329,7 +365,7 @@ def cmd_import(args):
         return 0
 
     # Confirm
-    if not args.force:
+    if not getattr(args, "force", False):
         response = input(f"\nImport {len(to_add)} new, update {len(to_update)}? [y/N] ")
         if response.lower() != "y":
             print("Cancelled.")
@@ -372,7 +408,7 @@ def cmd_import(args):
 
 
 def cmd_export(args):
-    """Export instincts to file."""
+    """Export instincts to file or global store."""
     instincts = load_all_instincts()
 
     if not instincts:
@@ -393,7 +429,8 @@ def cmd_export(args):
 
     # Generate output
     output = (
-        f"# Instincts export\n# Date: {datetime.now().isoformat()}\n# Total: {len(instincts)}\n\n"
+        f"# Instincts export\n# Date: {datetime.now().isoformat()}\n# Total: {len(instincts)}\n"
+        f"# Source: {PROJECT_ROOT}\n\n"
     )
 
     for inst in instincts:
@@ -407,6 +444,39 @@ def cmd_export(args):
                     output += f"{key}: {value}\n"
         output += "---\n\n"
         output += inst.get("content", "") + "\n\n"
+
+    # Export to global store
+    if getattr(args, "to_global", False):
+        GLOBAL_PERSONAL_DIR.mkdir(parents=True, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        project_name = PROJECT_ROOT.name
+        global_file = GLOBAL_PERSONAL_DIR / f"from-{project_name}-{timestamp}.md"
+
+        # Write each instinct as a separate file for easy management
+        exported_count = 0
+        for inst in instincts:
+            inst_id = inst.get("id", "unnamed")
+            inst_file = GLOBAL_PERSONAL_DIR / f"{inst_id}.md"
+
+            inst_content = "---\n"
+            for key in ["id", "trigger", "confidence", "domain", "source"]:
+                if inst.get(key):
+                    value = inst[key]
+                    if key == "trigger":
+                        inst_content += f'{key}: "{value}"\n'
+                    else:
+                        inst_content += f"{key}: {value}\n"
+            inst_content += f'source_project: "{project_name}"\n'
+            inst_content += "---\n\n"
+            inst_content += inst.get("content", "") + "\n"
+
+            inst_file.write_text(inst_content)
+            exported_count += 1
+
+        print(f"Exported {exported_count} instincts to global store: {GLOBAL_PERSONAL_DIR}")
+        print(f"\nGlobal instincts are available to all projects via:")
+        print(f"  python3 scripts/instinct-cli.py import {GLOBAL_PERSONAL_DIR}")
+        return 0
 
     # Write to file or stdout
     if args.output:
@@ -620,7 +690,13 @@ def main():
 
     # Import
     import_parser = subparsers.add_parser("import", help="Import instincts")
-    import_parser.add_argument("source", help="File path or URL")
+    import_parser.add_argument("source", nargs="?", help="File path or URL")
+    import_parser.add_argument(
+        "--from-global",
+        action="store_true",
+        dest="from_global",
+        help="Import from global instinct store (~/.claude/instincts/)",
+    )
     import_parser.add_argument("--dry-run", action="store_true", help="Preview without importing")
     import_parser.add_argument("--force", action="store_true", help="Skip confirmation")
     import_parser.add_argument("--min-confidence", type=float, help="Minimum confidence threshold")
@@ -628,6 +704,12 @@ def main():
     # Export
     export_parser = subparsers.add_parser("export", help="Export instincts")
     export_parser.add_argument("--output", "-o", help="Output file")
+    export_parser.add_argument(
+        "--to-global",
+        action="store_true",
+        dest="to_global",
+        help="Export to global instinct store (~/.claude/instincts/)",
+    )
     export_parser.add_argument("--domain", help="Filter by domain")
     export_parser.add_argument("--min-confidence", type=float, help="Minimum confidence")
 

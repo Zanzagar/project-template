@@ -39,20 +39,32 @@ Look for patterns worth saving from the current session:
 
 ## Output: Instinct (Lightweight Pattern)
 
-Save to `.claude/instincts/`:
+Save to `.claude/instincts/personal/<pattern-id>.md` using YAML frontmatter markdown:
 
-```json
-{
-  "pattern": "descriptive-name",
-  "trigger": "When [specific condition]",
-  "action": "Do [specific action]",
-  "confidence": 0.5,
-  "source": "session",
-  "created": "2026-02-13"
-}
+```markdown
+---
+id: descriptive-pattern-id
+trigger: "When [specific condition]"
+confidence: 0.5
+domain: "workflow"
+source: "manual-learn"
+---
+
+# Descriptive Pattern Name
+
+## Action
+[What to do when the trigger condition is met]
+
+## Evidence
+- Extracted from session on [date]
+- Context: [what was happening when the pattern was observed]
 ```
 
-Instincts start at confidence 0.5 (candidate), grow to >0.7 (active) when reinforced, decay when unused.
+### Domains
+`code-style`, `testing`, `debugging`, `workflow`, `architecture`, `git`
+
+### Confidence
+Instincts start at 0.5 (candidate), grow to >0.7 (active) when reinforced, decay when unused (-0.02/week).
 
 ## Output: Skill (Permanent Reference)
 
@@ -92,6 +104,22 @@ description: <when to activate this skill>
 ## Integration
 
 - Extracted instincts participate in authority hierarchy (Rules > Instincts > Defaults)
-- Use `/instinct-status` to view learned patterns
-- Use `/evolve` to cluster instincts into skills
+- Use `/instinct-status` to view all learned patterns and their confidence
+- Use `/evolve` to cluster related instincts into skills/commands/agents
+- Use `/instinct-export` to share instincts with teammates
 - Use `/skill-create` for git-history-based extraction
+
+## How /learn Fits Into the Learning System
+
+```
+Automatic paths (no user action needed):
+  observe.sh hooks → observations.jsonl → observer daemon → instincts/personal/
+  pattern-extraction.sh → candidates/ (from git commit history)
+
+Manual path (this command):
+  /learn → user reviews session → creates instinct in personal/
+```
+
+`/learn` is for capturing insights the automatic paths might miss — especially
+debugging discoveries, workarounds, and project-specific conventions that aren't
+visible in tool usage patterns alone.
