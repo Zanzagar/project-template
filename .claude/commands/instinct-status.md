@@ -1,46 +1,34 @@
-Show the status of all learned instincts.
+Show the status of all learned instincts using the instinct CLI.
 
 ## Instructions
 
-Read all JSON files in `.claude/instincts/` and display them grouped by category.
+Run the instinct CLI status command:
 
-### Output Format
-
+```bash
+python3 scripts/instinct-cli.py status
 ```
-╔══════════════════════════════════════════════════════════╗
-║                    INSTINCT STATUS                       ║
-╠══════════════════════════════════════════════════════════╣
 
-Category: coding-style
-┌─────────────────────────────────────┬────────┬──────────┐
-│ Pattern                             │ Score  │ Status   │
-├─────────────────────────────────────┼────────┼──────────┤
-│ Use snake_case for Python functions │ 0.85   │ Active   │
-│ Prefer f-strings over .format()    │ 0.45   │ Candidate│
-└─────────────────────────────────────┴────────┴──────────┘
+Display the output to the user.
 
-Category: testing-strategy
-┌─────────────────────────────────────┬────────┬──────────┐
-│ Always test edge cases first        │ 0.72   │ Active   │
-└─────────────────────────────────────┴────────┴──────────┘
+If the CLI is not available or fails, fall back to manually reading instinct files:
 
-Summary:
-- Active (>0.7): 2 instincts
-- Candidate (0.3-0.7): 1 instinct
-- Total: 3 instincts across 2 categories
-```
+1. Read YAML frontmatter `.md` files from `.claude/instincts/personal/` and `.claude/instincts/inherited/`
+2. Read JSON candidates from `.claude/instincts/candidates/`
+3. Check `.claude/instincts/observations.jsonl` for observation count
+4. Group instincts by domain and sort by confidence
 
 ### Status Mapping
-- Score > 0.7 → "Active" (auto-applied)
-- Score 0.3–0.7 → "Candidate" (needs reinforcement)
-- Score < 0.3 → "Fading" (will be discarded)
+- Confidence > 0.7 = "Active" (auto-applied)
+- Confidence 0.3-0.7 = "Candidate" (needs reinforcement)
+- Confidence < 0.3 = "Fading" (will be discarded)
 
 ### If No Instincts Exist
-```
-No instincts found in .claude/instincts/
 
-Instincts are learned automatically as you work. They capture recurring
-patterns in your coding style, testing strategy, and tool usage.
+```
+No instincts found.
+
+Instincts are learned automatically via observation hooks (PreToolUse/PostToolUse).
+Use /learn to manually extract patterns from the current session.
 
 See .claude/instincts/README.md for details.
 ```

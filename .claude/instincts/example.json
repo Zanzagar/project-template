@@ -1,8 +1,0 @@
-{
-  "pattern": "Always run tests before committing",
-  "confidence": 0.85,
-  "category": "tool-usage",
-  "source_sessions": ["2024-01-15", "2024-01-18"],
-  "last_reinforced": "2024-01-18",
-  "active": true
-}

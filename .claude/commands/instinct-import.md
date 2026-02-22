@@ -1,49 +1,46 @@
-Import instincts from a shared JSON file.
+Import instincts from a file or URL.
 
-Usage: `/instinct-import <path-to-file>`
+Usage: `/instinct-import <path-or-url>`
 
 Arguments: $ARGUMENTS
 
 ## Instructions
 
-1. Read the JSON file at the specified path
-2. Validate each instinct has required fields: pattern, confidence, category
-3. For each instinct:
-   - If an instinct with the same pattern already exists: keep the one with higher confidence
-   - If new: add to `.claude/instincts/` directory
-4. Report results
+Run the instinct CLI import command:
 
-### Validation Rules
-- `pattern`: non-empty string
-- `confidence`: number between 0.0 and 1.0
-- `category`: one of: coding-style, testing-strategy, debugging-approach, architecture-preference, tool-usage
-- `source_sessions`: array of strings (optional)
-- `active`: boolean (optional, defaults to confidence > 0.7)
-
-### Expected File Format
-
-Single instinct:
-```json
-{
-  "pattern": "...",
-  "confidence": 0.8,
-  "category": "coding-style"
-}
+```bash
+python3 scripts/instinct-cli.py import "$ARGUMENTS" --force
 ```
 
-Multiple instincts:
-```json
-[
-  {"pattern": "...", "confidence": 0.8, "category": "coding-style"},
-  {"pattern": "...", "confidence": 0.6, "category": "testing-strategy"}
-]
+Display the output to the user.
+
+If the CLI is not available, fall back to manual import:
+
+1. Read the source file (YAML frontmatter markdown format or JSON)
+2. Parse instincts with fields: id, trigger, confidence, domain
+3. Check for duplicates against `.claude/instincts/personal/` and `.claude/instincts/inherited/`
+4. Write new instincts to `.claude/instincts/inherited/`
+5. Report results
+
+### Expected Instinct Format (YAML Frontmatter)
+
+```markdown
+---
+id: prefer-functional-style
+trigger: "when writing new functions"
+confidence: 0.7
+domain: "code-style"
+source: "session-observation"
+---
+
+# Prefer Functional Style
+
+## Action
+Use functional patterns over classes when appropriate.
+
+## Evidence
+- Observed in multiple sessions
 ```
 
-### Output
-
-```
-Imported 3 instincts:
-  + "Use type hints on all public functions" (0.85, coding-style) — NEW
-  ↑ "Run tests before commits" (0.90 → kept, was 0.85) — UPDATED
-  = "Prefer composition over inheritance" (0.72, skipped — existing 0.80 is higher)
-```
+### Domains
+code-style, testing, git, debugging, workflow, architecture

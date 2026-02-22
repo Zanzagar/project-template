@@ -65,10 +65,13 @@ node_modules/
 # Session summaries (ephemeral, per-user)
 .claude/sessions/*.md
 
-# Instincts (personal learned patterns, not shared by default)
-.claude/instincts/*.json
-!.claude/instincts/example.json
-!.claude/instincts/export-*.json
+# Instincts — personal data (not shared by default)
+.claude/instincts/personal/
+.claude/instincts/candidates/
+.claude/instincts/observations.jsonl
+.claude/instincts/observations.archive/
+.claude/instincts/.observer.pid
+.claude/instincts/observer.log
 
 # AgentShield scan marker
 .claude/agentshield-last-run
