@@ -23,7 +23,7 @@
         "src/db",
         "tests/api",
         "tests/services",
-        "tests/conftest",
+        "tests",
         "docs",
         "alembic/versions"
       ],

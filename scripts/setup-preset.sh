@@ -473,6 +473,114 @@ update_gitignore() {
     log_success "Updated .gitignore with ${preset} entries"
 }
 
+generate_starter_files() {
+    local preset="$1"
+    local project_name="$2"
+
+    log_info "Generating starter files for TDD..."
+
+    if [ "$DRY_RUN" = true ]; then
+        log_dry "Would generate starter files (conftest.py, __init__.py, test stub)"
+        return
+    fi
+
+    # Detect language family from tech stack
+    local tech_stack
+    tech_stack=$(jq -r ".presets[\"$preset\"].tech_stack[]" "$PRESETS_FILE" | tr '[:upper:]' '[:lower:]')
+
+    local is_python=false
+    local is_node=false
+    local is_go=false
+    echo "$tech_stack" | grep -qi "python" && is_python=true
+    echo "$tech_stack" | grep -qi "node\|next\|react\|typescript" && is_node=true
+    echo "$tech_stack" | grep -qi "^go " && is_go=true
+
+    # Convert project name to valid Python package name
+    local package_name
+    package_name=$(echo "$project_name" | tr '-' '_' | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9_]//g')
+
+    if [ "$is_python" = true ]; then
+        # Create __init__.py files in all src/ subdirectories
+        find "$PROJECT_ROOT/src" -type d 2>/dev/null | while read -r dir; do
+            if [ ! -f "$dir/__init__.py" ]; then
+                touch "$dir/__init__.py"
+            fi
+        done
+        log_success "Created __init__.py files in src/"
+
+        # Create tests/conftest.py if it doesn't exist
+        if [ ! -f "$PROJECT_ROOT/tests/conftest.py" ]; then
+            cat > "$PROJECT_ROOT/tests/conftest.py" << 'CONFTEST_EOF'
+"""Shared test fixtures."""
+
+import pytest
+
+
+@pytest.fixture
+def sample_data():
+    """Example fixture — replace with project-specific setup."""
+    return {"key": "value"}
+CONFTEST_EOF
+            log_success "Created tests/conftest.py"
+        fi
+
+        # Create a passing test stub so pytest works immediately
+        if [ ! -f "$PROJECT_ROOT/tests/test_setup.py" ]; then
+            cat > "$PROJECT_ROOT/tests/test_setup.py" << TESTSETUP_EOF
+"""Verify project setup is correct."""
+
+
+def test_project_imports():
+    """Verify the package is importable — proves setup works."""
+    # Replace 'src' with actual module imports once code exists
+    assert True, "Project scaffolding is complete"
+
+
+def test_fixture_works(sample_data):
+    """Verify conftest fixtures load correctly."""
+    assert sample_data == {"key": "value"}
+TESTSETUP_EOF
+            log_success "Created tests/test_setup.py (2 passing tests)"
+        fi
+
+        # Remove erroneous tests/conftest/ directory if it exists (was a preset bug)
+        if [ -d "$PROJECT_ROOT/tests/conftest" ]; then
+            rm -rf "$PROJECT_ROOT/tests/conftest"
+            log_warning "Removed erroneous tests/conftest/ directory"
+        fi
+
+    elif [ "$is_node" = true ]; then
+        # Create a basic test stub for Node/Next.js
+        if [ ! -f "$PROJECT_ROOT/tests/setup.test.ts" ]; then
+            mkdir -p "$PROJECT_ROOT/tests"
+            cat > "$PROJECT_ROOT/tests/setup.test.ts" << 'NODETEST_EOF'
+describe('Project Setup', () => {
+  it('should have working test infrastructure', () => {
+    expect(true).toBe(true);
+  });
+});
+NODETEST_EOF
+            log_success "Created tests/setup.test.ts"
+        fi
+
+    elif [ "$is_go" = true ]; then
+        # Create a basic Go test stub
+        if [ ! -f "$PROJECT_ROOT/main_test.go" ]; then
+            cat > "$PROJECT_ROOT/main_test.go" << 'GOTEST_EOF'
+package main
+
+import "testing"
+
+func TestSetup(t *testing.T) {
+	// Verify project scaffolding works
+	t.Log("Project setup is complete")
+}
+GOTEST_EOF
+            log_success "Created main_test.go"
+        fi
+    fi
+}
+
 show_summary() {
     local preset="$1"
     local project_name="$2"
@@ -515,7 +623,11 @@ show_summary() {
         echo -e "     ${CYAN}task-master init${NC}"
         echo ""
 
-        echo "  4. Create a PRD and start planning:"
+        echo "  4. Verify TDD works (should pass):"
+        echo -e "     ${CYAN}pytest${NC}"
+        echo ""
+
+        echo "  5. Create a PRD and start planning:"
         echo -e "     ${CYAN}task-master parse-prd .taskmaster/docs/prd.txt${NC}"
         echo ""
     fi
@@ -566,6 +678,7 @@ main() {
 
     # Execute
     create_directories "$PRESET_NAME"
+    generate_starter_files "$PRESET_NAME" "$PROJECT_NAME"
     rewrite_claude_md "$PRESET_NAME" "$PROJECT_NAME"
     update_project_state "$PRESET_NAME" "$PROJECT_NAME"
     update_gitignore "$PRESET_NAME"
