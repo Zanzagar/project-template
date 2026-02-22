@@ -42,7 +42,11 @@ if [ -d "$PROJECT_DIR/.git" ]; then
 fi
 
 # --- Task Master capture ---
-TASK_PROGRESS=$(task-master list --status in-progress 2>/dev/null | head -10 || echo "No tasks in progress")
+# Use JSON output + jq for clean markdown (avoid ANSI box formatting)
+TASK_PROGRESS=$(task-master list --status in-progress --json 2>/dev/null \
+    | jq -r '.tasks[] | "- \(.title) (ID: \(.id))"' 2>/dev/null \
+    | head -10)
+[ -z "$TASK_PROGRESS" ] && TASK_PROGRESS="No tasks in progress"
 
 # --- Generate summary ---
 cat > "$SUMMARY_FILE" << EOF
