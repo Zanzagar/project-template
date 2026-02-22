@@ -31,7 +31,21 @@ else
 fi
 ```
 
-### Stage 2: Lint
+### Stage 2: Coverage
+```bash
+# Check test coverage (only if pytest-cov is installed)
+if python -c "import pytest_cov" &>/dev/null 2>&1; then
+    pytest --cov --cov-report=term-missing --cov-fail-under=80 -q 2>/dev/null
+    # Result: PASS if >=80%, WARN if <80%, SKIP if no source to cover
+elif command -v coverage &>/dev/null; then
+    coverage report --fail-under=80
+else
+    echo "SKIP: pytest-cov not installed (add to dev dependencies)"
+fi
+```
+**Note:** Coverage is a WARN, not FAIL — new projects may start below 80%. The threshold in `pyproject.toml` (`fail_under = 80`) is the source of truth.
+
+### Stage 3: Lint
 ```bash
 # Detect linter
 if command -v ruff &>/dev/null; then
@@ -45,7 +59,7 @@ else
 fi
 ```
 
-### Stage 3: Type Check
+### Stage 4: Type Check
 ```bash
 # Detect type checker
 if command -v mypy &>/dev/null; then
@@ -57,7 +71,7 @@ else
 fi
 ```
 
-### Stage 4: Security
+### Stage 5: Security
 ```bash
 # Detect security scanner
 if command -v bandit &>/dev/null; then
@@ -76,12 +90,13 @@ fi
 ```markdown
 # Verification Report
 
-| Stage    | Tool     | Result | Details            |
-|----------|----------|--------|--------------------|
-| Tests    | pytest   | PASS   | 42 passed, 0 failed |
-| Lint     | ruff     | WARN   | 3 warnings         |
-| Types    | mypy     | PASS   | No errors          |
-| Security | bandit   | FAIL   | 2 issues found     |
+| Stage    | Tool       | Result | Details              |
+|----------|------------|--------|----------------------|
+| Tests    | pytest     | PASS   | 42 passed, 0 failed  |
+| Coverage | pytest-cov | WARN   | 72% (threshold: 80%) |
+| Lint     | ruff       | WARN   | 3 warnings           |
+| Types    | mypy       | PASS   | No errors            |
+| Security | bandit     | FAIL   | 2 issues found       |
 
 **Overall: WARN** (1 failure, 1 warning)
 

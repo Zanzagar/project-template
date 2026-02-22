@@ -1,0 +1,93 @@
+# CI equivalent of the template's `/verify` pipeline.
+# Runs the same 5 stages locally enforced by Claude Code:
+#   Tests → Coverage → Lint → Types → Security
+#
+# Skips stages gracefully when tools aren't installed (mirrors local behavior).
+# Coverage is reported but doesn't block — new projects start at 0%.
+
+name: Verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]" 2>/dev/null || pip install ruff pytest pytest-cov mypy
+
+      # Stage 1: Tests
+      - name: Run tests
+        run: pytest --tb=short -q
+        continue-on-error: false
+
+      # Stage 2: Coverage (WARN, not FAIL — new projects may be below threshold)
+      - name: Check coverage
+        run: |
+          pytest --cov --cov-report=term-missing --cov-report=xml -q || true
+          # Report threshold but don't block
+          python -c "
+          import xml.etree.ElementTree as ET, sys, os
+          if not os.path.exists('coverage.xml'):
+              print('Coverage: SKIP (no coverage data)')
+              sys.exit(0)
+          tree = ET.parse('coverage.xml')
+          rate = float(tree.getroot().attrib.get('line-rate', 0)) * 100
+          threshold = 80
+          status = 'PASS' if rate >= threshold else 'WARN'
+          print(f'Coverage: {status} — {rate:.1f}% (threshold: {threshold}%)')
+          if rate < threshold:
+              print(f'::warning::Coverage {rate:.1f}% is below {threshold}% threshold')
+          "
+        continue-on-error: true
+
+      # Stage 3: Lint
+      - name: Run linter
+        run: ruff check .
+
+      # Stage 4: Type check
+      - name: Run type checker
+        run: mypy src/ --ignore-missing-imports
+        continue-on-error: true
+
+      # Stage 5: Security scan (optional — bandit may not be installed)
+      - name: Run security scan
+        run: |
+          pip install bandit 2>/dev/null
+          bandit -r src/ -q -f json -o bandit-report.json || true
+          python -c "
+          import json, os
+          if not os.path.exists('bandit-report.json'):
+              print('Security: SKIP')
+          else:
+              data = json.load(open('bandit-report.json'))
+              issues = len(data.get('results', []))
+              high = sum(1 for r in data.get('results', []) if r.get('issue_severity') == 'HIGH')
+              if high > 0:
+                  print(f'Security: FAIL — {high} high-severity issues')
+              elif issues > 0:
+                  print(f'Security: WARN — {issues} issues found')
+              else:
+                  print('Security: PASS')
+          "
+        continue-on-error: true

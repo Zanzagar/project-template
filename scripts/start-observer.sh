@@ -91,19 +91,23 @@ case "${1:-start}" in
                 echo "[$(date)] Analyzing $obs_count observations..." >> "$LOG_FILE"
 
                 # Use Claude Code with Haiku to analyze observations
+                # Must unset CLAUDECODE to avoid nested-session detection when
+                # observer is started from within a Claude Code session (via session-init.sh)
                 if command -v claude &> /dev/null; then
                     exit_code=0
-                    claude --model haiku --max-turns 3 --print \
+                    CLAUDECODE= claude --model haiku --max-turns 3 --print \
                         "Read $OBSERVATIONS_FILE and identify patterns. If you find 3+ occurrences of the same pattern, create an instinct file in $PERSONAL_DIR/ using YAML frontmatter format with id, trigger, confidence, domain, source fields. Be conservative - only create instincts for clear patterns." \
                         >> "$LOG_FILE" 2>&1 || exit_code=$?
                     if [ "$exit_code" -ne 0 ]; then
                         echo "[$(date)] Claude analysis failed (exit $exit_code)" >> "$LOG_FILE"
+                        return  # Don't archive — analysis didn't process them
                     fi
                 else
                     echo "[$(date)] claude CLI not found, skipping analysis" >> "$LOG_FILE"
+                    return  # Don't archive without analysis
                 fi
 
-                # Archive processed observations
+                # Archive only after successful analysis
                 if [ -f "$OBSERVATIONS_FILE" ]; then
                     archive_dir="$CONFIG_DIR/observations.archive"
                     mkdir -p "$archive_dir"
