@@ -4,6 +4,93 @@ Lightweight session-by-session record of work performed. Append-only, not auto-l
 
 ---
 
+## 2026-02-22 - CL v2 Testing, Phase 5 Docs, Phase 6 Release, Hook Audit
+
+**Actions:**
+- Tested continuous learning v2: observer start/stop/status, session-init auto-start, /learn nudge
+- Found and fixed $BASHPID bug in start-observer.sh (was writing parent PID, not subshell PID)
+- Phase 5: Updated TEMPLATE_OVERVIEW.md (14 agents, 18 hooks), CHANGELOG.md (comprehensive [2.2.0] section), CLAUDE.md (observer agent, observe.sh hook)
+- Deleted ephemeral docs: SESSION_HANDOFF_ORCHESTRATE_FIX.md, SESSION_HANDOFF_ROADMAP.md, tests/test_placeholder.py
+- Phase 6: Tagged v2.2.0 (82 commits since v2.1.0), pushed to GitHub
+- Hook audit: read all 18 hooks, found 3 with `set -e` (pre-commit-check, post-edit-format, project-index) — fixed all to `set +e`
+- Fixed Superpowers detection: session-init.sh now checks marketplace cache paths
+
+**Commits (5):**
+- `e556c78` fix: Use $BASHPID for observer PID tracking in subshell
+- `384127c` docs: Phase 5 documentation cleanup and count updates
+- `95cc325` chore: Prepare v2.2.0 release
+- `7f07627` fix: Harden 3 hooks with set +e to prevent silent failures
+- `57ca939` fix: Detect Superpowers in plugin cache/marketplace paths
+
+**Next:** Template v2.2.0 released. Remaining: dogfooding on real project, Journel deployment.
+
+---
+
+## 2026-02-22 - Feature Completion (pre-release)
+
+**Actions:**
+- Enabled all hooks by default in tracked .claude/settings.json
+- Fixed session-end.sh and session-summary.sh Stop hooks (set +e, input handling)
+- Hardened pre-compact.sh and suggest-compact.sh (set +e)
+- Added real multi-model integration: scripts/multi-model-query.py calls Gemini/OpenAI APIs
+- Reframed multi-model as optional enhancement (degrades gracefully without API keys)
+- Replaced download_plugin() stub with real GitHub Contents API downloads
+- Adopted continuous learning v2: observe.sh hooks, observer.md agent, start-observer.sh, config.json, instinct-cli.py enhancements (--to-global/--from-global)
+
+**Commits (7):**
+- `dd290c5` feat: Enable all 17 hooks by default via tracked settings.json
+- `ddb6831` fix: Fix session-end and session-summary Stop hooks
+- `6e651e6` fix: Harden pre-compact and suggest-compact hooks
+- `c350e3f` feat: Add real multi-model API integration for /multi-plan and /multi-execute
+- `dccdb5d` docs: Reframe multi-model as optional enhancement, not requirement
+- `bfbc6d4` feat: Replace download_plugin() stub with real GitHub API downloads
+- `117b101` feat: Complete continuous learning v2 with global store and auto-observer
+
+---
+
+## 2026-02-20 - Overlay Fixes (PR #4, 12 tasks)
+
+**Actions:**
+- Built init-project.sh (bootstraps local .claude/ structure, symlinks or copies)
+- Built smoke-test.sh (validates template overlay deployments, 8 checks)
+- Created superpowers-integration.md rule (overrides brainstorming→writing-plans bypass)
+- Fixed session-init.sh: detect missing local commands/skills with CRITICAL warning
+- Fixed sync-template.sh adopt mode: copies all .claude/ subdirs including rules/
+- Fixed init-project.sh: include rules/, strengthen auto-detection
+- Enhanced /setup with Step 0 (init .claude/ structure before other steps)
+- Hardened 6 hooks (session-end, session-summary, pre-compact, suggest-compact, pattern-extraction, instinct-export)
+- Fixed /orchestrate conflicting feature/bugfix pipelines
+- Created session handoff docs for next session
+
+**Decisions:**
+- Brainstorming exit override: brainstorm → PRD → Task Master (NOT brainstorm → writing-plans)
+- This rule was created because the Superpowers bypass was hit twice (postiz audit + friction fix session)
+
+**Commits:** 15 commits, merged via PR #4
+
+---
+
+## 2026-02-19 - Overlay Testing (PR #3)
+
+**Actions:**
+- Tested template as overlay on 3 real projects: analog_image_generator, rideshare-rescue, postiz
+- Created TEMPLATE_OVERLAY_FRICTION.md documenting all issues found
+- Critical finding: Claude Code doesn't inherit commands/skills from parent directories
+- Documented workflow conflicts with Superpowers brainstorming routing
+
+**Commits:** Merged via PR #3
+
+---
+
+## 2026-02-18 - ECC Phase 3 Closeout
+
+**Actions:**
+- Evaluated all remaining ECC gaps (Phase 3 = ECC skills, hooks, Django/Spring/C++)
+- All gaps either resolved, deferred with rationale, or marked N/A
+- Closed out ECC comparison effort
+
+---
+
 ## 2026-02-13 - v2.1.0 Gap-Filling & ECC Quality Comparison
 
 **Actions:**

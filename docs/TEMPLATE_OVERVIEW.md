@@ -132,6 +132,160 @@ This design ensures maximum working context. Previous iterations loaded everythi
 
 ---
 
+## Project Lifecycle Pipeline
+
+This section shows **what fires when** across all 188 components during a project lifecycle. Use this as a reference for understanding the system and identifying gaps.
+
+### Always Active (every session, ~35k tokens)
+
+| Component | Type | Purpose |
+|-----------|------|---------|
+| CLAUDE.md | Config | Project name, tech stack, patterns, constraints |
+| 8 core rules | Auto-loaded | Commit style, git workflow, reasoning patterns, phase detection, context management, proactive steering, authority hierarchy, Superpowers integration |
+| 5 language rules | Conditional | Load only when matching files are edited (.py, .ts, .go, .java, .jsx/.vue) |
+| task-master-ai MCP | Tools | Task management (list, show, set-status, next, expand, parse-prd) |
+| context7 MCP | Tools | Up-to-date library documentation lookup |
+| Superpowers plugin | Skills | TDD enforcement, systematic debugging, brainstorming, verification |
+
+### Session Lifecycle (automatic hooks)
+
+**Session Start:**
+- `session-init.sh` — Detects project phase (ideation/planning/building/review/shipping), shows status, loads last session summary (<24h), auto-starts observer daemon
+- `project-index.sh` — Scans source files for signatures, writes `.claude/project-index.json`
+
+**Every Tool Use:**
+- `observe.sh` (pre+post) — Logs tool usage to `observations.jsonl` for continuous learning
+
+**Every User Prompt:**
+- `pre-compact.sh` — Saves working state if `/compact` detected
+- `suggest-compact.sh` — Nudges at 50 tool calls, `/learn` nudge at 75
+
+**On File Edit/Write:**
+- `protect-sensitive-files.sh` — **BLOCKS** edits to .env, .pem, credentials
+- `doc-file-blocker.sh` — **BLOCKS** random .md file creation outside docs/
+- `post-edit-format.sh` — Auto-formats (ruff, prettier, gofmt, rustfmt, shfmt)
+- `console-log-audit.sh` — Warns on debug statements (print, console.log, fmt.Println)
+- `typescript-check.sh` — Runs `tsc --noEmit` after .ts/.tsx edits
+
+**On Bash Commands:**
+- `pre-commit-check.sh` — Lint + test + staged file scan before `git commit`
+- `dev-server-blocker.sh` — **BLOCKS** dev servers outside tmux
+- `long-running-tmux-hint.sh` — Advisory tmux reminder for slow commands
+- `build-analysis.sh` — Advisory analysis after build commands
+- `pr-url-extract.sh` — Shows PR creation URL after `git push`
+
+**Session End (Stop event):**
+- `session-end.sh` — Saves detailed session summary to `.claude/sessions/`
+- `session-summary.sh` — Lightweight YAML session log
+- `pattern-extraction.sh` — Extracts instinct candidates from git history (3+ commits)
+
+### Phase 1: Ideation ("I want to build...")
+
+| Action | Component | Type |
+|--------|-----------|------|
+| Explore ideas | `superpowers:brainstorming` | Skill (mandatory) |
+| Research topic | `/research` | Command |
+| Multi-model perspectives | `/multi-plan` → `multi-model-query.py` | Command + Script |
+| Web research | WebSearch, WebFetch, Context7 | Tools |
+| **Output** | `docs/plans/YYYY-MM-DD-<topic>-design.md` | Design doc |
+
+### Phase 2: Planning ("Here's what we'll build")
+
+| Action | Component | Type |
+|--------|-----------|------|
+| Create PRD | `/prd-generate` or manual | Command |
+| Parse into tasks | `task-master parse-prd --num-tasks 0` | MCP |
+| Analyze complexity | `task-master analyze-complexity` | MCP |
+| Expand complex tasks | `task-master expand --id=<id>` | MCP |
+| Architecture planning | planner agent (opus, read-only) | Agent |
+| System design | architect agent (opus, read-only) | Agent |
+| **Output** | Tasks with subtasks in Task Master | Task state |
+
+### Phase 3: Building ("Implement task by task")
+
+For each task, the TDD cycle runs:
+
+| Step | Action | Component | Type |
+|------|--------|-----------|------|
+| Get task | `task-master next` / `set-status in-progress` | MCP | |
+| **RED** | Write failing tests | `superpowers:test-driven-development`, `/tdd`, `/generate-tests` | Skill + Commands |
+| **GREEN** | Make tests pass | Language rules + domain skills (39 available) load on demand | Rules + Skills |
+| **REFACTOR** | Clean up | `/optimize` if needed | Command |
+| Verify | Run pipeline | `/verify` (test + lint + types + security) | Command |
+| Commit | Conventional commit | `/commit` → `pre-commit-check.sh` fires | Command + Hook |
+| Complete | Mark done | `task-master set-status --id=X --status=done` | MCP |
+
+**When things break:** `superpowers:systematic-debugging` (4 phases: Reproduce → Hypothesize → Test → Fix)
+
+**Agents available:** build-resolver, go-build-resolver, tdd-guide, e2e-runner, database-reviewer
+
+### Phase 4: Review ("Is it good enough?")
+
+| Action | Component | Type |
+|--------|-----------|------|
+| Verify before claiming done | `superpowers:verification-before-completion` | Skill (mandatory) |
+| Request code review | `superpowers:requesting-code-review` | Skill (mandatory) |
+| Code quality | `/code-review` → code-reviewer agent (sonnet) | Command + Agent |
+| Security scan | `/security-audit` → security-reviewer agent (sonnet) | Command + Agent |
+| Multi-agent review | `/orchestrate review` → code + security + database reviewers | Command + Agents |
+| Language-specific | `/python-review`, `/go-review` → specialized agents | Commands + Agents |
+| Update docs | `/update-docs` → doc-updater agent (haiku) | Command + Agent |
+| Architecture docs | `/update-codemaps` | Command |
+
+### Phase 5: Shipping ("Get it out the door")
+
+| Action | Component | Type |
+|--------|-----------|------|
+| Finish branch | `superpowers:finishing-a-development-branch` | Skill (mandatory) |
+| Create PR | `/pr` → `pr-url-extract.sh` fires after push | Command + Hook |
+| Update changelog | `/changelog` | Command |
+| Sync issues | `/github-sync` | Command |
+| Quality snapshot | `/eval [--save]` | Command |
+
+### Background Systems (always running)
+
+**Continuous Learning:**
+```
+observe.sh → observations.jsonl → observer daemon (every 5 min)
+                                       ↓
+                                 .claude/instincts/
+                                 ├── candidates/ (confidence 0.3-0.5)
+                                 ├── personal/   (confidence 0.5-0.7+)
+                                 └── inherited/  (shared across team)
+
+pattern-extraction.sh (session end) ──► candidates/
+/learn (manual, nudged at 75 calls) ──► candidates/
+/evolve (cluster instincts into skills)
+/instinct-export / /instinct-import (team sharing)
+
+Authority: Rules > Instincts > Defaults (always)
+```
+
+**Session Persistence:**
+```
+.claude/sessions/session_*.md ──── Detailed summaries (from Stop hooks)
+.claude/sessions/pre-compact-state.md ── State before compaction
+.claude/work-log.md ──── Manual decision ledger
+.claude/instincts/ ───── Learned patterns (survive sessions)
+.taskmaster/ ──────────── Task state (survive sessions)
+```
+
+### Component Summary
+
+| Type | Count | Loading | Token Cost |
+|------|-------|---------|-----------|
+| Rules (core) | 8 | Always | ~5k |
+| Rules (language) | 5 | On file edit | 0 at startup |
+| Agents | 14 | On invocation | 0 at startup |
+| Skills | 39 | On relevance | 0 at startup |
+| Commands | 49 | On `/command` | 0 at startup |
+| Hooks | 18 | On event trigger | 0 (shell scripts) |
+| MCP tools | ~42 | Always | ~25k |
+| Superpowers | 13 skills | Always | ~3-5k |
+| **Total** | **188 components** | | **~35k startup** |
+
+---
+
 ## Component Deep Dive
 
 ### 1. Specialized Agents (14)
