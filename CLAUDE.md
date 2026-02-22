@@ -324,15 +324,12 @@ Use multiple AI models for diverse perspectives during planning and implementati
 /multi-execute "Build JWT auth with refresh tokens"
 ```
 
-These commands query Gemini and OpenAI in addition to Claude via `scripts/multi-model-query.py`. If API keys are missing, Claude provides all perspectives (with a note).
+By default, Claude generates all perspectives itself — which works well for most planning tasks. Optionally, add API keys to get genuinely independent perspectives from other models via `scripts/multi-model-query.py`:
 
-**API keys** (optional, in `.env`):
-- `GOOGLE_AI_KEY` — Gemini (alternative perspectives)
-- `OPENAI_API_KEY` — OpenAI GPT (implementation patterns)
+- `GOOGLE_AI_KEY` — Gemini ([free tier available](https://aistudio.google.com/apikey))
+- `OPENAI_API_KEY` — OpenAI GPT (pay-as-you-go)
 
 Check availability: `python3 scripts/multi-model-query.py --check`
-
-See `.claude/examples/multi-model-config.json` for setup details.
 
 ## Security
 
