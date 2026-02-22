@@ -2,7 +2,7 @@
 
 **Author:** Corey Hoydic
 **Date:** February 13, 2026
-**Version:** 2.3.0
+**Version:** 2.2.0
 **Repository:** github.com/Zanzagar/project-template
 
 ---

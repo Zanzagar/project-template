@@ -4,7 +4,9 @@ All notable changes to this project template are documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [2.2.0] - 2026-02-22
+
+Comprehensive release: ECC feature parity (17 new skills, 9 new hooks), project-type presets, template overlay infrastructure, continuous learning v2, real multi-model integration, and real plugin downloads. Template now has 14 agents, 39 skills, 49 commands, 13 rules, 18 hooks.
 
 ### Added - Project-Type Presets
 - **project-presets.json** - Registry of 5 project-type presets: `python-fastapi`, `node-nextjs`, `go-api`, `java-spring`, `python-data-science`
@@ -41,14 +43,37 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added - Plugin Real Downloads
 - `download_plugin()` uses GitHub Contents API enumeration + raw URL downloads (replaces stub)
 
-### Added - Skills (5 new, 39 total)
+### Added - Skills (17 new, 39 total)
+
+**Core Workflow:**
+- **tdd-workflow** - RED-GREEN-REFACTOR cycle patterns, coverage thresholds by code type, mocking strategies, AAA templates for pytest/Jest/Go
+- **verification-loop** - 6-phase verification system (build → types → lint → test → security → diff), continuous verification mode
+- **python-patterns** - Framework-agnostic Python idioms: type hints (3.9+), context managers, decorators, `__slots__`, async/await, pyproject.toml
+- **security-scan** - AgentShield configuration auditing: CLAUDE.md secrets, hook injection, MCP misconfigs, agent tool access
+- **eval-harness** - Eval-driven development (EDD) framework with pass@k/pass^k metrics, code-based and model-based graders
+- **strategic-compact** - Manual context compaction at logical intervals
 - **cost-aware-llm-pipeline** - Model routing by task complexity, budget tracking, retry logic, prompt caching
 - **regex-vs-llm-structured-text** - Decision framework for choosing regex vs LLM for structured text parsing
-- **cpp-coding-standards** - C++ Core Guidelines enforcement for modern, safe, idiomatic C++
-- **springboot-verification** - Verification loop for Spring Boot: build, static analysis, tests, security, diff review
-- **django-patterns** - Django architecture patterns, REST API design with DRF, ORM best practices
 
-### Added - Hooks (3 new, 18 total)
+**Framework-Specific:**
+- **postgresql-patterns** - EXPLAIN ANALYZE, indexing strategies (B-tree/GIN/GiST/BRIN), PostGIS spatial queries, JSONB, partitioning
+- **django-tdd** - pytest-django, TestCase hierarchy, factory_boy, DRF APIClient, model/view/middleware testing
+- **django-verification** - Django system checks, `--deploy` findings, migration safety, template/URL validation
+- **django-patterns** - Django architecture patterns, REST API design with DRF, ORM best practices
+- **spring-boot-security** - SecurityFilterChain (Spring 6+), JWT/OAuth2, CORS, CSRF, method-level security
+- **spring-boot-tdd** - JUnit 5 + Mockito, @WebMvcTest/@DataJpaTest slice testing, TestContainers
+- **springboot-verification** - Verification loop for Spring Boot: build, static analysis, tests, security, diff review
+- **jpa-patterns** - Entity mapping, lazy loading, N+1 prevention (@EntityGraph, JOIN FETCH), JPQL optimization
+- **cpp-testing** - Google Test/Catch2, parameterized tests, GMock, AddressSanitizer, benchmark testing
+- **cpp-coding-standards** - C++ Core Guidelines enforcement for modern, safe, idiomatic C++
+
+### Added - Hooks (9 new, 18 total)
+- **doc-file-blocker.sh** (PreToolUse: Write) - Blocks .md/.txt creation outside allowed locations
+- **console-log-audit.sh** (PostToolUse: Edit) - Warns about debug statements across Python/JS/TS/Go/Java/Ruby
+- **pattern-extraction.sh** (Stop) - Auto-extracts instinct candidates from session git history
+- **build-analysis.sh** (PostToolUse: Bash) - Advisory analysis of build command output
+- **typescript-check.sh** (PostToolUse: Edit) - Runs tsc --noEmit after editing .ts/.tsx files
+- **dev-server-blocker.sh** (PreToolUse: Bash) - Blocks dev servers outside tmux
 - **pr-url-extract.sh** (Stop) - Extracts PR creation URL from `git push` output, suggests review commands
 - **long-running-tmux-hint.sh** (PreToolUse: Bash) - Advisory tmux reminder for long-running commands
 - **observe.sh** (PreToolUse/PostToolUse) - Observation capture for continuous learning v2
@@ -72,42 +97,6 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Multi-model documented as optional enhancement (degrades gracefully without API keys)
 - TEMPLATE_OVERVIEW.md updated: 14 agents, 18 hooks, observer agent, overlay infrastructure
 - CLAUDE.md updated: 18 hooks, observer agent in table, observe.sh in hook list
-
-## [2.2.0] - 2026-02-13
-
-ECC feature parity release: 12 domain skills and 6 automation hooks close remaining gaps identified in the ECC comparison audit. Template now has full coverage across Python, Java/Spring, Django, PostgreSQL, C++, and workflow automation.
-
-### Added - Skills (12 new, 32 total)
-
-**Core Workflow:**
-- **tdd-workflow** - RED-GREEN-REFACTOR cycle patterns, coverage thresholds by code type, mocking strategies, AAA templates for pytest/Jest/Go
-- **verification-loop** - 6-phase verification system (build → types → lint → test → security → diff), continuous verification mode
-- **python-patterns** - Framework-agnostic Python idioms: type hints (3.9+), context managers, decorators, `__slots__`, async/await, pyproject.toml
-- **security-scan** - AgentShield configuration auditing: CLAUDE.md secrets, hook injection, MCP misconfigs, agent tool access
-- **eval-harness** - Eval-driven development (EDD) framework with pass@k/pass^k metrics, code-based and model-based graders
-
-**Framework-Specific:**
-- **postgresql-patterns** - EXPLAIN ANALYZE, indexing strategies (B-tree/GIN/GiST/BRIN), PostGIS spatial queries, JSONB, partitioning, vacuum tuning
-- **django-tdd** - pytest-django, TestCase hierarchy, factory_boy, DRF APIClient, model/view/middleware testing
-- **django-verification** - Django system checks, `--deploy` findings, migration safety, template/URL validation
-- **spring-boot-security** - SecurityFilterChain (Spring 6+), JWT/OAuth2, CORS, CSRF, method-level security
-- **spring-boot-tdd** - JUnit 5 + Mockito, @WebMvcTest/@DataJpaTest slice testing, TestContainers
-- **jpa-patterns** - Entity mapping, lazy loading, N+1 prevention (@EntityGraph, JOIN FETCH), JPQL optimization, second-level cache
-- **cpp-testing** - Google Test/Catch2, parameterized tests, GMock, AddressSanitizer, benchmark testing, CMake integration
-
-### Added - Hooks (6 new, 15 total)
-- **doc-file-blocker.sh** (PreToolUse: Write) - Blocks .md/.txt creation outside allowed locations
-- **console-log-audit.sh** (PostToolUse: Edit) - Warns about debug statements across Python/JS/TS/Go/Java/Ruby
-- **pattern-extraction.sh** (Stop) - Auto-extracts instinct candidates from session git history
-- **build-analysis.sh** (PostToolUse: Bash) - Advisory analysis of build command output
-- **typescript-check.sh** (PostToolUse: Edit) - Runs tsc --noEmit after editing .ts/.tsx files
-- **dev-server-blocker.sh** (PreToolUse: Bash) - Blocks dev servers outside tmux
-
-### Changed
-- Updated settings-example.json with all new hook registrations
-- Updated CLAUDE.md hooks list (now 15 hooks)
-- Updated ECC_INTEGRATION.md with Phase 2.2 additions and corrected skill counts
-- Updated TEMPLATE_OVERVIEW.md: version header, architecture tree, moved v2.2.0 from "In Progress" to "Completed"
 
 ## [2.1.0] - 2026-02-13
 
@@ -277,4 +266,6 @@ Major release integrating patterns from [Everything Claude Code](https://github.
 - Python coding standards with testing and error handling patterns
 - Plugin system with marketplace support
 
+[2.2.0]: https://github.com/Zanzagar/project-template/releases/tag/v2.2.0
+[2.1.0]: https://github.com/Zanzagar/project-template/releases/tag/v2.1.0
 [2.0.0]: https://github.com/Zanzagar/project-template/releases/tag/v2.0.0
