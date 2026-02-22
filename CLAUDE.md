@@ -176,8 +176,8 @@ Available commands for common tasks:
 | `/github-sync [action]` | Sync tasks with GitHub Issues |
 | `/research <topic>` | Structured research (papers, docs, exploration) |
 | `/orchestrate <pipeline>` | Multi-agent analysis pipeline (review, security, refactor) |
-| `/multi-plan <requirements>` | Multi-perspective planning (SIMULATED — Claude generates all views) |
-| `/multi-execute <task>` | Multi-perspective implementation (SIMULATED — Claude generates all views) |
+| `/multi-plan <requirements>` | Multi-perspective planning (queries Gemini + GPT if API keys set) |
+| `/multi-execute <task>` | Multi-perspective implementation (queries Gemini + GPT if API keys set) |
 | `/multi-backend <task>` | Backend-focused development (NOT IMPLEMENTED — needs codeagent-wrapper) |
 | `/multi-frontend <task>` | Frontend-focused development (NOT IMPLEMENTED — needs codeagent-wrapper) |
 | `/multi-workflow <task>` | Full-stack collaborative workflow (NOT IMPLEMENTED — needs codeagent-wrapper) |
@@ -314,23 +314,25 @@ See `.claude/instincts/README.md` for format and `.claude/rules/authority-hierar
 
 ## Multi-Model Collaboration
 
-> **Status**: SIMULATED. Currently Claude generates all perspectives itself — no actual API calls to Gemini or Codex. Real multi-model integration is planned.
-
-Use structured multi-perspective analysis during planning:
+Use multiple AI models for diverse perspectives during planning and implementation:
 
 ```bash
-# Get diverse perspectives on a design (Claude simulates all views)
+# Get diverse perspectives on a design
 /multi-plan "Design authentication system"
 
-# Get diverse implementation approaches (Claude simulates all views)
+# Get diverse implementation approaches
 /multi-execute "Build JWT auth with refresh tokens"
 ```
 
-Future: Real multi-model support will require API keys in `.env`:
-- `GOOGLE_AI_KEY` — Gemini (alternative perspectives)
-- `OPENAI_API_KEY` — Codex/GPT (implementation patterns)
+These commands query Gemini and OpenAI in addition to Claude via `scripts/multi-model-query.py`. If API keys are missing, Claude provides all perspectives (with a note).
 
-See `.claude/examples/multi-model-config.json` for planned setup.
+**API keys** (optional, in `.env`):
+- `GOOGLE_AI_KEY` — Gemini (alternative perspectives)
+- `OPENAI_API_KEY` — OpenAI GPT (implementation patterns)
+
+Check availability: `python3 scripts/multi-model-query.py --check`
+
+See `.claude/examples/multi-model-config.json` for setup details.
 
 ## Security
 

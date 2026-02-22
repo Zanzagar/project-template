@@ -1,35 +1,51 @@
 Generate a plan using multiple AI models in parallel for diverse perspectives.
 
-> **SIMULATED**: Currently, Claude generates all perspectives itself — no actual Gemini or Codex API calls are made. The multi-model output format is used to structure diverse thinking, but all reasoning comes from Claude. Real multi-model integration is planned (requires GOOGLE_AI_KEY and OPENAI_API_KEY in `.env`).
-
 Usage: `/multi-plan <requirements>`
 
 Arguments: $ARGUMENTS
 
-## Model Roles
+## How It Works
 
-| Model | Role | Strengths |
-|-------|------|-----------|
-| **Claude** (primary) | Architecture, security, testing strategy | Deep reasoning, safety analysis |
-| **Gemini** | Alternative perspectives, different approaches | Broad knowledge, catches different issues |
-| **Codex/GPT** | Implementation focus, practical patterns | Code generation, API expertise |
+This command queries Gemini and OpenAI in addition to Claude for genuinely different perspectives on your planning problem. If API keys are missing, those models are skipped and Claude provides all perspectives (with a note).
 
-## Process
+## Step 1: Check Available Models
 
-### 1. Distribute Requirements
-Send the same requirements to all available models.
+Run this first:
+```bash
+python3 scripts/multi-model-query.py --check
+```
 
-### 2. Collect Perspectives
-Each model analyzes independently:
-- Claude: Architecture, risks, testing strategy, security considerations
-- Gemini: Alternative approaches, scalability concerns, different trade-offs
-- Codex: Implementation details, library recommendations, code patterns
+## Step 2: Generate Your Analysis (Claude)
 
-### 3. Synthesize (Claude)
-Claude aggregates all perspectives into a unified plan, noting:
-- Where models agree (high confidence)
-- Where models differ (decision point)
-- Unique insights from each model
+Analyze the requirements yourself first. Cover:
+- Architecture and component design
+- Security considerations and threat model
+- Testing strategy
+- Risk assessment
+
+## Step 3: Query External Models (in parallel)
+
+Run both queries in parallel using the Bash tool. Use the requirements from $ARGUMENTS as the prompt context.
+
+**Gemini** — ask for alternative perspectives:
+```bash
+python3 scripts/multi-model-query.py --model gemini \
+  --role "You are a senior software architect reviewing a design proposal. Focus on: alternative approaches the team may not have considered, scalability concerns, and different trade-offs. Be concise and specific." \
+  --prompt "Review this proposal and suggest alternatives:\n\n$ARGUMENTS"
+```
+
+**OpenAI (GPT)** — ask for implementation patterns:
+```bash
+python3 scripts/multi-model-query.py --model openai \
+  --role "You are a pragmatic senior engineer focused on implementation. Focus on: specific libraries and APIs to use, concrete code patterns, practical gotchas, and boilerplate that will be needed. Be concise and specific." \
+  --prompt "Suggest implementation details for:\n\n$ARGUMENTS"
+```
+
+If a model returns `"available": false`, skip it and note in the output.
+
+## Step 4: Synthesize
+
+Combine all perspectives into the output format below. For each model that responded, use their ACTUAL response — do not simulate or rephrase. For models that were unavailable, note this clearly.
 
 ## Output Format
 
@@ -38,36 +54,31 @@ Claude aggregates all perspectives into a unified plan, noting:
 
 ## Claude Analysis (Primary)
 ### Architecture
-[Design decisions, component structure]
+[Your own analysis]
 ### Security Considerations
-[Threats, mitigations]
+[Your own analysis]
 ### Testing Strategy
-[What to test, approach]
+[Your own analysis]
 
 ## Gemini Perspective
-### Alternative Approaches
-[Different ways to solve this]
-### Additional Concerns
-[Issues Claude didn't flag]
+[ACTUAL Gemini response, or "Gemini unavailable (GOOGLE_AI_KEY not set)"]
 
-## Codex Suggestions
-### Implementation Patterns
-[Specific code approaches, libraries]
-### API Integration Details
-[Practical implementation notes]
+## GPT Perspective
+[ACTUAL GPT response, or "GPT unavailable (OPENAI_API_KEY not set)"]
 
 ## Synthesis
 ### Unified Plan
-[Merged plan incorporating best of all perspectives]
+[Merged plan incorporating best of all available perspectives]
 
 ### Conflicts & Resolutions
-| Topic | Claude | Gemini | Codex | Resolution |
-|-------|--------|--------|-------|------------|
+| Topic | Claude | Gemini | GPT | Resolution |
+|-------|--------|--------|-----|------------|
 | [Area] | [View] | [View] | [View] | [Decision] |
 
 ### Confidence Assessment
-- High confidence: [Areas where all models agree]
+- High confidence: [Areas where available models agree]
 - Decision needed: [Areas of disagreement]
+- Models consulted: [list which were available]
 ```
 
 ## API Configuration
@@ -75,7 +86,7 @@ Claude aggregates all perspectives into a unified plan, noting:
 Required environment variables (in `.env`):
 ```bash
 GOOGLE_AI_KEY=your_google_ai_key    # Gemini
-OPENAI_API_KEY=your_openai_key      # Codex/GPT
+OPENAI_API_KEY=your_openai_key      # GPT
 ```
 
 See `.claude/examples/multi-model-config.json` for setup details.
@@ -83,11 +94,6 @@ See `.claude/examples/multi-model-config.json` for setup details.
 ## Graceful Degradation
 
 - **Missing GOOGLE_AI_KEY**: Skip Gemini, note in output
-- **Missing OPENAI_API_KEY**: Skip Codex, note in output
-- **Both missing**: Run Claude-only analysis with note
-- **API error**: Retry once, then skip with note
-
-```
-Note: Gemini perspective unavailable (GOOGLE_AI_KEY not set).
-Running with Claude + Codex only.
-```
+- **Missing OPENAI_API_KEY**: Skip GPT, note in output
+- **Both missing**: Run Claude-only analysis with note that this is single-model
+- **API error**: Note the error, continue with available models

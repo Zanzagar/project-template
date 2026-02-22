@@ -1,36 +1,52 @@
 Execute implementation tasks using multiple AI models in parallel.
 
-> **SIMULATED**: Currently, Claude generates all implementations itself — no actual Gemini or Codex API calls are made. The multi-model output format structures the work, but all code comes from Claude. Real multi-model integration is planned (requires GOOGLE_AI_KEY and OPENAI_API_KEY in `.env`).
-
 Usage: `/multi-execute <task-description>`
 
 Arguments: $ARGUMENTS
 
-## Division of Work
+## How It Works
 
-| Model | Responsibility | Best For |
-|-------|---------------|----------|
-| **Claude** | Core logic, complex algorithms, integration | Reasoning-heavy code |
-| **Gemini** | Alternative implementations, edge cases | Different perspectives |
-| **Codex/GPT** | Boilerplate, API integrations, scaffolding | Fast code generation |
+This command queries Gemini and OpenAI for alternative implementation approaches, then Claude synthesizes the best solution. If API keys are missing, those models are skipped and Claude handles everything (with a note).
 
-## Process
+## Step 1: Check Available Models
 
-### 1. Task Decomposition
-Break the task into components suitable for parallel execution:
-- Core logic components (Claude)
-- Boilerplate/scaffolding (Codex)
-- Alternative approaches for comparison (Gemini)
+```bash
+python3 scripts/multi-model-query.py --check
+```
 
-### 2. Parallel Execution
-Each model works on its assigned components independently.
+## Step 2: Decompose the Task
 
-### 3. Merge (Claude)
-Claude reviews all outputs and synthesizes:
-- Select best approach per component
-- Ensure consistency across merged code
-- Resolve conflicts between implementations
-- Run tests on merged result
+Break the task ($ARGUMENTS) into components:
+- Core logic (Claude handles directly)
+- Areas where alternative approaches would be valuable (query external models)
+
+## Step 3: Query External Models (in parallel)
+
+Run both queries in parallel using the Bash tool.
+
+**Gemini** — alternative implementation:
+```bash
+python3 scripts/multi-model-query.py --model gemini \
+  --role "You are a senior engineer providing an alternative implementation approach. Write actual code, not pseudocode. Focus on: different design patterns, edge case handling, and approaches the primary developer might not consider." \
+  --prompt "Provide an alternative implementation for:\n\n$ARGUMENTS"
+```
+
+**OpenAI (GPT)** — scaffolding and boilerplate:
+```bash
+python3 scripts/multi-model-query.py --model openai \
+  --role "You are a pragmatic engineer focused on scaffolding and integration. Write actual code. Focus on: type definitions, interfaces, API integration boilerplate, configuration, and error handling patterns." \
+  --prompt "Generate scaffolding and boilerplate code for:\n\n$ARGUMENTS"
+```
+
+If a model returns `"available": false`, skip it and note in the output.
+
+## Step 4: Implement and Merge
+
+1. Write your own implementation (core logic)
+2. Review external model responses for useful patterns
+3. Incorporate the best ideas from each model
+4. Ensure consistency across merged code
+5. Write tests for the final implementation
 
 ## Output Format
 
@@ -40,27 +56,20 @@ Claude reviews all outputs and synthesizes:
 ## Component Implementations
 
 ### Core Logic (Claude)
-```[language]
-[implementation]
-```
+[Your implementation]
 
 ### Alternative Approach (Gemini)
-[If different/better than Claude's version]
+[ACTUAL Gemini response, or "Gemini unavailable"]
 
-### Scaffolding (Codex)
-```[language]
-[boilerplate, types, interfaces]
-```
+### Scaffolding (GPT)
+[ACTUAL GPT response, or "GPT unavailable"]
 
 ## Merged Implementation
-```[language]
-[final synthesized code]
-```
+[Final synthesized code incorporating best of all approaches]
 
 ## Selection Rationale
-- Core: Used Claude's approach because [reason]
-- Types: Used Codex's scaffolding because [reason]
-- Edge case from Gemini incorporated: [what and why]
+- [What was used from each model and why]
+- Models consulted: [list which were available]
 
 ## Verification
 - [ ] Tests pass
@@ -74,13 +83,12 @@ Same as `/multi-plan` — requires `GOOGLE_AI_KEY` and/or `OPENAI_API_KEY` in `.
 
 ## Graceful Degradation
 
-Same as `/multi-plan`:
 - Missing API keys → skip that model, Claude handles everything
-- API errors → retry once, then skip with note
+- API errors → note error, continue with available models
 - Single-model fallback is always Claude
 
 ## When to Use
 
-- **Use `/multi-execute`**: Complex features with multiple components
+- **Use `/multi-execute`**: Complex features where alternative perspectives add value
 - **Use regular implementation**: Simple features, bug fixes, refactoring
-- **Use after `/multi-plan`**: Plan approved, ready to implement with multiple perspectives
+- **Use after `/multi-plan`**: Plan approved, ready to implement with diverse input
