@@ -14,14 +14,15 @@
 #   Uses CLAUDE_SESSION_ID if available for per-session tracking,
 #   falls back to PPID for process-level isolation.
 
-set -euo pipefail
+# Best-effort: never block user prompts
+set +e
 
 THRESHOLD=${COMPACT_THRESHOLD:-50}
 REPEAT_INTERVAL=25
 
 # Session-specific counter for isolation across parallel sessions
 SESSION_ID="${CLAUDE_SESSION_ID:-${PPID:-default}}"
-SESSIONS_DIR="${PROJECT_DIR:-.}/.claude/sessions"
+SESSIONS_DIR="${CLAUDE_PROJECT_DIR:-.}/.claude/sessions"
 COMPACT_STATE="${SESSIONS_DIR}/compact-state-${SESSION_ID}.tmp"
 
 # Ensure sessions directory exists

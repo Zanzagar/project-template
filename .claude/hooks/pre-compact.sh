@@ -8,7 +8,8 @@
 #
 # The saved state is detected by session-init.sh on the next session start.
 
-set -e
+# Best-effort: never block user prompts
+set +e
 
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 SESSIONS_DIR="$PROJECT_DIR/.claude/sessions"
@@ -40,7 +41,10 @@ if [ -d "$PROJECT_DIR/.git" ]; then
     UNCOMMITTED=$(cd "$PROJECT_DIR" && git status --porcelain 2>/dev/null | head -10 || true)
 fi
 
-ACTIVE_TASK=$(task-master list --status in-progress 2>/dev/null | head -5 || echo "none")
+ACTIVE_TASK=$(task-master list --status in-progress --json 2>/dev/null \
+    | jq -r '.tasks[] | "- \(.title) (ID: \(.id))"' 2>/dev/null \
+    | head -5)
+[ -z "$ACTIVE_TASK" ] && ACTIVE_TASK="none"
 
 cat > "$STATE_FILE" << EOF
 # Pre-Compaction State
