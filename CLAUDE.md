@@ -261,6 +261,7 @@ Specialized sub-agent definitions in `.claude/agents/`:
 | **go-reviewer** | sonnet | Read-only | Go-specific patterns, goroutine leaks |
 | **go-build-resolver** | sonnet | All | Go module/CGO/cross-compilation errors |
 | **python-reviewer** | sonnet | Read-only | Python async, metaclasses, GIL, packaging |
+| **observer** | haiku | All tools | Background pattern analysis, instinct creation |
 
 ## MCP Discipline
 
@@ -269,7 +270,7 @@ See `docs/MCP_SETUP.md` for configuration by project type.
 
 ## Hooks (Enabled by Default)
 
-All 17 hooks are enabled by default via the tracked `.claude/settings.json`. Use presets to slim down:
+All 18 hooks are enabled by default via the tracked `.claude/settings.json`. Use presets to slim down:
 
 ```bash
 # Slim down with a preset (writes to settings.local.json, overrides tracked config)
@@ -298,6 +299,7 @@ Available hooks:
 - **dev-server-blocker.sh** - Blocks dev servers outside tmux to prevent terminal capture
 - **pr-url-extract.sh** - Extracts PR creation URL from git push output, suggests review commands
 - **long-running-tmux-hint.sh** - Advisory tmux reminder for long-running commands (npm, pytest, cargo, docker)
+- **observe.sh** - Captures tool usage patterns to observations.jsonl for continuous learning v2
 
 See `docs/HOOKS.md` for full documentation.
 

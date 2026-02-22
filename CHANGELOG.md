@@ -6,16 +6,72 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-### Added - Project-Type Presets (v3.0 Phase 1)
+### Added - Project-Type Presets
 - **project-presets.json** - Registry of 5 project-type presets: `python-fastapi`, `node-nextjs`, `go-api`, `java-spring`, `python-data-science`
 - **setup-preset.sh** - Bash script for one-command project scaffolding with `--dry-run`, `--force`, `--name` options
-- **python-data-science skill** - NumPy, pandas, scikit-learn, matplotlib, Jupyter, spatial/geostatistics patterns (33 skills total)
+- **python-data-science skill** - NumPy, pandas, scikit-learn, matplotlib, Jupyter, spatial/geostatistics patterns
 - `/setup preset <name>` subcommand for slash-command access to presets
 - Active preset display in `session-init.sh` startup output
 
+### Added - Template Overlay Infrastructure
+- **init-project.sh** - Bootstraps local `.claude/` structure; auto-detects nested (symlinks) vs standalone (copies); handles 6 subdirs; idempotent with `--dry-run`, `--force`, `--mode`
+- **smoke-test.sh** - Validates template overlay deployments; 8 checks with CRITICAL/WARN distinction; follows symlinks
+- **superpowers-integration.md** - Rule override fixing Superpowers brainstorming→writing-plans bypass; enforces PRD→Task Master pipeline
+- `/setup` Step 0 - Setup wizard now initializes local `.claude/` structure before all other steps
+- `sync-template.sh` adopt mode now copies all `.claude/` subdirectories
+- `session-init.sh` detects missing local commands/skills with CRITICAL warning
+- `docs/TEMPLATE_OVERLAY_FRICTION.md` - Friction log from 3 overlay tests
+
+### Added - Continuous Learning v2
+- **observe.sh** hook (PreToolUse/PostToolUse) - Captures tool usage patterns to `observations.jsonl`
+- **observer.md** agent (Haiku) - Background pattern analyzer that creates instincts from observations
+- **start-observer.sh** - Observer daemon lifecycle management (start/stop/status)
+- **config.json** - CL v2 configuration (observation, instincts, observer, evolution settings)
+- **instinct-cli.py** enhancements - `--to-global` and `--from-global` for cross-project instinct sharing
+- `session-init.sh` auto-starts observer daemon when enabled
+- `/learn` nudge at 75 tool calls via `suggest-compact.sh`
+- `/prd-generate` command for research-backed PRD generation with architecture diagrams
+
+### Added - Multi-Model Real Integration
+- **scripts/multi-model-query.py** - Real API calls to Gemini (`GOOGLE_AI_KEY`) and OpenAI (`OPENAI_API_KEY`)
+- `/multi-plan` and `/multi-execute` now call external model APIs
+- Graceful degradation to Claude-only perspectives without API keys
+- `--check` flag to verify API key availability
+
+### Added - Plugin Real Downloads
+- `download_plugin()` uses GitHub Contents API enumeration + raw URL downloads (replaces stub)
+
+### Added - Skills (5 new, 39 total)
+- **cost-aware-llm-pipeline** - Model routing by task complexity, budget tracking, retry logic, prompt caching
+- **regex-vs-llm-structured-text** - Decision framework for choosing regex vs LLM for structured text parsing
+- **cpp-coding-standards** - C++ Core Guidelines enforcement for modern, safe, idiomatic C++
+- **springboot-verification** - Verification loop for Spring Boot: build, static analysis, tests, security, diff review
+- **django-patterns** - Django architecture patterns, REST API design with DRF, ORM best practices
+
+### Added - Hooks (3 new, 18 total)
+- **pr-url-extract.sh** (Stop) - Extracts PR creation URL from `git push` output, suggests review commands
+- **long-running-tmux-hint.sh** (PreToolUse: Bash) - Advisory tmux reminder for long-running commands
+- **observe.sh** (PreToolUse/PostToolUse) - Observation capture for continuous learning v2
+
+### Added - Infrastructure
+- **llms.txt** as Tier 2.5 documentation lookup pattern (between WebFetch and Context7)
+- Enriched Python, TypeScript, and Go coding-standards rules with security, tooling, and modern patterns
+
+### Fixed
+- Observer PID tracking: `$$` → `$BASHPID` in subshell (was writing parent PID, causing stale detection)
+- Session hooks hardened: `session-end.sh`, `session-summary.sh`, `pre-compact.sh`, `suggest-compact.sh` use `set +e`
+- Hook resilience: Stop/UserPromptSubmit hooks handle unexpected input without silent failures
+- `/orchestrate` conflicting feature/bugfix pipelines removed
+- `instinct-export` default filter lowered to include candidates
+- `pattern-extraction.sh` dedup prevents duplicate instinct candidates
+- `session-end.sh` removed broken `stop_hook_reason` filter
+- Task Master directory creation and `/health` fallback for workflow test friction
+
 ### Changed
-- Updated TEMPLATE_OVERVIEW.md: moved presets from "Future Roadmap" to "Completed", updated counts (33 skills, 5 presets)
-- Updated CHANGELOG.md with unreleased section
+- All 18 hooks enabled by default via tracked `.claude/settings.json`
+- Multi-model documented as optional enhancement (degrades gracefully without API keys)
+- TEMPLATE_OVERVIEW.md updated: 14 agents, 18 hooks, observer agent, overlay infrastructure
+- CLAUDE.md updated: 18 hooks, observer agent in table, observe.sh in hook list
 
 ## [2.2.0] - 2026-02-13
 

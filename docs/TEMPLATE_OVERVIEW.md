@@ -14,11 +14,11 @@ This project template is a **comprehensive configuration framework for AI-assist
 The template was developed through systematic analysis and integration of best practices from the open-source community — most notably [Everything Claude Code](https://github.com/affaan-m/everything-claude-code) (45K+ stars, Anthropic hackathon winner) — combined with original workflow enforcement patterns designed for disciplined, production-quality software development.
 
 **By the numbers:**
-- 13 specialized AI agents
+- 14 specialized AI agents
 - 39 skills (domain-specific knowledge modules)
 - 49 slash commands
 - 13 behavior rules (8 core + 5 language-specific)
-- 17 automation hooks
+- 18 automation hooks
 - 5 project-type presets for one-command scaffolding
 - Multi-model collaboration (Claude + Gemini + Codex)
 - Continuous learning system with cross-session memory
@@ -80,11 +80,11 @@ The difference is analogous to the difference between giving someone a text edit
 ```
 project-template/
 ├── .claude/
-│   ├── agents/          # 13 specialized sub-agents
+│   ├── agents/          # 14 specialized sub-agents
 │   ├── commands/        # 49 slash commands (user-invocable)
 │   ├── skills/          # 39 domain knowledge modules (on-demand)
 │   ├── rules/           # 13 behavior rules (auto-loaded)
-│   ├── hooks/           # 17 automation hooks
+│   ├── hooks/           # 18 automation hooks
 │   ├── presets/         # Project-type preset definitions (JSON)
 │   ├── instincts/       # Continuous learning patterns (JSON)
 │   ├── contexts/        # Session mode injection (dev/review/research)
@@ -134,7 +134,7 @@ This design ensures maximum working context. Previous iterations loaded everythi
 
 ## Component Deep Dive
 
-### 1. Specialized Agents (13)
+### 1. Specialized Agents (14)
 
 Rather than using one general-purpose model for everything, the template deploys **purpose-built sub-agents** that operate in isolated context windows with appropriate tool access:
 
@@ -153,6 +153,7 @@ Rather than using one general-purpose model for everything, the template deploys
 | **Go Reviewer** | Sonnet | Go-specific patterns | Goroutine leaks, error wrapping, interface design |
 | **Go Build Resolver** | Sonnet | Go module/CGO errors | Go-specific build toolchain |
 | **Python Reviewer** | Sonnet | Python async, metaclasses, GIL | Framework-specific (Django, FastAPI, Flask) |
+| **Observer** | Haiku | Background pattern analysis | Analyzes session observations, creates instincts automatically |
 
 **Why this matters:** A security review by a dedicated security agent with OWASP training produces categorically better results than asking a general-purpose model "does this code have security issues?" The specialization is in the system prompt, tool access, and model selection — not just the question asked.
 
@@ -587,6 +588,9 @@ Hooks are shell scripts that execute automatically in response to Claude Code ev
 | **Build Analysis** | PostToolUse (Bash) | After build commands (`npm run build`, `cargo build`, `go build`), runs a background analysis of build output without blocking the developer. | Provides proactive feedback about build health. Runs asynchronously so it doesn't slow down the workflow — results appear as advisory messages. |
 | **TypeScript Check** | PostToolUse (Edit) | After editing `.ts` / `.tsx` files, runs `tsc --noEmit` on the changed file to catch type errors immediately. | Type errors caught at edit time take 5 seconds to fix. Type errors discovered 30 minutes later during a build take 5 minutes to fix. Immediate feedback dramatically reduces debugging time. |
 | **Dev Server Blocker** | PreToolUse (Bash) | Blocks `npm run dev`, `pnpm dev`, and similar commands unless running inside tmux. Suggests the tmux command instead. | Dev servers run indefinitely and capture the terminal. Inside tmux, you can detach and reattach. Outside tmux, killing the terminal kills the server — and any unsaved session state with it. |
+| **PR URL Extract** | Stop | Extracts PR creation URL from `git push` output and suggests review commands. | After pushing, the next natural step is creating a PR — this hook surfaces the URL automatically so the developer doesn't need to navigate to GitHub manually. |
+| **Tmux Hint** | PreToolUse (Bash) | Advisory reminder to use tmux for long-running commands (npm, pytest, cargo, docker). | Long-running commands can capture the terminal. Inside tmux, you detach and reattach; outside, an interrupted terminal kills the process. |
+| **Observe** | PreToolUse/PostToolUse | Captures tool usage patterns to `observations.jsonl` for the continuous learning system. | The engine that feeds the observer agent — records what tools are used, on what files, enabling automatic pattern detection across sessions. |
 
 #### v3.0 Phase 1: Project-Type Presets (Completed)
 
@@ -780,4 +784,4 @@ Any student using this template starts their project with the workflow enforceme
 ---
 
 *Built with Claude Code (Anthropic) | Informed by Everything Claude Code (45K+ stars)*
-*Template version 2.3.0 | 13 agents, 39 skills, 49 commands, 13 rules, 17 hooks | 5 project-type presets*
+*Template version 2.3.0 | 14 agents, 39 skills, 49 commands, 13 rules, 18 hooks | 5 project-type presets*
