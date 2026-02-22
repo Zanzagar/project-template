@@ -84,7 +84,7 @@ case "${1:-start}" in
                     return
                 fi
                 obs_count=$(wc -l < "$OBSERVATIONS_FILE" 2>/dev/null || echo 0)
-                if [ "$obs_count" -lt 10 ]; then
+                if [ "$obs_count" -lt 20 ]; then
                     return
                 fi
 
@@ -115,7 +115,7 @@ case "${1:-start}" in
             # Handle SIGUSR1 for on-demand analysis
             trap 'analyze_observations' USR1
 
-            echo "$$" > "$PID_FILE"
+            echo "$BASHPID" > "$PID_FILE"
             echo "[$(date)] Observer started (PID: $$)" >> "$LOG_FILE"
 
             while true; do
