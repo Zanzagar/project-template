@@ -98,18 +98,35 @@ test_tag_section_present() {
 }
 
 test_tag_from_state_file() {
-    echo "=== Task Master Tag from state.json ==="
+    echo "=== Task Master Tag from state.json (currentTag) ==="
     setup_repo
 
-    # Create mock .taskmaster/state.json
+    # Create mock .taskmaster/state.json with currentTag (current TM format)
     mkdir -p .taskmaster
-    echo '{"activeTag":"feature-auth"}' > .taskmaster/state.json
+    echo '{"currentTag":"feature-auth"}' > .taskmaster/state.json
 
     run_hook
     local sf
     sf=$(state_file)
 
-    assert_contains "tag reads from state.json" "$sf" "feature-auth"
+    assert_contains "tag reads currentTag from state.json" "$sf" "feature-auth"
+
+    teardown
+}
+
+test_tag_from_state_file_legacy() {
+    echo "=== Task Master Tag from state.json (legacy activeTag) ==="
+    setup_repo
+
+    # Create mock .taskmaster/state.json with legacy activeTag field
+    mkdir -p .taskmaster
+    echo '{"activeTag":"bugfix-api"}' > .taskmaster/state.json
+
+    run_hook
+    local sf
+    sf=$(state_file)
+
+    assert_contains "tag reads legacy activeTag from state.json" "$sf" "bugfix-api"
 
     teardown
 }
@@ -261,6 +278,7 @@ echo ""
 
 test_tag_section_present
 test_tag_from_state_file
+test_tag_from_state_file_legacy
 test_tdd_phase_no_tests
 test_tdd_phase_with_passing_tests
 test_tdd_phase_with_failing_tests

@@ -284,7 +284,7 @@ When transitioning between workflow phases, validate prerequisites before procee
 
 **Steps:**
 1. Detect phase change from commitment checkpoint
-2. Run `/phase-check <new-phase>`
+2. Run `/phase-check <new-phase>` (see `.claude/commands/phase-check.md` for prerequisite definitions)
 3. If all prerequisites pass: proceed with new phase behaviors
 4. If prerequisites fail:
    ```

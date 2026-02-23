@@ -21,7 +21,7 @@ When guidance from different sources conflicts, follow this precedence order:
 
 ## Superpowers Authority
 
-When the Superpowers plugin is installed and active, its enforcement mechanisms operate at **rule-level authority**:
+When the Superpowers plugin is installed and active, its enforcement mechanisms are **hard constraints, subordinate only to explicit project rules**:
 
 - **TDD enforcement** — deletes production code written without failing tests first
 - **Debugging discipline** — systematic-debugging workflow required for bugs

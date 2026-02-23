@@ -57,7 +57,7 @@ ACTIVE_TASK=$(task-master list --status in-progress --json 2>/dev/null \
 
 # --- Active Task Master tag (R2.1) ---
 if [ -f "$PROJECT_DIR/.taskmaster/state.json" ]; then
-    ACTIVE_TAG=$(jq -r '.activeTag // "master"' "$PROJECT_DIR/.taskmaster/state.json" 2>/dev/null)
+    ACTIVE_TAG=$(jq -r '.currentTag // .activeTag // "master"' "$PROJECT_DIR/.taskmaster/state.json" 2>/dev/null)
 fi
 [ -z "$ACTIVE_TAG" ] && ACTIVE_TAG="master"
 
