@@ -15,7 +15,7 @@ The template was developed through systematic analysis and integration of best p
 
 **By the numbers:**
 - 14 specialized AI agents
-- 39 skills (domain-specific knowledge modules)
+- 40 skills (domain-specific knowledge modules)
 - 50 slash commands
 - 13 behavior rules (8 core + 5 language-specific)
 - 18 automation hooks
@@ -137,7 +137,7 @@ This design ensures maximum working context. Previous iterations loaded everythi
 
 ## Project Lifecycle Pipeline
 
-This section shows **what fires when** across all 189 components during a project lifecycle. Use this as a reference for understanding the system and identifying gaps.
+This section shows **what fires when** across all 190 components during a project lifecycle. Use this as a reference for understanding the system and identifying gaps.
 
 ### Always Active (every session, ~35k tokens)
 
@@ -297,12 +297,12 @@ Hooks capture **observable state** (what git and task-master report). Handoff do
 | Rules (core) | 8 | Always | ~5k |
 | Rules (language) | 5 | On file edit | 0 at startup |
 | Agents | 14 | On invocation | 0 at startup |
-| Skills | 39 | On relevance | 0 at startup |
+| Skills | 40 | On relevance | 0 at startup |
 | Commands | 50 | On `/command` | 0 at startup |
 | Hooks | 18 | On event trigger | 0 (shell scripts) |
 | MCP tools | ~42 | Always | ~25k |
 | Superpowers | 13 skills | Always | ~3-5k |
-| **Total** | **189 components** | | **~35k startup** |
+| **Total** | **190 components** | | **~35k startup** |
 
 ---
 
@@ -621,7 +621,7 @@ With the template:
 
 **The result isn't just a better pipeline — it's a better researcher.** The template's enforced workflows become muscle memory. Students who use it for a semester internalize TDD, version control discipline, reproducibility practices, and code review habits that distinguish reliable research from one-off scripts.
 
-Beyond enforcement, the template provides **domain expertise on demand.** Need to configure a PostgreSQL spatial database? The `postgresql-patterns` skill knows about GiST indexing for geometry columns, PostGIS query optimization, and migration safety. Need Python testing patterns? The `python-testing` skill provides pytest fixtures, parametrization, and mocking strategies. The 39 skills act as an always-available senior engineer across every domain the student might encounter — without requiring the student to know the right questions to ask.
+Beyond enforcement, the template provides **domain expertise on demand.** Need to configure a PostgreSQL spatial database? The `postgresql-patterns` skill knows about GiST indexing for geometry columns, PostGIS query optimization, and migration safety. Need Python testing patterns? The `python-testing` skill provides pytest fixtures, parametrization, and mocking strategies. The 40 skills act as an always-available senior engineer across every domain the student might encounter — without requiring the student to know the right questions to ask.
 
 Critically, **quality scales with the project.** A thesis codebase that grows to 10,000+ lines maintains the same quality standards as the first 100 lines, because the template's enforcement doesn't fatigue. The TDD guide is just as strict on line 10,000 as on line 1. The security reviewer doesn't get tired of scanning. This is where AI-assisted development fundamentally differs from manual discipline — the template never has a bad day.
 
@@ -708,7 +708,7 @@ The template's development followed a deliberate research-first methodology: stu
 
 **Key implementation decisions:**
 - **Language-specific rules use `paths:` frontmatter** so they load only when matching files are edited. A Python developer never pays the token cost for Go rules. This was our innovation — ECC loads all language rules at startup.
-- **Skills are on-demand** (loaded when Claude detects relevance), not startup-loaded. This means 39 skills contribute exactly 0 tokens to startup overhead. ECC handles this similarly.
+- **Skills are on-demand** (loaded when Claude detects relevance), not startup-loaded. This means 40 skills contribute exactly 0 tokens to startup overhead. ECC handles this similarly.
 - **The instinct system uses confidence scoring** (0.0-1.0) with automatic decay. Unused patterns lose 0.05 confidence per week and are removed when they reach 0. This prevents knowledge rot — outdated patterns fade naturally instead of persisting forever.
 
 **Delivery:** 50 tasks, 250 subtasks total across both phases. All implemented through Claude Code itself — the template was built using the template's own workflow enforcement, which served as both a development tool and a stress test.
@@ -811,7 +811,7 @@ The first step beyond ECC feature parity: **one-command project scaffolding.** P
 
 #### v3.0 Phase 2: Template Overlay Infrastructure (Completed)
 
-Real-world overlay testing on three projects (analog_image_generator, rideshare-rescue, postiz-social-automation) revealed a **critical architectural finding**: Claude Code's parent-directory traversal registers rules and CLAUDE.md from parent directories, but does NOT register commands, skills, or hooks. This meant all 50 slash commands and 39 skills were silently broken for any project that didn't have its own local `.claude/` directory.
+Real-world overlay testing on three projects (analog_image_generator, rideshare-rescue, postiz-social-automation) revealed a **critical architectural finding**: Claude Code's parent-directory traversal registers rules and CLAUDE.md from parent directories, but does NOT register commands, skills, or hooks. This meant all 50 slash commands and 40 skills were silently broken for any project that didn't have its own local `.claude/` directory.
 
 **What was built to fix this:**
 
@@ -958,4 +958,4 @@ Any student using this template starts their project with the workflow enforceme
 ---
 
 *Built with Claude Code (Anthropic) | Informed by Everything Claude Code (45K+ stars)*
-*Template version 2.2.0 | 14 agents, 39 skills, 50 commands, 13 rules, 18 hooks | 5 project-type presets*
+*Template version 2.2.0 | 14 agents, 40 skills, 50 commands, 13 rules, 18 hooks | 5 project-type presets*

@@ -166,12 +166,12 @@ See `docs/SECURITY.md` for details.
 |-----------|--------|--------|
 | Core rules (8 files) | ~5k | Every session (auto-loaded) |
 | Language rules (5 files) | 0 at startup | Only when matching files edited |
-| Skills (39 skills) | 0 at startup | Only when invoked via `/skill-name` |
+| Skills (40 total) | 0 at startup | Only when invoked via `/skill-name` |
 | Instincts (JSON) | ~50-200 each | Only when continuous-learning skill active |
 | Agents | 0 at startup | Only when spawned via Task tool |
 | AgentShield | 0 | External tool (npx), no context cost |
 
-**Key insight**: Phases 2-2.2 add significant capability (39 skills, 18 hooks, 14 agents) without increasing startup overhead. Skills, agents, instincts, and language rules are all on-demand.
+**Key insight**: Phases 2-2.2 add significant capability (40 skills, 18 hooks, 14 agents) without increasing startup overhead. Skills, agents, instincts, and language rules are all on-demand.
 
 ## Migration Notes
 

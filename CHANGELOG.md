@@ -6,7 +6,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [2.2.0] - 2026-02-22
 
-Comprehensive release: ECC feature parity (17 new skills, 9 new hooks), project-type presets, template overlay infrastructure, continuous learning v2, real multi-model integration, and real plugin downloads. Template now has 14 agents, 39 skills, 50 commands, 13 rules, 18 hooks.
+Comprehensive release: ECC feature parity (17 new skills, 9 new hooks), project-type presets, template overlay infrastructure, continuous learning v2, real multi-model integration, and real plugin downloads. Template now has 14 agents, 40 skills, 50 commands, 13 rules, 18 hooks.
 
 ### Added - Project-Type Presets
 - **project-presets.json** - Registry of 5 project-type presets: `python-fastapi`, `node-nextjs`, `go-api`, `java-spring`, `python-data-science`
