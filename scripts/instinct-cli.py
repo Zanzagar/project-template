@@ -16,14 +16,12 @@ Commands:
 import argparse
 import json
 import os
-import sys
 import re
+import sys
 import urllib.request
-from pathlib import Path
-from datetime import datetime
 from collections import defaultdict
-from typing import Optional
-
+from datetime import datetime
+from pathlib import Path
 
 # ─────────────────────────────────────────────
 # Configuration — project-scoped
@@ -177,16 +175,16 @@ def cmd_status(args):
 
     if not instincts and not candidates:
         print("No instincts found.")
-        print(f"\nInstinct directories:")
+        print("\nInstinct directories:")
         print(f"  Personal:   {PERSONAL_DIR}")
         print(f"  Inherited:  {INHERITED_DIR}")
         print(f"  Candidates: {CANDIDATES_DIR}")
-        print(f"\nTo start learning, use /learn during a session.")
+        print("\nTo start learning, use /learn during a session.")
         return
 
     # Print header
     print(f"\n{'=' * 60}")
-    print(f"  INSTINCT STATUS")
+    print("  INSTINCT STATUS")
     print(f"{'=' * 60}\n")
 
     if instincts:
@@ -385,7 +383,7 @@ def _do_import(args, new_instincts: list[dict], source: str) -> int:
         output_content += f'trigger: "{inst.get("trigger", "unknown")}"\n'
         output_content += f"confidence: {inst.get('confidence', 0.5)}\n"
         output_content += f"domain: {inst.get('domain', 'general')}\n"
-        output_content += f"source: inherited\n"
+        output_content += "source: inherited\n"
         output_content += f'imported_from: "{source}"\n'
         if inst.get("source_repo"):
             output_content += f"source_repo: {inst.get('source_repo')}\n"
@@ -394,7 +392,7 @@ def _do_import(args, new_instincts: list[dict], source: str) -> int:
 
     output_file.write_text(output_content)
 
-    print(f"\nImport complete!")
+    print("\nImport complete!")
     print(f"   Added: {len(to_add)}")
     print(f"   Updated: {len(to_update)}")
     print(f"   Saved to: {output_file}")
@@ -450,7 +448,7 @@ def cmd_export(args):
         GLOBAL_PERSONAL_DIR.mkdir(parents=True, exist_ok=True)
         timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
         project_name = PROJECT_ROOT.name
-        global_file = GLOBAL_PERSONAL_DIR / f"from-{project_name}-{timestamp}.md"
+        GLOBAL_PERSONAL_DIR / f"from-{project_name}-{timestamp}.md"
 
         # Write each instinct as a separate file for easy management
         exported_count = 0
@@ -474,7 +472,7 @@ def cmd_export(args):
             exported_count += 1
 
         print(f"Exported {exported_count} instincts to global store: {GLOBAL_PERSONAL_DIR}")
-        print(f"\nGlobal instincts are available to all projects via:")
+        print("\nGlobal instincts are available to all projects via:")
         print(f"  python3 scripts/instinct-cli.py import {GLOBAL_PERSONAL_DIR}")
         return 0
 
@@ -544,13 +542,13 @@ def cmd_evolve(args):
     print(f"\nPotential skill clusters found: {len(skill_candidates)}")
 
     if skill_candidates:
-        print(f"\n## SKILL CANDIDATES\n")
+        print("\n## SKILL CANDIDATES\n")
         for i, cand in enumerate(skill_candidates[:5], 1):
             print(f'{i}. Cluster: "{cand["trigger"]}"')
             print(f"   Instincts: {len(cand['instincts'])}")
             print(f"   Avg confidence: {cand['avg_confidence']:.0%}")
             print(f"   Domains: {', '.join(cand['domains'])}")
-            print(f"   Instincts:")
+            print("   Instincts:")
             for inst in cand["instincts"][:3]:
                 print(f"     - {inst.get('id')}")
             print()
@@ -622,7 +620,7 @@ def _generate_evolved(
         content += f"Evolved from {len(cand['instincts'])} instincts "
         content += f"(avg confidence: {cand['avg_confidence']:.0%})\n\n"
         content += f"## When to Apply\n\nTrigger: {trigger}\n\n"
-        content += f"## Actions\n\n"
+        content += "## Actions\n\n"
         for inst in cand["instincts"]:
             inst_content = inst.get("content", "")
             action_match = re.search(
@@ -661,12 +659,12 @@ def _generate_evolved(
         agent_file = EVOLVED_DIR / "agents" / f"{agent_name}.md"
         domains = ", ".join(cand["domains"])
 
-        content = f"---\nmodel: sonnet\ntools: Read, Grep, Glob\n---\n"
+        content = "---\nmodel: sonnet\ntools: Read, Grep, Glob\n---\n"
         content += f"# {agent_name}\n\n"
         content += f"Evolved from {len(cand['instincts'])} instincts "
         content += f"(avg confidence: {cand['avg_confidence']:.0%})\n"
         content += f"Domains: {domains}\n\n"
-        content += f"## Source Instincts\n\n"
+        content += "## Source Instincts\n\n"
         for inst in cand["instincts"]:
             content += f"- {inst.get('id', 'unnamed')}\n"
 

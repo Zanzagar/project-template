@@ -21,9 +21,8 @@ Returns JSON:
 import argparse
 import json
 import os
-import sys
-import urllib.request
 import urllib.error
+import urllib.request
 
 
 def query_gemini(prompt: str, role: str = "", model: str = "gemini-2.0-flash") -> dict:
