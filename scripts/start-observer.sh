@@ -96,33 +96,34 @@ case "${1:-start}" in
 
                 echo "[$(date)] Analyzing $obs_count observations..." >> "$LOG_FILE"
 
-                # Use Claude Code with Haiku to analyze observations
-                # Must unset CLAUDECODE to avoid nested-session detection when
-                # observer is started from within a Claude Code session (via session-init.sh)
                 # Count instincts before analysis to detect if new ones were created
                 local before_count
                 before_count=$(find "$PERSONAL_DIR" -name "*.md" -o -name "*.json" 2>/dev/null | wc -l)
 
+                # Must unset CLAUDECODE to avoid nested-session detection when
+                # observer is started from within a Claude Code session (via session-init.sh).
+                # --tools restricts Haiku to ONLY Read/Write/Glob (not --allowedTools,
+                # which only auto-approves permissions without restricting access).
+                # --max-turns 15 is a safety net, not a constraint — normal runs use ~5-8 turns.
                 if command -v claude &> /dev/null; then
-                    exit_code=0
-                    CLAUDECODE= claude --model haiku --max-turns 15 --allowedTools "Read,Write,Glob" --print \
+                    CLAUDECODE= claude --model haiku --max-turns 15 \
+                        --tools "Read,Write,Glob" --print \
                         "You are an autonomous background agent. Do NOT ask questions or request permission — act immediately. Read the last 100 lines of $OBSERVATIONS_FILE (use Read with offset if large). Identify tool usage patterns with 3+ occurrences. For each pattern found, immediately Write a JSON file to $PERSONAL_DIR/<pattern-id>.json with fields: id, pattern, action, trigger, confidence (0.3-0.7), domain, source. Create at most 3 instinct files. Do not explain — just read and write." \
-                        >> "$LOG_FILE" 2>&1 || exit_code=$?
-                    if [ "$exit_code" -ne 0 ]; then
-                        echo "[$(date)] Claude analysis failed (exit $exit_code)" >> "$LOG_FILE"
-                        return  # Don't archive — analysis didn't process them
-                    fi
+                        >> "$LOG_FILE" 2>&1 || true
+                        # Exit code intentionally ignored — we check instinct output instead.
+                        # max-turns exits non-zero even if instincts were created mid-run.
                 else
                     echo "[$(date)] claude CLI not found, skipping analysis" >> "$LOG_FILE"
                     return  # Don't archive without analysis
                 fi
 
-                # Verify instincts were actually created (not just max-turns exit)
+                # Success = instinct files were created, regardless of exit code.
+                # This handles: normal completion, max-turns mid-run, and partial success.
                 local after_count
                 after_count=$(find "$PERSONAL_DIR" -name "*.md" -o -name "*.json" 2>/dev/null | wc -l)
 
                 if [ "$after_count" -le "$before_count" ]; then
-                    echo "[$(date)] Analysis ran but created no instincts (before=$before_count, after=$after_count) — keeping observations for retry" >> "$LOG_FILE"
+                    echo "[$(date)] Analysis produced no instincts (before=$before_count, after=$after_count) — keeping observations for retry" >> "$LOG_FILE"
                     return  # Don't archive — nothing was produced
                 fi
 
