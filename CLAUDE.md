@@ -163,6 +163,7 @@ Available commands for common tasks:
 | `/eval [--save]` | Code quality metrics with trend tracking |
 | `/commit [message]` | Create conventional commit |
 | `/pr [title]` | Create GitHub Pull Request |
+| `/rollback [commit]` | Guided rollback with session context |
 | `/changelog [version]` | Generate changelog from git history |
 | `/prd` | Show/parse PRD documents |
 | `/prd-generate <concept>` | Deep research PRD generation with architecture diagrams |

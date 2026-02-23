@@ -938,4 +938,4 @@ Any student using this template starts their project with the workflow enforceme
 ---
 
 *Built with Claude Code (Anthropic) | Informed by Everything Claude Code (45K+ stars)*
-*Template version 2.2.0 | 14 agents, 39 skills, 49 commands, 13 rules, 18 hooks | 5 project-type presets*
+*Template version 2.2.0 | 14 agents, 39 skills, 50 commands, 13 rules, 18 hooks | 5 project-type presets*
