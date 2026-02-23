@@ -78,6 +78,7 @@ I notice we might be stuck. Let me help:
 | Post-implementation review | Suggest `/orchestrate review` |
 | "review this thoroughly" | `/orchestrate review` |
 | Multi-model planning needed | `/multi-plan` |
+| After `git push` to CI branch | `gh run list` → `gh run watch` (verify CI) |
 
 ### 5. Manage Scope Proactively
 
@@ -216,6 +217,29 @@ At the end of significant sessions, append to `.claude/work-log.md`:
 This creates a lightweight ledger of work beyond git commits—capturing research, decisions, and context that would otherwise be lost.
 
 **Automated session persistence:** If `session-end.sh` hook is enabled, detailed summaries are saved automatically to `.claude/sessions/` on Stop events. The `session-init.sh` hook detects these on next startup and displays recent summaries (<24h). This reduces the need for manual work-log entries but doesn't replace them for capturing *decisions* and *reasoning*.
+
+### Pattern: Post-Push CI Verification
+
+After pushing to a branch with CI configured, **proactively verify the pipeline passes.** Don't wait for the user to notice failures.
+
+**Trigger:** Any `git push` to a branch that has GitHub Actions workflows.
+
+**Steps:**
+1. Wait briefly for the run to start: `sleep 15 && gh run list --branch <branch> --limit 1`
+2. Watch the run: `gh run watch <run-id> --exit-status`
+3. If it **passes**: briefly confirm ("CI green") and continue
+4. If it **fails**: immediately diagnose
+   - `gh run view <run-id> --log-failed` to get failure output
+   - Filter for error lines: `grep -E '(##\[error\]|Error:|FAILED|exit code)'`
+   - Read the relevant workflow file and source code
+   - Fix, commit, and push — then verify again
+
+**Why this matters:** CI failures on main are silent unless someone checks. A failed pipeline means the template's own quality gate is broken — this should never persist unnoticed.
+
+**Don't block on CI when:**
+- Pushing to a feature branch during active development (check later)
+- The push is a documentation-only change with no CI triggers
+- The user explicitly says to skip verification
 
 ## Quality Guardrails
 
