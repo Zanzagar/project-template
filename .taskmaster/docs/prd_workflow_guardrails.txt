@@ -1,0 +1,98 @@
+# PRD: Workflow Guardrails Enhancement
+
+## Overview
+Enhance the project template's workflow enforcement to close 14 identified gaps where the development process can silently break, become ambiguous, or skip required steps.
+
+## Background
+A deep audit of the template's enforcement mechanisms revealed:
+- 5 hard enforcement hooks (pre-commit tests/lint, sensitive file protection, doc blocker, dev server blocker, Superpowers TDD)
+- 20+ soft enforcement points (rules, steering patterns) that rely on Claude faithfully following prose instructions
+- 14 specific gaps where workflows can drift, contradict, or be bypassed
+
+The core problem: rules say "always do X before Y" but nothing prevents doing Y without X.
+
+## Goals
+1. Add hard enforcement for the most critical workflow violations
+2. Resolve all contradictions and ambiguities in existing rules
+3. Explicitly document the correct workflow for every common scenario
+4. Provide a phase-check mechanism that validates prerequisites at workflow transitions
+
+## Non-Goals
+- Adding blocking hooks for every gap (would create too much friction)
+- Changing the fundamental workflow (brainstorm → PRD → tasks → TDD)
+- Removing user override capability (users can still explicitly skip steps)
+- Testing prose/markdown deliverables with TDD (not applicable)
+
+## Requirements
+
+### R1: Enhanced pre-commit-check.sh
+Enhance the existing pre-commit hook to validate:
+- R1.1: Commit messages follow conventional commits format (type: description). Block commits that don't match.
+- R1.2: Block direct commits to main/master branch with a clear error message suggesting feature branch creation.
+- R1.3: Warn (not block) when no Task Master task is in-progress. Advisory only since not all commits are task-tracked.
+- R1.4: Preserve all existing checks (linter, tests, debug statements, secrets).
+- R1.5: Each new check should be individually skippable via environment variable (e.g., SKIP_COMMIT_FORMAT=1) for edge cases.
+
+### R2: Enhanced pre-compact.sh
+Enhance the existing pre-compaction hook to preserve more workflow state:
+- R2.1: Save the active Task Master tag name (from .taskmaster config or recent CLI usage).
+- R2.2: Save current TDD phase indicator if detectable (RED/GREEN/REFACTOR from Superpowers state).
+- R2.3: Warn about uncommitted changes with a count of modified files.
+- R2.4: Save the current feature branch name for session resume.
+- R2.5: Preserve existing state-saving behavior (task ID, working directory, etc.).
+
+### R3: New rule — workflow-enforcement.md
+Create a comprehensive rule that explicitly defines the correct workflow for every common scenario:
+- R3.1: Feature implementation workflow (brainstorm → PRD → parse → expand → TDD). State that this is MANDATORY for multi-task work.
+- R3.2: Bug fix workflow with size thresholds: trivial (<10 lines) = direct TDD, scoped bug = TDD with task, complex/unclear = systematic debugging skill first.
+- R3.3: Refactoring workflow: small (<50 lines) = direct with tests, medium (50-200) = task + TDD, large (200+) = PRD + full workflow.
+- R3.4: Documentation workflow: no TDD needed, commit with docs: prefix, no task required for small updates, task for major rewrites.
+- R3.5: Dependency update workflow: always run full test suite after, commit as chore:, task only for major version bumps.
+- R3.6: Emergency hotfix workflow: TDD still applies but can use minimal test (single assertion for the fix), skip PRD/task overhead, use hotfix/ branch prefix.
+- R3.7: Multi-feature sessions: one task in-progress at a time, must set-status before switching, use proactive-steering redirect pattern.
+- R3.8: Session resume priority: (1) handoff doc if exists, (2) MEMORY.md for patterns, (3) session-summary for recent activity, (4) git log + task-master status for ground truth.
+- R3.9: Tag management: one tag per workflow phase, switch tags before any status operations, document tag purpose.
+- R3.10: Explicit statement that this rule is NORMATIVE (defines what should happen) while hooks are ENFORCEMENT (prevent violations). Not all normative rules have enforcement — some rely on Claude's discipline.
+
+### R4: Updated authority-hierarchy.md
+Resolve the contradiction between user override and Superpowers enforcement:
+- R4.1: Add a new tier: Rules > Superpowers enforcement > Instincts > Defaults.
+- R4.2: Clarify that Superpowers plugin enforcement (deleting code without tests) is RULE-LEVEL authority when the plugin is installed and active.
+- R4.3: User can override instincts freely, but overriding Superpowers requires explicit acknowledgment (e.g., "I understand this skips TDD, proceed anyway").
+- R4.4: Document what happens when Superpowers is NOT installed: TDD becomes advisory (instinct-level), not enforced.
+- R4.5: Add examples for the new tier to the existing examples table.
+
+### R5: New /phase-check command
+Create a command that validates prerequisites for the current workflow phase:
+- R5.1: Check IDEATION phase: no specific prerequisites, suggest /brainstorm if starting fresh.
+- R5.2: Check PLANNING phase: PRD should exist in .taskmaster/docs/, tasks should be parsed, complexity analyzed.
+- R5.3: Check BUILDING phase: task claimed (in-progress), on feature branch (not main), tests exist or TDD in progress.
+- R5.4: Check REVIEW phase: all tests passing, linter clean, no debug statements.
+- R5.5: Check SHIPPING phase: PR created or ready, CHANGELOG updated if releasing, task status updated.
+- R5.6: Output clear pass/fail for each prerequisite with actionable fix suggestions.
+- R5.7: Command should be lightweight — only reads local state (git, filesystem, task-master), no API calls.
+
+### R6: Updated proactive-steering.md
+Add /phase-check to the auto-invoke workflow:
+- R6.1: Add /phase-check to the auto-invoke table: trigger on phase transitions (detected via commitment checkpoints).
+- R6.2: Add steering pattern for "Phase Transition" that invokes /phase-check before proceeding.
+- R6.3: Clarify that /phase-check is advisory (soft enforcement) — it reports but doesn't block.
+
+## Dependencies
+- R3 (workflow-enforcement.md) should be written first — it defines the rules that R1 and R2 enforce.
+- R4 (authority-hierarchy.md update) should come before R5 — phase-check needs clear authority model.
+- R1 and R2 (hook enhancements) can be developed in parallel after R3 and R4.
+- R5 and R6 depend on R3 (workflow definitions) and R4 (authority model).
+
+## Success Criteria
+1. Running /phase-check in each phase reports clear prerequisites and their status.
+2. Committing with a bad message format on main branch is blocked by pre-commit hook.
+3. All 14 identified gaps have explicit documentation or enforcement.
+4. No contradictions remain between rules (authority-hierarchy resolves Superpowers question).
+5. A new user reading workflow-enforcement.md can understand the correct workflow for any common scenario without consulting other rules.
+
+## Testing Strategy
+- Hook enhancements (R1, R2): Shell script tests that verify block/allow behavior with mock inputs.
+- Rules (R3, R4): Manual review for clarity, completeness, and consistency with other rules.
+- Command (R5): Manual invocation in each phase to verify correct prerequisite detection.
+- Integration: End-to-end walkthrough of a feature workflow to verify all pieces work together.

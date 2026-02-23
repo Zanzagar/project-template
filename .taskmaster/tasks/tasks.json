@@ -558,7 +558,8 @@
         "master"
       ],
       "created": "2026-02-20T05:20:06.052Z",
-      "description": "Tasks for master context"
+      "description": "Tasks for master context",
+      "updated": "2026-02-20T05:20:06.052Z"
     }
   },
   "ecc-gap-p1": {
@@ -898,7 +899,8 @@
         "ecc-gap-p1"
       ],
       "created": "2026-02-20T05:20:06.053Z",
-      "description": "Tasks for ecc-gap-p1 context"
+      "description": "Tasks for ecc-gap-p1 context",
+      "updated": "2026-02-20T05:20:06.053Z"
     }
   },
   "ecc-gap-p2": {
@@ -1095,13 +1097,14 @@
         "ecc-gap-p2"
       ],
       "created": "2026-02-20T05:20:06.053Z",
-      "description": "Tasks for ecc-gap-p2 context"
+      "description": "Tasks for ecc-gap-p2 context",
+      "updated": "2026-02-20T05:20:06.053Z"
     }
   },
   "overlay-fixes": {
     "tasks": [
       {
-        "id": "1",
+        "id": 1,
         "title": "Create init-project.sh Script Foundation",
         "description": "Create the core scripts/init-project.sh script with argument parsing, template auto-detection, and help documentation. This is the foundational script that will fix the CRITICAL inheritance gap.",
         "details": "Implementation steps:\n\n1. Create `scripts/init-project.sh` with proper bash shebang and set -e\n2. Define constants for the 5 target directories: commands/, skills/, agents/, contexts/, hooks/\n3. Implement argument parsing for:\n   - `--template PATH` (source template directory)\n   - `--mode symlink|copy` (override auto-detection)\n   - `--force` (recreate existing)\n   - `--dry-run` (preview without changes)\n   - `--help` (show usage)\n4. Support `$TEMPLATE_PATH` env var fallback (default: ~/projects/project-template)\n5. Add color constants for output formatting\n6. Create helper functions:\n   - `show_usage()` - display help\n   - `log_info()`, `log_warn()`, `log_error()` - colored output\n   - `ensure_claude_dir()` - create .claude/ if missing\n\nPseudo-code:\n```bash\n#!/bin/bash\nset -e\n\nTARGET_DIRS=(\"commands\" \"skills\" \"agents\" \"contexts\" \"hooks\")\nTEMPLATE_PATH=\"${TEMPLATE_PATH:-$HOME/projects/project-template}\"\nMODE=\"auto\"\nFORCE=false\nDRY_RUN=false\n\nwhile [[ \"$#\" -gt 0 ]]; do\n  case $1 in\n    --template) TEMPLATE_PATH=\"$2\"; shift ;;\n    --mode) MODE=\"$2\"; shift ;;\n    --force) FORCE=true ;;\n    --dry-run) DRY_RUN=true ;;\n    --help|-h) show_usage; exit 0 ;;\n    *) log_error \"Unknown: $1\"; exit 1 ;;\n  esac\n  shift\ndone\n```",
@@ -1116,7 +1119,7 @@
         "updatedAt": "2026-02-20T05:35:08.158Z"
       },
       {
-        "id": "2",
+        "id": 2,
         "title": "Implement Template Auto-Detection Logic",
         "description": "Add the logic to auto-detect whether the current project is nested under a template parent directory by walking parent directories.",
         "details": "Implementation steps:\n\n1. Create `detect_template_parent()` function that:\n   - Starts from current directory\n   - Walks up parent directories (../, ../../, etc.)\n   - Looks for `.claude/commands/` with >10 command files\n   - Returns the template path if found, empty string if not\n\n2. Create `count_files()` helper function to count files in a directory\n\n3. Implement auto-detection in main logic:\n   - If MODE=auto, call detect_template_parent()\n   - If found, set MODE=symlink and store relative path\n   - If not found, set MODE=copy\n\n4. Use relative paths for detection (via realpath --relative-to)\n\nPseudo-code:\n```bash\ndetect_template_parent() {\n    local current=\"$PWD\"\n    local max_depth=5\n    local depth=0\n    \n    while [ $depth -lt $max_depth ]; do\n        local check_dir=\"$(realpath \"$current/..\")\"  # Parent\n        if [ -d \"$check_dir/.claude/commands\" ]; then\n            local cmd_count=$(ls -1 \"$check_dir/.claude/commands/\"*.md 2>/dev/null | wc -l)\n            if [ \"$cmd_count\" -ge 10 ]; then\n                echo \"$check_dir\"\n                return 0\n            fi\n        fi\n        current=\"$check_dir\"\n        ((depth++))\n    done\n    return 1\n}\n```\n\n5. Store the detected/specified template path and calculated relative path for symlinks",
@@ -1169,7 +1172,7 @@
         "updatedAt": "2026-02-20T05:35:22.475Z"
       },
       {
-        "id": "3",
+        "id": 3,
         "title": "Implement Symlink Creation Mode",
         "description": "Add the symlink creation logic for nested projects, using relative paths and handling existing directories.",
         "details": "Implementation steps:\n\n1. Create `create_symlinks()` function that:\n   - Iterates over TARGET_DIRS array\n   - Calculates relative path from project .claude/ to template .claude/subdir\n   - Creates symlink using `ln -s`\n\n2. Use Python's os.path.relpath for accurate relative path calculation:\n   ```bash\n   calc_relative_path() {\n       python3 -c \"import os; print(os.path.relpath('$1', '$2'))\"\n   }\n   ```\n\n3. Handle existing directories/symlinks:\n   - If symlink exists and points to correct target: skip with info message\n   - If symlink exists but wrong target: warn (or recreate with --force)\n   - If real directory exists: WARN (suggests pre-existing content that may shadow)\n   - If nothing exists: create symlink\n\n4. Support --force flag:\n   - Remove existing symlink/directory before creating new\n   - Use `rm -f` for symlinks, warn before `rm -rf` for directories\n\n5. Support --dry-run flag:\n   - Print what would be done without doing it\n\nPseudo-code:\n```bash\ncreate_symlinks() {\n    local template_claude=\"$TEMPLATE_PATH/.claude\"\n    local project_claude=\"$PROJECT_DIR/.claude\"\n    \n    for dir in \"${TARGET_DIRS[@]}\"; do\n        local target=\"$project_claude/$dir\"\n        local source=\"$template_claude/$dir\"\n        local relative=$(calc_relative_path \"$source\" \"$project_claude\")\n        \n        if [ -L \"$target\" ]; then\n            log_info \"Skip: $dir (symlink exists)\"\n        elif [ -d \"$target\" ]; then\n            log_warn \"Skip: $dir (real directory exists - may shadow template)\"\n        else\n            [ \"$DRY_RUN\" = true ] && log_info \"Would create: $dir -> $relative\" && continue\n            ln -s \"$relative\" \"$target\"\n            log_info \"Created: $dir -> $relative\"\n        fi\n    done\n}\n```",
@@ -1234,7 +1237,7 @@
         "updatedAt": "2026-02-20T05:35:26.672Z"
       },
       {
-        "id": "4",
+        "id": 4,
         "title": "Implement Copy Mode for Standalone Projects",
         "description": "Add the directory copy logic for standalone projects not under the template tree, copying entire subdirectory contents.",
         "details": "Implementation steps:\n\n1. Create `copy_directories()` function that:\n   - Verifies template source exists\n   - Copies entire .claude/<subdir>/ contents to project\n   - Preserves directory structure (for skills/debugging/SKILL.md etc.)\n   - Counts files copied for summary\n\n2. Use `cp -r` with proper source/destination:\n   ```bash\n   cp -r \"$TEMPLATE_PATH/.claude/$dir/\" \"$PROJECT_DIR/.claude/$dir/\"\n   ```\n\n3. Handle existing directories:\n   - If exists and --force: remove and copy fresh\n   - If exists and not --force: skip with count info\n   - If not exists: create and copy\n\n4. Count files for summary output:\n   ```bash\n   count=$(find \"$PROJECT_DIR/.claude/$dir\" -type f | wc -l)\n   ```\n\n5. Support --dry-run:\n   - Show file counts without copying\n   - List first few files that would be copied\n\nPseudo-code:\n```bash\ncopy_directories() {\n    local template_claude=\"$TEMPLATE_PATH/.claude\"\n    local project_claude=\"$PROJECT_DIR/.claude\"\n    \n    for dir in \"${TARGET_DIRS[@]}\"; do\n        local source=\"$template_claude/$dir\"\n        local target=\"$project_claude/$dir\"\n        \n        if [ ! -d \"$source\" ]; then\n            log_warn \"Source not found: $source\"\n            continue\n        fi\n        \n        local count=$(find \"$source\" -type f | wc -l)\n        \n        if [ -d \"$target\" ] && [ \"$FORCE\" = false ]; then\n            log_info \"Skip: $dir (exists, $count files in template)\"\n            continue\n        fi\n        \n        [ \"$DRY_RUN\" = true ] && log_info \"Would copy: $dir ($count files)\" && continue\n        \n        [ \"$FORCE\" = true ] && rm -rf \"$target\"\n        cp -r \"$source\" \"$target\"\n        log_info \"Copied: $dir ($count files)\"\n    done\n}\n```",
@@ -1251,7 +1254,7 @@
         "updatedAt": "2026-02-20T05:35:31.262Z"
       },
       {
-        "id": "5",
+        "id": 5,
         "title": "Add Idempotency and Summary Output",
         "description": "Make the script idempotent (safe to run multiple times) and add clear summary output showing what was created.",
         "details": "Implementation steps:\n\n1. Track operations performed:\n   ```bash\n   CREATED_COUNT=0\n   SKIPPED_COUNT=0\n   WARNED_COUNT=0\n   ```\n\n2. Create summary output function:\n   ```bash\n   show_summary() {\n       echo \"\"\n       echo \"Summary:\"\n       echo \"  Created: $CREATED_COUNT\"\n       echo \"  Skipped: $SKIPPED_COUNT\"\n       [ $WARNED_COUNT -gt 0 ] && echo \"  Warnings: $WARNED_COUNT\"\n       echo \"\"\n       echo \"Mode: $MODE\"\n       [ \"$MODE\" = \"symlink\" ] && echo \"Template: $TEMPLATE_PATH\"\n   }\n   ```\n\n3. Add detailed output for each directory:\n   - For symlinks: show relative path target\n   - For copies: show file count\n   - For skips: show reason\n\n4. Final status message:\n   ```bash\n   if [ $CREATED_COUNT -gt 0 ]; then\n       echo \"✅ Local .claude/ structure ready. Slash commands should now work.\"\n   else\n       echo \"ℹ️  No changes made (already configured)\"\n   fi\n   ```\n\n5. Exit codes:\n   - 0: Success (created or skipped)\n   - 1: Error (template not found, etc.)\n   - 2: Nothing to do but warnings present\n\n6. Req 1.12: Ensure non-zero exit if template source cannot be found:\n   ```bash\n   if [ ! -d \"$TEMPLATE_PATH/.claude\" ]; then\n       log_error \"Template not found: $TEMPLATE_PATH\"\n       exit 1\n   fi\n   ```",
@@ -1269,7 +1272,7 @@
         "updatedAt": "2026-02-20T05:35:35.729Z"
       },
       {
-        "id": "6",
+        "id": 6,
         "title": "Enhance session-init.sh with Local Presence Checks",
         "description": "Add checks to session-init.sh that detect missing LOCAL .claude/commands/ and .claude/skills/ directories and warn users with actionable fix commands.",
         "details": "Implementation steps:\n\n1. Add new check function in session-init.sh after existing checks (~line 88):\n   ```bash\n   # Check LOCAL .claude/ presence for commands/skills\n   # Parent inheritance doesn't work - must be local directory or symlink\n   check_local_claude_dirs() {\n       local claude_dir=\"$PROJECT_DIR/.claude\"\n       \n       # Check commands - can be directory (-d) OR symlink (-L)\n       if [ ! -d \"$claude_dir/commands\" ] && [ ! -L \"$claude_dir/commands\" ]; then\n           CRITICAL_ISSUES+=(\"Slash commands not registered (no local .claude/commands/)\")\n           SETUP_NEEDED+=(\"Run: ./scripts/init-project.sh\")\n       fi\n       \n       # Check skills - can be directory (-d) OR symlink (-L)\n       if [ ! -d \"$claude_dir/skills\" ] && [ ! -L \"$claude_dir/skills\" ]; then\n           CRITICAL_ISSUES+=(\"Skills not registered (no local .claude/skills/)\")\n           # Don't duplicate the fix suggestion\n       fi\n   }\n   ```\n\n2. Call the function early in the script (before scenario detection)\n\n3. Add fallback for when init-project.sh doesn't exist:\n   ```bash\n   if [ ! -f \"$PROJECT_DIR/scripts/init-project.sh\" ]; then\n       SETUP_NEEDED+=(\"Or run: /setup\")\n   fi\n   ```\n\n4. Ensure existing behavior is NOT changed - only ADD new checks\n\n5. The check must work for both:\n   - Real directories: `-d \"$path\"` returns true\n   - Symlinks to directories: `-L \"$path\"` returns true\n   - Use `[ -d \"$path\" ] || [ -L \"$path\" ]` for robust check\n\n6. Req 2.6: Both real dirs and symlinks should pass the check",
@@ -1286,7 +1289,7 @@
         "updatedAt": "2026-02-20T05:36:41.396Z"
       },
       {
-        "id": "7",
+        "id": 7,
         "title": "Update setup.md Command with Step 0",
         "description": "Add 'Step 0: Initialize Local .claude/ Structure' to the setup wizard that runs init-project.sh before other setup steps.",
         "details": "Implementation steps:\n\n1. Add new 'Step 0' section at the beginning of setup.md (before current Step 1):\n   ```markdown\n   ### Step 0: Initialize Local .claude/ Structure\n\n   Claude Code's parent-directory traversal inherits rules and CLAUDE.md, but \n   commands, skills, and hooks must exist locally (as directories or symlinks).\n\n   Check for local structure:\n   ```bash\n   # Check if commands/ and skills/ exist locally\n   ls -la .claude/commands/ .claude/skills/ 2>/dev/null || echo \"Missing local .claude/ structure\"\n   ```\n\n   If missing, initialize:\n   ```bash\n   # If script exists\n   ./scripts/init-project.sh\n\n   # If script doesn't exist (standalone project without scripts/)\n   # Create minimal structure manually or copy from template\n   ```\n\n   **Why this step is needed:** Claude Code walks parent directories for rules\n   and CLAUDE.md, but does NOT register commands/skills from parent `.claude/`\n   directories. Without local copies or symlinks, all 50 slash commands fail.\n   ```\n\n2. Add automatic detection and execution:\n   ```markdown\n   If `.claude/commands/` is missing (check with `-d` or `-L`):\n   - If `./scripts/init-project.sh` exists: run it automatically\n   - If not: provide manual instructions for creating symlinks or copying\n   ```\n\n3. Update 'For Adopting Template' section to include init-project.sh step\n\n4. Renumber existing steps (Step 1 becomes Step 2, etc.)",
@@ -1303,7 +1306,7 @@
         "updatedAt": "2026-02-20T05:37:27.943Z"
       },
       {
-        "id": "8",
+        "id": 8,
         "title": "Add sync_full_directories to sync-template.sh",
         "description": "Enhance sync-template.sh with a sync_full_directories() function for the adopt command that copies ALL files from template .claude/ subdirectories.",
         "details": "Implementation steps:\n\n1. Add new function after existing `ensure_directories()` (~line 356):\n   ```bash\n   # Full directory sync for adopt mode\n   # Copies ALL files, not just curated lists\n   sync_full_directories() {\n       local dirs=(\"commands\" \"skills\" \"agents\" \"contexts\" \"hooks\")\n       \n       for dir in \"${dirs[@]}\"; do\n           local source=\"$TEMPLATE_PATH/.claude/$dir\"\n           local target=\"./.claude/$dir\"\n           \n           if [ ! -d \"$source\" ]; then\n               echo -e \"${YELLOW}Skip: .claude/$dir (not in template)${NC}\"\n               continue\n           fi\n           \n           # Count files for reporting\n           local file_count=$(find \"$source\" -type f | wc -l)\n           \n           if [ \"$DRY_RUN\" = true ]; then\n               echo -e \"${BLUE}Would copy: .claude/$dir/ ($file_count files)${NC}\"\n               # Show first few files\n               find \"$source\" -type f | head -5 | sed 's|.*/||' | sed 's/^/  /' \n               continue\n           fi\n           \n           # Create target and copy\n           mkdir -p \"$target\"\n           cp -r \"$source/\"* \"$target/\" 2>/dev/null || true\n           echo -e \"${GREEN}Copied: .claude/$dir/ ($file_count files)${NC}\"\n       done\n   }\n   ```\n\n2. Modify `adopt` command logic to call sync_full_directories():\n   - After building FILES_TO_SYNC array\n   - Call sync_full_directories() to copy full directories\n   - Then continue with individual file sync for rules, docs, etc.\n\n3. Update dry-run mode to show:\n   - File counts per directory\n   - List of new/changed files (first N)\n\n4. Preserve existing curated lists (STOCK_COMMANDS, etc.) for selective `sync` command\n\n5. Ensure subdirectory structure is preserved:\n   - skills/debugging/SKILL.md → skills/debugging/SKILL.md\n   - Not flattened",
@@ -1318,7 +1321,7 @@
         "updatedAt": "2026-02-20T05:41:41.794Z"
       },
       {
-        "id": "9",
+        "id": 9,
         "title": "Create smoke-test.sh Verification Script",
         "description": "Create scripts/smoke-test.sh that verifies LOCAL .claude/ presence and reports PASS/FAIL with counts, catching the false-positive problem.",
         "details": "Implementation steps:\n\n1. Create `scripts/smoke-test.sh` with structure:\n   ```bash\n   #!/bin/bash\n   # smoke-test.sh - Verify template overlay is working\n   # Checks LOCAL presence, not just file existence\n   \n   PROJECT_DIR=\"${1:-.}\"\n   PASS=0\n   FAIL=0\n   WARN=0\n   ```\n\n2. Implement check functions for each component:\n   ```bash\n   check_local_dir() {\n       local name=\"$1\"\n       local path=\"$PROJECT_DIR/.claude/$name\"\n       local critical=\"$2\"  # true/false\n       \n       if [ -d \"$path\" ] || [ -L \"$path\" ]; then\n           local count=$(find \"$path\" -type f 2>/dev/null | wc -l)\n           echo \"✅ PASS: $name/ ($count files)\"\n           ((PASS++))\n           return 0\n       else\n           if [ \"$critical\" = true ]; then\n               echo \"❌ FAIL: $name/ (missing - slash commands won't work)\"\n               ((FAIL++))\n           else\n               echo \"⚠️  WARN: $name/ (missing)\"\n               ((WARN++))\n           fi\n           return 1\n       fi\n   }\n   ```\n\n3. Check each required component:\n   - commands/ - CRITICAL (Req 5.2)\n   - skills/ - CRITICAL (Req 5.3)\n   - agents/ - warning (Req 5.4)\n   - contexts/ - warning (Req 5.5)\n   - hooks/ - warning (Req 5.6)\n\n4. Check rules with parent walk-up (Req 5.7):\n   ```bash\n   check_rules() {\n       local dir=\"$PROJECT_DIR\"\n       while [ \"$dir\" != \"/\" ]; do\n           if [ -d \"$dir/.claude/rules\" ]; then\n               local count=$(ls -1 \"$dir/.claude/rules/\"*.md 2>/dev/null | wc -l)\n               echo \"✅ PASS: rules/ ($count files at $dir)\"\n               return 0\n           fi\n           dir=$(dirname \"$dir\")\n       done\n       echo \"❌ FAIL: rules/ (not found in any parent)\"\n       return 1\n   }\n   ```\n\n5. Check CLAUDE.md customization (Req 5.8)\n\n6. Check .gitignore entries (Req 5.9)\n\n7. Output summary (Req 5.10, 5.11):\n   ```bash\n   echo \"\"\n   echo \"Summary: $PASS passed, $FAIL failed, $WARN warnings\"\n   [ $FAIL -gt 0 ] && exit 1 || exit 0\n   ```",
@@ -1333,7 +1336,7 @@
         "updatedAt": "2026-02-20T05:41:45.970Z"
       },
       {
-        "id": "10",
+        "id": 10,
         "title": "Update Documentation with Fix Status",
         "description": "Update TEMPLATE_OVERLAY_FRICTION.md friction tracker with fix status and update CLAUDE.md if component counts changed.",
         "details": "Implementation steps:\n\n1. Update Friction Pattern Tracker in `docs/TEMPLATE_OVERLAY_FRICTION.md`:\n   ```markdown\n   | Pattern | Occurrences | Severity | Status |\n   |---------|-------------|----------|--------|\n   | Commands/skills don't inherit | 1/3 | CRITICAL | **FIXED** via init-project.sh |\n   | Smoke test false positives | 1/3 | High | **FIXED** via smoke-test.sh |\n   | Hooks not auto-wired | 3/3 | Medium | **MITIGATED** via session-init.sh warning |\n   | No onboarding prompt | 1/3 | Medium | **MITIGATED** via session-init.sh detection |\n   ```\n\n2. Add a new section describing the fix:\n   ```markdown\n   ## Resolution: init-project.sh\n   \n   The CRITICAL inheritance gap was resolved by creating `scripts/init-project.sh`\n   which:\n   - Auto-detects nested vs standalone projects\n   - Creates symlinks for nested projects (in sync with template)\n   - Copies full directories for standalone projects\n   \n   Run `./scripts/smoke-test.sh` to verify your project is correctly configured.\n   ```\n\n3. Update CLAUDE.md if needed:\n   - Check current rules count - if superpowers-integration.md was added, update \"7 core rules\" to \"8 core rules\"\n   - Update any component counts that changed\n\n4. Add references to new scripts in relevant sections:\n   - scripts/ section should mention init-project.sh and smoke-test.sh\n   - Setup section should reference init-project.sh\n\n5. Cross-reference from `docs/ECC_INTEGRATION.md` or other relevant docs",
@@ -1352,7 +1355,7 @@
         "updatedAt": "2026-02-20T05:55:51.470Z"
       },
       {
-        "id": "11",
+        "id": 11,
         "title": "Integration Testing Across Test Projects",
         "description": "Run comprehensive integration tests across all 3 test projects to verify the fixes work in real scenarios.",
         "details": "Implementation steps:\n\n1. Test analog_image_generator (existing project, has local .claude/):\n   - Run smoke-test.sh - should PASS\n   - Verify existing commands still work\n   - Run init-project.sh - should skip (already configured)\n\n2. Test rideshare-rescue (child of template, has pre-existing .claude/):\n   - Run smoke-test.sh - should PASS (has local copies)\n   - Test that skill/command shadowing behavior is unchanged\n   - Document any new warnings from session-init.sh\n\n3. Test postiz-social-automation (greenfield, no local .claude/ initially):\n   - Remove existing symlinks if present\n   - Run smoke-test.sh - should FAIL (missing commands/skills)\n   - Run init-project.sh - should create 5 symlinks\n   - Run smoke-test.sh again - should PASS\n   - Start new Claude Code session - verify session-init.sh shows no CRITICAL warnings\n   - Test a slash command (e.g., /health) - should work\n\n4. Test standalone scenario:\n   - Create temp project outside template tree\n   - Run init-project.sh --mode copy\n   - Run smoke-test.sh - should PASS\n   - Verify full directory contents were copied\n\n5. Document results:\n   - Update friction log with final test results\n   - Note any unexpected behaviors",
@@ -1437,7 +1440,7 @@
         "updatedAt": "2026-02-20T06:02:39.672Z"
       },
       {
-        "id": "12",
+        "id": 12,
         "title": "Add Security Checks to init-project.sh",
         "description": "Add security checks to prevent symlink attacks and ensure safe operation.",
         "details": "Implementation steps:\n\n1. Prevent symlinks outside template tree (Req 1 from Security Considerations):\n   ```bash\n   validate_template_path() {\n       local resolved=$(realpath \"$TEMPLATE_PATH\" 2>/dev/null)\n       \n       # Ensure template path is a real directory, not a symlink to unknown location\n       if [ -L \"$TEMPLATE_PATH\" ]; then\n           log_warn \"Template path is a symlink - validating target\"\n           # Check that resolved path exists and contains expected structure\n       fi\n       \n       # Ensure .claude/ exists in resolved path\n       if [ ! -d \"$resolved/.claude\" ]; then\n           log_error \"Template .claude/ not found at $resolved\"\n           return 1\n       fi\n       \n       return 0\n   }\n   ```\n\n2. Use relative paths only for symlinks (Req 2):\n   - Already implemented in Task 3 via calc_relative_path()\n   - Add validation that result doesn't start with /\n\n3. Add check for sensitive files in settings.local.json:\n   ```bash\n   check_sensitive_files() {\n       local settings=\"$PROJECT_DIR/.claude/settings.local.json\"\n       if [ -f \"$settings\" ]; then\n           if grep -qE '(token|key|secret|password)' \"$settings\"; then\n               log_warn \"settings.local.json may contain tokens - ensure it's in .gitignore\"\n           fi\n       fi\n   }\n   ```\n\n4. Validate that symlink targets don't escape expected boundaries:\n   ```bash\n   # After creating symlink, verify it resolves within template\n   validate_symlink() {\n       local link=\"$1\"\n       local resolved=$(realpath \"$link\" 2>/dev/null)\n       local template_resolved=$(realpath \"$TEMPLATE_PATH\" 2>/dev/null)\n       \n       if [[ \"$resolved\" != \"$template_resolved\"* ]]; then\n           log_error \"Symlink resolves outside template tree: $resolved\"\n           rm \"$link\"\n           return 1\n       fi\n   }\n   ```",
@@ -1461,7 +1464,441 @@
       "completedCount": 12,
       "tags": [
         "overlay-fixes"
-      ]
+      ],
+      "created": "2026-02-23T05:22:55.134Z",
+      "description": "Tasks for overlay-fixes context",
+      "updated": "2026-02-23T05:22:55.134Z"
+    }
+  },
+  "workflow-guardrails": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Create workflow-enforcement.md Rule",
+        "description": "Create a comprehensive rule file that explicitly defines the correct workflow for every common scenario, serving as the normative foundation for enforcement hooks.",
+        "details": "Create `.claude/rules/workflow-enforcement.md` with the following sections:\n\n1. **Header**: Template version comment, file path comment, title\n\n2. **Introduction**: Explain this is the NORMATIVE rule (defines what should happen) vs hooks which are ENFORCEMENT (prevents violations). State that not all normative rules have hard enforcement.\n\n3. **Feature Implementation Workflow (R3.1)**:\n   - State MANDATORY for multi-task work\n   - Document: brainstorm → PRD (.taskmaster/docs/prd_*.txt) → parse-prd --num-tasks=0 → analyze-complexity → expand (guided by report) → TDD per task\n   - Reference superpowers-integration.md for details\n\n4. **Bug Fix Workflow (R3.2)**:\n   | Size | Threshold | Workflow |\n   |------|-----------|----------|\n   | Trivial | <10 lines | Direct TDD, no task needed |\n   | Scoped | 10-50 lines, clear cause | Create task, TDD |\n   | Complex/unclear | >50 lines or unclear | systematic-debugging skill first, then task + TDD |\n\n5. **Refactoring Workflow (R3.3)**:\n   | Size | Threshold | Workflow |\n   |------|-----------|----------|\n   | Small | <50 lines | Direct with tests |\n   | Medium | 50-200 lines | Task + TDD |\n   | Large | 200+ lines | PRD + full workflow |\n\n6. **Documentation Workflow (R3.4)**:\n   - No TDD needed (prose not testable)\n   - Commit with `docs:` prefix\n   - No task for small updates\n   - Task required for major rewrites\n\n7. **Dependency Update Workflow (R3.5)**:\n   - Always run full test suite after update\n   - Commit as `chore:` prefix\n   - Task only for major version bumps\n\n8. **Emergency Hotfix Workflow (R3.6)**:\n   - TDD still applies (minimal test: single assertion for fix)\n   - Skip PRD/task overhead\n   - Use `hotfix/` branch prefix\n   - Document hotfix in CHANGELOG\n\n9. **Multi-Feature Sessions (R3.7)**:\n   - One task in-progress at a time\n   - Must `set-status` before switching tasks\n   - Reference proactive-steering.md redirect pattern\n\n10. **Session Resume Priority (R3.8)**:\n    1. Handoff doc (`.claude/sessions/handoff-*.md`) if exists\n    2. MEMORY.md for patterns\n    3. Session summary for recent activity\n    4. `git log` + `task-master status` for ground truth\n\n11. **Tag Management (R3.9)**:\n    - One tag per workflow phase\n    - `task-master tags use <name>` before status operations\n    - Document tag purpose when creating\n\n12. **Enforcement Note (R3.10)**:\n    - Normative = defines correct behavior\n    - Enforcement = prevents violations\n    - This rule is normative; hooks provide enforcement\n\nPseudo-code structure:\n```markdown\n<!-- template-version: 2.0.0 -->\n<!-- template-file: .claude/rules/workflow-enforcement.md -->\n# Workflow Enforcement\n\n## Introduction\n[Normative vs Enforcement explanation]\n\n## Workflows by Task Type\n### Feature Implementation (MANDATORY for multi-task)\n### Bug Fixes\n### Refactoring\n### Documentation\n### Dependency Updates\n### Emergency Hotfixes\n\n## Session Management\n### Multi-Feature Sessions\n### Session Resume Priority\n\n## Tag Management\n\n## Enforcement Note\n```",
+        "testStrategy": "Manual review for:\n1. Completeness: All 10 subsections from R3.1-R3.10 present\n2. Clarity: A new user can understand correct workflow without consulting other rules\n3. Consistency: No contradictions with existing rules (authority-hierarchy, superpowers-integration, workflow-guide)\n4. Actionable: Each workflow has clear decision points and commands",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create file structure with header, introduction, and normative vs enforcement distinction",
+            "description": "Create the workflow-enforcement.md file with template version header, introduction explaining the normative (defines correct behavior) vs enforcement (prevents violations) distinction, and foundational context.",
+            "dependencies": [],
+            "details": "Create `.claude/rules/workflow-enforcement.md` with: (1) Template version comment `<!-- template-version: 2.0.0 -->` and file path comment, (2) Title '# Workflow Enforcement', (3) Introduction section explaining that this rule is NORMATIVE (defines what SHOULD happen) while hooks are ENFORCEMENT (prevents violations), (4) Note that not all normative rules have hard enforcement - some are advisory. Reference that this complements but does not duplicate workflow-guide.md (which focuses on phase detection and tool selection) and superpowers-integration.md (which defines the Superpowers + Task Master pipeline). Establish that this rule provides explicit decision thresholds for common scenarios.",
+            "status": "pending",
+            "testStrategy": "Verify: (1) Header matches template-version 2.0.0 format, (2) Introduction clearly distinguishes normative vs enforcement, (3) Does not duplicate existing content from workflow-guide.md or superpowers-integration.md, (4) Sets up the document structure for subsequent sections"
+          },
+          {
+            "id": 2,
+            "title": "Document Feature Implementation (R3.1), Bug Fix (R3.2), and Refactoring (R3.3) workflows",
+            "description": "Add the core development workflows with explicit size thresholds and decision tables for feature implementation, bug fixes, and refactoring tasks.",
+            "dependencies": [
+              1
+            ],
+            "details": "Add three workflow sections: (1) **Feature Implementation (R3.1)** - State MANDATORY for multi-task work, document the pipeline from superpowers-integration.md: brainstorm → PRD (.taskmaster/docs/prd_*.txt) → parse-prd --num-tasks=0 → analyze-complexity → expand (guided by report) → TDD per task. Reference superpowers-integration.md for full pipeline details. (2) **Bug Fix (R3.2)** - Create threshold table: Trivial (<10 lines) → Direct TDD, no task; Scoped (10-50 lines, clear cause) → Create task, TDD; Complex/unclear (>50 lines or unclear root cause) → systematic-debugging skill first, then task + TDD. (3) **Refactoring (R3.3)** - Create threshold table: Small (<50 lines) → Direct with tests; Medium (50-200 lines) → Task + TDD; Large (200+ lines) → PRD + full workflow. Ensure thresholds are consistent with the 'trivial fix < 10 lines' from superpowers-integration.md Quick Decision Tree.",
+            "status": "pending",
+            "testStrategy": "Verify: (1) Feature workflow matches superpowers-integration.md pipeline exactly, (2) Bug fix thresholds are actionable (10/50 line boundaries), (3) Refactoring thresholds scale correctly (50/200 lines), (4) No contradiction with workflow-guide.md phase behaviors, (5) TDD requirement is consistent across all code-writing workflows"
+          },
+          {
+            "id": 3,
+            "title": "Document Documentation (R3.4), Dependency Update (R3.5), and Emergency Hotfix (R3.6) workflows",
+            "description": "Add auxiliary workflow sections for documentation changes, dependency updates, and emergency hotfixes with appropriate constraints and commit conventions.",
+            "dependencies": [
+              1
+            ],
+            "details": "Add three workflow sections: (1) **Documentation Workflow (R3.4)** - No TDD needed (prose is not testable), commit with `docs:` prefix per claude-behavior.md conventional commits, no task needed for small updates (README fixes, comment updates), task required for major documentation rewrites or new documentation systems. (2) **Dependency Update Workflow (R3.5)** - Always run full test suite after update to catch breaking changes, commit as `chore:` prefix, task only required for major version bumps (semantic versioning major = breaking changes), note to review changelogs for breaking changes before updating. (3) **Emergency Hotfix Workflow (R3.6)** - TDD still applies but minimal: single assertion test proving the fix, skip PRD/task overhead for speed, use `hotfix/` branch prefix per git-workflow.md conventions, document hotfix in CHANGELOG with date and brief explanation, reference the production issue if applicable.",
+            "status": "pending",
+            "testStrategy": "Verify: (1) Documentation workflow correctly exempts TDD, (2) Commit prefixes match claude-behavior.md/git-workflow.md conventions (docs:, chore:, hotfix:), (3) Hotfix workflow maintains TDD discipline while being appropriately minimal, (4) Dependency update workflow emphasizes test suite verification"
+          },
+          {
+            "id": 4,
+            "title": "Document Session Management (R3.7-R3.8), Tag Management (R3.9), and Enforcement Note (R3.10)",
+            "description": "Add session and tag management sections covering multi-feature sessions, session resume priority, tag discipline, and the final enforcement note clarifying normative vs enforcement.",
+            "dependencies": [
+              1
+            ],
+            "details": "Add four sections: (1) **Multi-Feature Sessions (R3.7)** - One task in-progress at a time (matches workflow-guide.md 'Don't work on multiple tasks simultaneously'), must `task-master set-status` before switching tasks, reference proactive-steering.md 'Pattern: The Redirect' for handling scope changes. (2) **Session Resume Priority (R3.8)** - Ordered priority list: 1. Handoff doc (`.claude/sessions/handoff-*.md`) if exists, 2. MEMORY.md for patterns/context, 3. Session summary (`.claude/sessions/session-summary-*.md`) for recent activity, 4. `git log` + `task-master status` for ground truth. (3) **Tag Management (R3.9)** - One tag per workflow phase (per CLAUDE.md 'New tag per phase'), `task-master tags use <name>` before status operations (per CLAUDE.md 'Switch tags' rule), document tag purpose when creating to maintain clarity. (4) **Enforcement Note (R3.10)** - Conclude with clear statement: Normative rules define correct behavior, Enforcement hooks prevent violations, this document is normative, violations may not always be blocked but should be corrected when noticed.",
+            "status": "pending",
+            "testStrategy": "Verify: (1) Multi-feature session rules align with workflow-guide.md Building phase, (2) Session resume priority matches context-management.md session guidance, (3) Tag management rules match CLAUDE.md Taskmaster Workflows section exactly, (4) Enforcement note provides clear closure and explains the normative/enforcement relationship"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Update authority-hierarchy.md with Superpowers Tier",
+        "description": "Resolve the contradiction between user override and Superpowers enforcement by adding a new authority tier and clarifying override behavior.",
+        "details": "Edit `.claude/rules/authority-hierarchy.md` to add Superpowers as a distinct authority level:\n\n1. **Update Precedence Order section**:\n   Change from 3 tiers to 4:\n   ```markdown\n   ## Precedence Order\n   \n   1. **Rules** (`.claude/rules/*.md`) — Highest authority. Project-defined requirements.\n   2. **Superpowers Enforcement** (when plugin installed) — Hard workflow enforcement. Deletes code without tests.\n   3. **Instincts** (`.claude/instincts/*.json`) — Learned patterns. Supplementary suggestions.\n   4. **Defaults** — Built-in Claude behavior. Baseline when nothing else applies.\n   ```\n\n2. **Add new section after Key Principles**:\n   ```markdown\n   ## Superpowers Authority (R4.2)\n   \n   When the Superpowers plugin is installed and active, its enforcement mechanisms operate at RULE-LEVEL authority:\n   \n   - TDD enforcement (deletes production code written without failing tests first)\n   - Debugging discipline (systematic-debugging workflow required)\n   - Verification requirements (evidence before completion claims)\n   \n   **When Superpowers is NOT installed (R4.4):**\n   TDD becomes advisory (instinct-level), not enforced. The template will suggest TDD but cannot delete code.\n   \n   ## User Override Behavior (R4.3)\n   \n   | Level | User Override Behavior |\n   |-------|------------------------|\n   | Rules | Cannot be overridden |\n   | Superpowers | Requires explicit acknowledgment: \"I understand this skips TDD, proceed anyway\" |\n   | Instincts | Can be overridden freely |\n   | Defaults | Can be overridden freely |\n   \n   Superpowers is intentionally strict — overriding it requires the user to consciously acknowledge they're bypassing quality gates.\n   ```\n\n3. **Add new examples to Examples table (R4.5)**:\n   | Conflict | Resolution |\n   |----------|------------|\n   | Superpowers: \"delete code without tests\" vs User: \"skip tests this once\" | User must explicitly acknowledge override |\n   | Superpowers not installed + Instinct: \"use TDD\" | Follow instinct (advisory) |\n   | Rule: \"commit frequently\" vs Superpowers: \"verify before commit\" | Both apply: verify, then commit |\n\nPseudo-code for edit:\n```\nOLD: \"1. **Rules**... 2. **Instincts**... 3. **Defaults**...\"\nNEW: \"1. **Rules**... 2. **Superpowers Enforcement**... 3. **Instincts**... 4. **Defaults**...\"\n```",
+        "testStrategy": "Manual review:\n1. Four tiers clearly documented with precedence\n2. Superpowers enforcement behavior explained (what it does, when it applies)\n3. Override mechanism documented (explicit acknowledgment required)\n4. Fallback behavior documented (when Superpowers not installed)\n5. Examples cover the new tier interactions\n6. No contradictions with superpowers-integration.md",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 3,
+        "title": "Enhance pre-commit-check.sh with Commit Format and Branch Protection",
+        "description": "Add conventional commit format validation and main/master branch protection to the existing pre-commit hook while preserving current checks.",
+        "details": "Edit `.claude/hooks/pre-commit-check.sh` to add the following checks:\n\n**1. Conventional Commit Format Validation (R1.1)**:\nAfter the `git commit` command detection, add:\n```bash\n# Check 0: Validate conventional commit format (R1.1)\nif [[ -z \"$SKIP_COMMIT_FORMAT\" ]]; then\n    # Extract commit message from command (-m \"message\" or heredoc)\n    COMMIT_MSG=\"\"\n    if [[ \"$COMMAND\" =~ -m[[:space:]]+[\\'\\\"](.*)[\\'\\\"] ]]; then\n        COMMIT_MSG=\"${BASH_REMATCH[1]}\"\n    elif [[ \"$COMMAND\" =~ -m[[:space:]]+([^[:space:]]+) ]]; then\n        COMMIT_MSG=\"${BASH_REMATCH[1]}\"\n    fi\n    \n    if [[ -n \"$COMMIT_MSG\" ]]; then\n        # Conventional commit regex: type(scope)?: description\n        CONVENTIONAL_REGEX='^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\\([a-zA-Z0-9_-]+\\))?!?:[[:space:]].+'\n        if [[ ! \"$COMMIT_MSG\" =~ $CONVENTIONAL_REGEX ]]; then\n            ERRORS+=(\"Commit message must follow conventional commits format: type: description\")\n            ERRORS+=(\"Valid types: feat, fix, docs, style, refactor, test, chore, perf, ci, build, revert\")\n        fi\n    fi\nfi\n```\n\n**2. Main/Master Branch Protection (R1.2)**:\n```bash\n# Check -1: Block commits to main/master (R1.2)\nif [[ -z \"$SKIP_BRANCH_CHECK\" ]]; then\n    CURRENT_BRANCH=$(cd \"$PROJECT_DIR\" && git branch --show-current 2>/dev/null || echo \"\")\n    if [[ \"$CURRENT_BRANCH\" == \"main\" || \"$CURRENT_BRANCH\" == \"master\" ]]; then\n        ERRORS+=(\"Direct commits to $CURRENT_BRANCH are blocked.\")\n        ERRORS+=(\"Create a feature branch: git checkout -b feature/<description>\")\n    fi\nfi\n```\n\n**3. Task Master In-Progress Warning (R1.3)**:\n```bash\n# Warning: Check for in-progress task (R1.3)\nif [[ -z \"$SKIP_TASK_CHECK\" ]]; then\n    ACTIVE_TASK=$(task-master list --status in-progress --json 2>/dev/null | jq -r '.tasks[0].id // empty' 2>/dev/null)\n    if [[ -z \"$ACTIVE_TASK\" ]]; then\n        echo \"Advisory: No Task Master task is in-progress. Consider tracking work with task-master.\"\n        # Note: This is a warning only, doesn't add to ERRORS\n    fi\nfi\n```\n\n**4. Environment Variable Skips (R1.5)**:\nDocument at top of script:\n```bash\n# Skip individual checks with environment variables:\n#   SKIP_COMMIT_FORMAT=1 - Skip conventional commit validation\n#   SKIP_BRANCH_CHECK=1 - Skip main/master branch protection\n#   SKIP_TASK_CHECK=1 - Skip task-in-progress warning\n#   SKIP_LINT=1 - Skip linter check\n#   SKIP_TESTS=1 - Skip test check\n```\n\n**5. Preserve existing checks (R1.4)**:\nWrap existing linter and test checks with skip variables:\n```bash\nif [[ -z \"$SKIP_LINT\" ]]; then\n    # existing ruff check\nfi\n\nif [[ -z \"$SKIP_TESTS\" ]]; then\n    # existing pytest check\nfi\n```\n\nOrder of checks:\n1. Branch protection (most critical, blocks early)\n2. Commit format validation\n3. Linter (existing)\n4. Tests (existing)\n5. Debug statements/secrets (existing)\n6. Task warning (advisory, runs last)",
+        "testStrategy": "Shell script tests:\n1. Test commit to main → should block with error message\n2. Test commit to feature branch → should allow\n3. Test bad commit message (\"fix stuff\") → should block\n4. Test good commit message (\"fix: resolve null check\") → should allow\n5. Test SKIP_COMMIT_FORMAT=1 with bad message → should allow\n6. Test SKIP_BRANCH_CHECK=1 on main → should allow\n7. Test all existing checks still work (linter, tests, debug statements)\n8. Test advisory task warning appears when no task in-progress",
+        "priority": "high",
+        "dependencies": [
+          1,
+          2
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Add main/master branch protection check with SKIP_BRANCH_CHECK variable",
+            "description": "Implement branch protection that blocks direct commits to main/master branches, with an environment variable escape hatch for emergency overrides.",
+            "dependencies": [],
+            "details": "Add branch protection as the first check after the git commit detection (line 21-23). Insert code that extracts current branch using `git branch --show-current`, then blocks if branch is 'main' or 'master' unless SKIP_BRANCH_CHECK=1 is set. This is the most critical check so it runs first to fail fast. Add error messages that explain the block and suggest creating a feature branch. Test by: (1) attempting commit on main → should block, (2) attempting on feature branch → should allow, (3) SKIP_BRANCH_CHECK=1 on main → should allow.",
+            "status": "pending",
+            "testStrategy": "Shell tests: 1) `git checkout main && git commit -m 'test'` → expect exit 2 with 'Direct commits to main are blocked' message. 2) `git checkout -b feature/test && git commit -m 'feat: test'` → expect exit 0. 3) `SKIP_BRANCH_CHECK=1 git commit -m 'feat: test'` on main → expect check skipped."
+          },
+          {
+            "id": 2,
+            "title": "Add conventional commit format validation with SKIP_COMMIT_FORMAT variable",
+            "description": "Implement regex-based validation of commit messages against conventional commits specification (type: description format), with support for extracting messages from -m flag or heredoc patterns.",
+            "dependencies": [
+              1
+            ],
+            "details": "Add commit message extraction logic that handles both `-m \"message\"` and `-m 'message'` formats using bash regex. Implement conventional commit regex pattern matching for types: feat, fix, docs, style, refactor, test, chore, perf, ci, build, revert. Support optional scope `(scope)` and breaking change indicator `!`. Run after branch protection but before linter checks. Add clear error messages listing valid commit types. Skip check when SKIP_COMMIT_FORMAT=1 is set. Test edge cases: messages with quotes, empty messages, type-only messages, valid messages with scope.",
+            "status": "pending",
+            "testStrategy": "Shell tests: 1) `git commit -m 'fix stuff'` → expect exit 2 with conventional format error. 2) `git commit -m 'feat: add feature'` → expect pass. 3) `git commit -m 'fix(api): resolve null check'` → expect pass. 4) `SKIP_COMMIT_FORMAT=1` with bad message → expect check skipped."
+          },
+          {
+            "id": 3,
+            "title": "Add Task Master in-progress warning as advisory check",
+            "description": "Add a non-blocking advisory check that warns when no Task Master task is currently in-progress, encouraging developers to track their work.",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "Add advisory check after all blocking checks complete. Use `task-master list --status in-progress --json` to query for active tasks, pipe through jq to extract task ID. If no task is in-progress (empty result or jq fails), print an advisory message but do NOT add to ERRORS array - this keeps the check non-blocking. The check should gracefully handle: task-master not installed, jq not installed, no tasks file. Support SKIP_TASK_CHECK=1 to suppress the warning. Place this as the final check since it's advisory-only.",
+            "status": "pending",
+            "testStrategy": "Shell tests: 1) With no in-progress task → expect advisory message printed but exit 0. 2) With in-progress task → expect no warning. 3) task-master not installed → expect graceful handling, no error. 4) SKIP_TASK_CHECK=1 → expect warning suppressed."
+          },
+          {
+            "id": 4,
+            "title": "Wrap existing checks with SKIP_* variables and add documentation header",
+            "description": "Add environment variable skip support to existing linter and test checks, and document all available skip variables in the script header for discoverability.",
+            "dependencies": [
+              1,
+              2,
+              3
+            ],
+            "details": "Wrap existing ruff check (lines 28-33) with `if [[ -z \"$SKIP_LINT\" ]]; then ... fi`. Wrap existing pytest check (lines 36-40) with `if [[ -z \"$SKIP_TESTS\" ]]; then ... fi`. Add comprehensive documentation header after line 9 that lists all skip variables: SKIP_COMMIT_FORMAT, SKIP_BRANCH_CHECK, SKIP_TASK_CHECK, SKIP_LINT, SKIP_TESTS. Document what each skip does. Ensure existing debug statement and secrets checks remain unchanged (no skip variables for security checks). Verify check order: branch → format → lint → tests → debug/secrets → task warning.",
+            "status": "pending",
+            "testStrategy": "Shell tests: 1) SKIP_LINT=1 with linter errors → expect linter check skipped. 2) SKIP_TESTS=1 with failing tests → expect test check skipped. 3) Review script header shows all 5 SKIP_* variables documented. 4) Debug statement check runs regardless of SKIP_* variables (security cannot be skipped)."
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Enhance pre-compact.sh with Extended State Preservation",
+        "description": "Extend the pre-compaction hook to save additional workflow state including TDD phase, active tag, and branch name for better session continuity.",
+        "details": "Edit `.claude/hooks/pre-compact.sh` to capture additional state:\n\n**1. Save Active Task Master Tag (R2.1)**:\nAfter the ACTIVE_TASK capture, add:\n```bash\n# Get active Task Master tag\nACTIVE_TAG=\"\"\nif [ -f \"$PROJECT_DIR/.taskmaster/state.json\" ]; then\n    ACTIVE_TAG=$(jq -r '.activeTag // \"master\"' \"$PROJECT_DIR/.taskmaster/state.json\" 2>/dev/null)\nfi\n[ -z \"$ACTIVE_TAG\" ] && ACTIVE_TAG=\"master\"\n```\n\n**2. Detect TDD Phase (R2.2)**:\n```bash\n# Detect TDD phase from Superpowers state (if available)\nTDD_PHASE=\"unknown\"\n# Superpowers stores state in session; we can infer from recent activity:\n# - Failing test exists with no implementation → RED\n# - Passing test exists with recent implementation → GREEN/REFACTOR\n# This is best-effort detection\nif [ -d \"$PROJECT_DIR/tests\" ]; then\n    # Run quick test check without output\n    if pytest -q --tb=no \"$PROJECT_DIR/tests\" &>/dev/null 2>&1; then\n        TDD_PHASE=\"GREEN or REFACTOR (tests passing)\"\n    else\n        TDD_PHASE=\"RED (tests failing)\"\n    fi\nelse\n    TDD_PHASE=\"N/A (no tests directory)\"\nfi\n```\n\n**3. Warn About Uncommitted Changes with Count (R2.3)**:\n```bash\n# Count uncommitted changes\nUNCOMMITTED_COUNT=0\nif [ -d \"$PROJECT_DIR/.git\" ]; then\n    UNCOMMITTED_COUNT=$(cd \"$PROJECT_DIR\" && git status --porcelain 2>/dev/null | wc -l)\n    if [ \"$UNCOMMITTED_COUNT\" -gt 0 ]; then\n        echo \"WARNING: $UNCOMMITTED_COUNT uncommitted changes will not be preserved.\"\n    fi\nfi\n```\n\n**4. Save Feature Branch Name (R2.4)**:\nAlready captured as CURRENT_BRANCH, ensure it's saved.\n\n**5. Update the STATE_FILE Template (R2.5)**:\n```bash\ncat > \"$STATE_FILE\" << EOF\n# Pre-Compaction State\n*Saved: $TIMESTAMP*\n\n## Active Task\n$ACTIVE_TASK\n\n## Task Master Tag\n$ACTIVE_TAG\n\n## TDD Phase\n$TDD_PHASE\n\n## Branch: $CURRENT_BRANCH\n\n## Uncommitted Changes ($UNCOMMITTED_COUNT files)\n\\`\\`\\`\n${UNCOMMITTED:-none}\n\\`\\`\\`\n\n## Context to Preserve\n<!-- Add key decisions, variable names, or context that shouldn't be lost -->\n\n---\n*This file is overwritten on each run. Review on session reload.*\nEOF\n```\n\nPseudo-code for the full script structure:\n```\nHeader (unchanged)\nInput handling (unchanged)\nTimestamp capture (unchanged)\nGit branch/uncommitted (enhanced with count warning)\nActive task capture (unchanged)\nActive tag capture (NEW)\nTDD phase detection (NEW)\nWrite enhanced state file (UPDATED template)\n```",
+        "testStrategy": "Shell script tests:\n1. Run hook → verify state file contains Active Task section\n2. Run hook → verify state file contains Task Master Tag section\n3. Run hook → verify state file contains TDD Phase section\n4. Run hook with uncommitted changes → verify warning printed and count shown\n5. Run hook on feature branch → verify branch name saved\n6. Run hook with no tests directory → verify TDD Phase shows \"N/A\"\n7. Run hook with failing tests → verify TDD Phase shows \"RED\"\n8. Run hook with passing tests → verify TDD Phase shows \"GREEN or REFACTOR\"",
+        "priority": "medium",
+        "dependencies": [
+          1,
+          2
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Add Active Task Master Tag Capture",
+            "description": "Add bash code to read the active Task Master tag from .taskmaster/state.json using jq, with fallback to 'master' if not found or file doesn't exist.",
+            "dependencies": [],
+            "details": "After the ACTIVE_TASK capture block (line 47), add the new tag capture logic:\n\n```bash\n# Get active Task Master tag\nACTIVE_TAG=\"\"\nif [ -f \"$PROJECT_DIR/.taskmaster/state.json\" ]; then\n    ACTIVE_TAG=$(jq -r '.activeTag // \"master\"' \"$PROJECT_DIR/.taskmaster/state.json\" 2>/dev/null)\nfi\n[ -z \"$ACTIVE_TAG\" ] && ACTIVE_TAG=\"master\"\n```\n\nThis uses jq's null-coalescing operator (//) to default to 'master' if activeTag is null, with a final fallback check for empty string.",
+            "status": "pending",
+            "testStrategy": "Run the hook with a .taskmaster/state.json containing {\"activeTag\": \"feature-auth\"} and verify the state file shows 'feature-auth'. Run without state.json and verify fallback to 'master'."
+          },
+          {
+            "id": 2,
+            "title": "Add TDD Phase Detection via Test Execution",
+            "description": "Add best-effort TDD phase detection by running pytest quietly and interpreting pass/fail status as GREEN/REFACTOR vs RED phase.",
+            "dependencies": [
+              1
+            ],
+            "details": "After the tag capture block, add TDD phase detection:\n\n```bash\n# Detect TDD phase from Superpowers state (if available)\nTDD_PHASE=\"unknown\"\n# Superpowers stores state in session; we can infer from recent activity:\n# - Failing test exists with no implementation → RED\n# - Passing test exists with recent implementation → GREEN/REFACTOR\n# This is best-effort detection\nif [ -d \"$PROJECT_DIR/tests\" ]; then\n    # Run quick test check without output\n    if pytest -q --tb=no \"$PROJECT_DIR/tests\" &>/dev/null 2>&1; then\n        TDD_PHASE=\"GREEN or REFACTOR (tests passing)\"\n    else\n        TDD_PHASE=\"RED (tests failing)\"\n    fi\nelse\n    TDD_PHASE=\"N/A (no tests directory)\"\nfi\n```\n\nNote: This runs pytest silently with --tb=no to minimize execution time and suppress output.",
+            "status": "pending",
+            "testStrategy": "Run hook with passing tests and verify 'GREEN or REFACTOR' shown. Run with failing test and verify 'RED'. Run without tests/ directory and verify 'N/A' message."
+          },
+          {
+            "id": 3,
+            "title": "Add Uncommitted Changes Count with Warning",
+            "description": "Enhance the git status capture to count uncommitted changes and print a warning to stderr when changes exist that won't survive compaction.",
+            "dependencies": [
+              1
+            ],
+            "details": "Modify the existing git block (lines 39-42) to add a count and warning:\n\n```bash\n# Count uncommitted changes\nUNCOMMITTED_COUNT=0\nif [ -d \"$PROJECT_DIR/.git\" ]; then\n    CURRENT_BRANCH=$(cd \"$PROJECT_DIR\" && git branch --show-current 2>/dev/null || echo \"detached\")\n    UNCOMMITTED=$(cd \"$PROJECT_DIR\" && git status --porcelain 2>/dev/null | head -10 || true)\n    UNCOMMITTED_COUNT=$(cd \"$PROJECT_DIR\" && git status --porcelain 2>/dev/null | wc -l)\n    if [ \"$UNCOMMITTED_COUNT\" -gt 0 ]; then\n        echo \"WARNING: $UNCOMMITTED_COUNT uncommitted changes will not be preserved.\" >&2\n    fi\nfi\n```\n\nThe warning goes to stderr so it doesn't interfere with any pipe usage of the hook.",
+            "status": "pending",
+            "testStrategy": "Run hook with uncommitted changes and verify warning is printed with correct count. Run with clean working tree and verify no warning. Verify the count matches actual uncommitted files."
+          },
+          {
+            "id": 4,
+            "title": "Update State File Template with New Sections",
+            "description": "Rewrite the heredoc template to include Task Master Tag section, TDD Phase section, and enhanced Uncommitted Changes section showing the file count.",
+            "dependencies": [
+              1,
+              2,
+              3
+            ],
+            "details": "Replace the existing cat > \"$STATE_FILE\" << EOF block with the enhanced template:\n\n```bash\ncat > \"$STATE_FILE\" << EOF\n# Pre-Compaction State\n*Saved: $TIMESTAMP*\n\n## Active Task\n$ACTIVE_TASK\n\n## Task Master Tag\n$ACTIVE_TAG\n\n## TDD Phase\n$TDD_PHASE\n\n## Branch: $CURRENT_BRANCH\n\n## Uncommitted Changes ($UNCOMMITTED_COUNT files)\n\\`\\`\\`\n${UNCOMMITTED:-none}\n\\`\\`\\`\n\n## Context to Preserve\n<!-- Add key decisions, variable names, or context that shouldn't be lost -->\n\n---\n*This file is overwritten on each run. Review on session reload.*\nEOF\n```\n\nNote the new sections for Task Master Tag and TDD Phase, plus the count in the Uncommitted Changes header.",
+            "status": "pending",
+            "testStrategy": "Run hook and verify state file contains all 6 sections: Active Task, Task Master Tag, TDD Phase, Branch, Uncommitted Changes (with count), Context to Preserve. Verify markdown formatting is valid."
+          },
+          {
+            "id": 5,
+            "title": "Integration Testing and Edge Case Verification",
+            "description": "Test the complete enhanced hook across multiple scenarios including missing dependencies (jq, pytest), various git states, and Task Master configurations.",
+            "dependencies": [
+              4
+            ],
+            "details": "Run comprehensive tests covering:\n\n1. **Happy path**: Full state with tasks, tags, passing tests, uncommitted changes\n2. **Missing jq**: Verify fallback to 'master' tag without crashing\n3. **Missing pytest**: Verify TDD_PHASE shows appropriate fallback\n4. **No .git directory**: Verify branch shows '(no git)' and counts show 0\n5. **No .taskmaster directory**: Verify tag defaults to 'master'\n6. **Empty tests directory**: Verify pytest handling\n7. **Detached HEAD**: Verify branch shows 'detached'\n8. **Large uncommitted count**: Verify count accuracy with >10 files (head -10 limit on display but accurate count)\n\nEnsure the hook still exits 0 in all cases (best-effort, never blocks).",
+            "status": "pending",
+            "testStrategy": "Create test scenarios for each edge case. Verify hook always exits 0 (set +e behavior preserved). Verify state file is always created with valid markdown. Verify warning messages appear only when appropriate."
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Create /phase-check Command",
+        "description": "Create a new command that validates prerequisites for the current workflow phase and reports pass/fail status with actionable fix suggestions.",
+        "details": "Create `.claude/commands/phase-check.md` with the following content:\n\n```markdown\n# Phase Check\n\nValidate prerequisites for the current workflow phase.\n\nUsage: `/phase-check [phase]`\n\nArguments: $ARGUMENTS\n\n## Phase Detection\n\nIf no phase specified, auto-detect from context:\n- Check for active Task Master task → BUILDING\n- Check for PRD without parsed tasks → PLANNING\n- Check for uncommitted code changes → BUILDING or REVIEW\n- Check for recent commits awaiting PR → SHIPPING\n- Default → IDEATION\n\n## Phase Prerequisites\n\n### IDEATION Phase (R5.1)\n\n| Prerequisite | Check | Status |\n|--------------|-------|--------|\n| No specific requirements | Always passes | ✓ PASS |\n\n**Suggestions:**\n- If starting fresh, suggest `/brainstorm` to explore ideas\n- If requirements exist, suggest moving to PLANNING\n\n### PLANNING Phase (R5.2)\n\n| Prerequisite | Check | Status |\n|--------------|-------|--------|\n| PRD exists | `ls .taskmaster/docs/prd_*.txt` | ✓/✗ |\n| Tasks parsed | `task-master list` returns tasks | ✓/✗ |\n| Complexity analyzed | Check for complexity report | ✓/⚠/✗ |\n\n**Fix Suggestions:**\n- No PRD: \"Create PRD: `/prd-generate <concept>` or write to `.taskmaster/docs/prd_<name>.txt`\"\n- No tasks: \"Parse PRD: `task-master parse-prd --input=<file> --num-tasks=0`\"\n- No complexity report: \"Analyze: `task-master analyze-complexity`\"\n\n### BUILDING Phase (R5.3)\n\n| Prerequisite | Check | Status |\n|--------------|-------|--------|\n| Task claimed | `task-master list --status in-progress` | ✓/⚠ |\n| On feature branch | Not on main/master | ✓/✗ |\n| TDD in progress | Tests exist or being written | ✓/⚠ |\n\n**Fix Suggestions:**\n- No task claimed: \"Claim task: `task-master set-status <id> in-progress`\"\n- On main: \"Create branch: `git checkout -b feature/<description>`\"\n- No tests: \"Start TDD: Write failing test first\"\n\n### REVIEW Phase (R5.4)\n\n| Prerequisite | Check | Status |\n|--------------|-------|--------|\n| Tests passing | `pytest -q --tb=no` exits 0 | ✓/✗ |\n| Linter clean | `ruff check .` exits 0 | ✓/✗ |\n| No debug statements | `grep -r 'breakpoint\\|pdb\\|console.log'` | ✓/✗ |\n\n**Fix Suggestions:**\n- Tests failing: \"Fix tests: `pytest -v` to see failures\"\n- Lint errors: \"Fix lint: `ruff check --fix .`\"\n- Debug statements: \"Remove debug statements from: <files>\"\n\n### SHIPPING Phase (R5.5)\n\n| Prerequisite | Check | Status |\n|--------------|-------|--------|\n| PR created/ready | `gh pr view` or branch pushed | ✓/⚠ |\n| CHANGELOG updated | Modified within this branch | ✓/⚠ |\n| Task status updated | Task marked done | ✓/⚠ |\n\n**Fix Suggestions:**\n- No PR: \"Create PR: `/pr`\"\n- CHANGELOG not updated: \"Update: `/changelog`\"\n- Task not done: \"Update status: `task-master set-status <id> done`\"\n\n## Output Format (R5.6)\n\n```\n╔═══════════════════════════════════════════════════════════════╗\n║                      PHASE CHECK: BUILDING                     ║\n╠═══════════════════════════════════════════════════════════════╣\n║ Prerequisite          │ Status │ Action                        ║\n╠───────────────────────┼────────┼───────────────────────────────╣\n║ Task claimed          │ ✓ PASS │ Task #3: Implement login      ║\n║ Feature branch        │ ✗ FAIL │ git checkout -b feature/login ║\n║ TDD in progress       │ ⚠ WARN │ No tests found yet            ║\n╚═══════════════════════════════════════════════════════════════╝\n\nResult: FAIL (1 blocking issue)\n\nFix first: Create feature branch before continuing.\n```\n\n## Implementation Notes (R5.7)\n\n- **Lightweight**: Only reads local state (git, filesystem, task-master)\n- **No API calls**: No external services, MCP queries, or network requests\n- **Fast execution**: Should complete in <2 seconds\n- **Advisory**: Reports but does not block (soft enforcement)\n```\n\nPseudo-code for implementation:\n```bash\n# 1. Detect current phase (from args or auto-detect)\n# 2. Run phase-specific checks\n# 3. Collect results (PASS/WARN/FAIL per check)\n# 4. Format output table\n# 5. Provide actionable fix suggestions\n```",
+        "testStrategy": "Manual invocation tests:\n1. Run `/phase-check IDEATION` → should always pass with brainstorm suggestion\n2. Run `/phase-check PLANNING` without PRD → should fail with create PRD suggestion\n3. Run `/phase-check PLANNING` with PRD but no tasks → should fail with parse-prd suggestion\n4. Run `/phase-check BUILDING` on main branch → should fail with branch suggestion\n5. Run `/phase-check BUILDING` with task claimed on feature branch → should pass\n6. Run `/phase-check REVIEW` with failing tests → should fail with pytest suggestion\n7. Run `/phase-check SHIPPING` without PR → should warn with /pr suggestion\n8. Run `/phase-check` with no args → should auto-detect phase",
+        "priority": "high",
+        "dependencies": [
+          1,
+          2
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create command file structure with phase detection logic",
+            "description": "Create `.claude/commands/phase-check.md` with the basic structure, usage documentation, and auto-detect phase logic that interprets context signals (active Task Master task, PRD existence, uncommitted changes, commits awaiting PR).",
+            "dependencies": [],
+            "details": "Create the command file with: 1) Header and usage section showing `/phase-check [phase]` syntax with $ARGUMENTS placeholder, 2) Phase Detection section with auto-detect logic that checks: (a) `task-master list --status in-progress` for BUILDING, (b) `ls .taskmaster/docs/prd_*.txt` without parsed tasks for PLANNING, (c) `git diff --cached` or `git diff` for BUILDING/REVIEW, (d) `git log origin/main..HEAD` for SHIPPING, (e) default to IDEATION. Include decision tree for phase selection when multiple signals present.",
+            "status": "pending",
+            "testStrategy": "Test phase detection by: 1) Running with explicit phase argument overrides auto-detect, 2) With active task-master task returns BUILDING, 3) With PRD but no tasks returns PLANNING, 4) With recent commits and no open PR returns SHIPPING, 5) Clean state returns IDEATION."
+          },
+          {
+            "id": 2,
+            "title": "Implement IDEATION and PLANNING phase prerequisite checks",
+            "description": "Add the IDEATION phase check (always passes with brainstorm suggestion) and PLANNING phase checks (PRD exists, tasks parsed, complexity analyzed) with corresponding fix suggestions.",
+            "dependencies": [
+              1
+            ],
+            "details": "Add two phase check sections: **IDEATION (R5.1)**: Single check that always passes, suggests `/brainstorm` if starting fresh or moving to PLANNING if requirements exist. **PLANNING (R5.2)**: Three checks: (a) PRD exists via `ls .taskmaster/docs/prd_*.txt`, (b) Tasks parsed via `task-master list | grep -c 'Task'`, (c) Complexity analyzed via check for `.taskmaster/reports/task-complexity-report*.json`. Each check has PASS/WARN/FAIL status and specific fix command (e.g., 'Parse PRD: `task-master parse-prd --input=<file> --num-tasks=0`').",
+            "status": "pending",
+            "testStrategy": "Test by: 1) `/phase-check IDEATION` always passes, 2) `/phase-check PLANNING` without PRD fails with create PRD suggestion, 3) With PRD but no tasks fails with parse-prd suggestion, 4) With tasks but no complexity report shows WARN with analyze suggestion, 5) All prerequisites met shows PASS."
+          },
+          {
+            "id": 3,
+            "title": "Implement BUILDING and REVIEW phase prerequisite checks",
+            "description": "Add BUILDING phase checks (task claimed, feature branch, TDD in progress) and REVIEW phase checks (tests passing, linter clean, no debug statements) with fix suggestions.",
+            "dependencies": [
+              1
+            ],
+            "details": "Add two phase check sections: **BUILDING (R5.3)**: Three checks: (a) Task claimed via `task-master list --status in-progress | grep -c 'Task'`, (b) Feature branch via `git branch --show-current` not main/master, (c) TDD in progress via `ls tests/ 2>/dev/null | grep -c test_`. **REVIEW (R5.4)**: Three checks: (a) Tests passing via `pytest -q --tb=no` exit code, (b) Linter clean via `ruff check .` exit code, (c) No debug statements via `grep -rE 'breakpoint|pdb\\.set_trace|console\\.log|debugger' src/ tests/ 2>/dev/null`. Each with specific fix commands.",
+            "status": "pending",
+            "testStrategy": "Test by: 1) `/phase-check BUILDING` on main branch fails with branch creation suggestion, 2) Without active task shows WARN with claim task suggestion, 3) `/phase-check REVIEW` with failing tests fails with pytest command, 4) With lint errors fails with ruff fix command, 5) With debug statements fails listing files to clean."
+          },
+          {
+            "id": 4,
+            "title": "Implement SHIPPING phase prerequisite checks",
+            "description": "Add SHIPPING phase checks (PR created/ready, CHANGELOG updated, task status updated) with corresponding fix suggestions.",
+            "dependencies": [
+              1
+            ],
+            "details": "Add SHIPPING (R5.5) phase check section with three checks: (a) PR created/ready via `gh pr view --json state 2>/dev/null` or checking if branch pushed with `git rev-parse --abbrev-ref @{u} 2>/dev/null`, (b) CHANGELOG updated by checking if modified in current branch via `git diff main..HEAD --name-only | grep -i changelog`, (c) Task status updated via `task-master list --status done` or checking if current task marked complete. Each check can be PASS/WARN/FAIL with specific suggestions like 'Create PR: `/pr`', 'Update CHANGELOG: `/changelog`', or 'Update status: `task-master set-status <id> done`'.",
+            "status": "pending",
+            "testStrategy": "Test by: 1) `/phase-check SHIPPING` without PR shows suggestion to create one, 2) Without CHANGELOG update shows WARN, 3) With task not marked done shows WARN with set-status command, 4) All prerequisites met shows all PASS."
+          },
+          {
+            "id": 5,
+            "title": "Create output formatting with pass/warn/fail table and summary",
+            "description": "Implement the formatted output table showing all prerequisites with status indicators (✓/⚠/✗), actionable summary with blocking issue count, and immediate next-step recommendation.",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "details": "Create Output Format section (R5.6) and Implementation Notes (R5.7) with: 1) Box-drawing table format matching existing commands (health.md, verify.md style) with columns: Prerequisite | Status | Action, 2) Status symbols: ✓ PASS (green), ⚠ WARN (yellow), ✗ FAIL (red), 3) Result summary line showing 'Result: PASS/WARN/FAIL (N blocking issues)', 4) 'Fix first:' line with the highest-priority fix action, 5) Implementation notes emphasizing: lightweight (local state only), no API calls, <2 second execution, advisory not blocking. Include pseudo-code block showing the check-collect-format-suggest flow.",
+            "status": "pending",
+            "testStrategy": "Test by: 1) Verify table renders correctly with proper alignment, 2) Mixed results (some PASS, some FAIL) shows correct overall status and blocking count, 3) All PASS shows clean result, 4) FAIL takes precedence over WARN in overall status, 5) 'Fix first' shows most critical action."
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Update proactive-steering.md with Phase Transition Pattern",
+        "description": "Add /phase-check to the auto-invoke table and create a Phase Transition steering pattern for automatic prerequisite validation.",
+        "details": "Edit `.claude/rules/proactive-steering.md` to integrate /phase-check:\n\n**1. Add to Auto-Invoke Table (R6.1)**:\nFind the \"Auto-Invoke Tools at the Right Time\" section and add to the table:\n```markdown\n| Context Signal | Auto-Invoke |\n|----------------|-------------|\n| ... (existing entries) ... |\n| Phase transition detected | /phase-check (validate prerequisites) |\n| Commitment checkpoint stated | /phase-check (validate before proceeding) |\n```\n\n**2. Add Phase Transition Pattern (R6.2)**:\nAdd new pattern after existing patterns:\n```markdown\n### Pattern: Phase Transition\n\nWhen transitioning between workflow phases, validate prerequisites before proceeding.\n\n**Trigger:** Any commitment checkpoint that changes phase (e.g., \"PHASE: BUILDING\")\n\n**Steps:**\n1. Detect phase change from commitment checkpoint\n2. Run `/phase-check <new-phase>`\n3. If all prerequisites pass: proceed with new phase behaviors\n4. If prerequisites fail:\n   ```\n   Phase transition blocked: [PHASE]\n   \n   Missing prerequisites:\n   - [Prerequisite 1]: [Fix suggestion]\n   - [Prerequisite 2]: [Fix suggestion]\n   \n   Options:\n   1. Fix prerequisites, then continue\n   2. Override: \"Proceed despite missing prerequisites\"\n   ```\n\n**Example:**\n```\nYou: \"PHASE: BUILDING\"\nClaude: Running /phase-check BUILDING...\n\nPhase Check: BUILDING\n✓ Task claimed (Task #5)\n✗ Feature branch (currently on main)\n\nFix required: Create feature branch before continuing.\nCommand: git checkout -b feature/task-5-description\n```\n\n**Note (R6.3):** /phase-check is advisory (soft enforcement). It reports missing prerequisites but doesn't block. The user can explicitly override if they understand the implications.\n```\n\n**3. Reference in Integration Table**:\nUpdate the \"Integration with Other Rules\" section:\n```markdown\n| Rule | How Steering Uses It |\n|------|---------------------|\n| workflow-guide.md | Phase detection, tool selection |\n| workflow-enforcement.md | Phase prerequisites, correct workflows |\n| ... (rest unchanged) ...\n```\n\nPseudo-code for the edit:\n```\n1. Find Auto-Invoke table\n2. Add phase-check row\n3. Find Conversation Steering Patterns section\n4. Add Phase Transition pattern (after Post-Push CI Verification)\n5. Update Integration table\n```",
+        "testStrategy": "Manual review:\n1. Auto-invoke table includes phase-check entry\n2. Phase Transition pattern is complete with trigger, steps, example\n3. Advisory nature (R6.3) is clearly stated\n4. Integration table references workflow-enforcement.md\n5. Pattern fits stylistically with existing patterns",
+        "priority": "medium",
+        "dependencies": [
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "Integration Testing - End-to-End Workflow Validation",
+        "description": "Perform end-to-end testing of all components working together through a complete feature workflow to verify integration and identify edge cases.",
+        "details": "Conduct a manual end-to-end test following a complete feature workflow:\n\n**Test Scenario: Add a small feature**\n\n1. **IDEATION Phase Test**:\n   - Run `/phase-check IDEATION` → verify passes\n   - Run `/brainstorm` to explore feature\n   - Document findings\n\n2. **PLANNING Phase Test**:\n   - Create PRD in `.taskmaster/docs/prd_test.txt`\n   - Run `/phase-check PLANNING` without parsing → verify fails\n   - Parse PRD: `task-master parse-prd --input=... --num-tasks=0`\n   - Run `/phase-check PLANNING` → verify passes\n   - Run `task-master analyze-complexity`\n   - Expand complex tasks\n\n3. **BUILDING Phase Test (main branch protection)**:\n   - On main branch, run `/phase-check BUILDING` → verify fails with branch suggestion\n   - Attempt commit on main → verify hook blocks\n   - Create feature branch: `git checkout -b feature/test`\n   - Run `/phase-check BUILDING` → verify passes\n   - Claim task: `task-master set-status 1 in-progress`\n   - Write code without test → verify Superpowers guidance\n   - Write test first, then implementation\n\n4. **Commit Format Test**:\n   - Attempt commit with bad message: `git commit -m \"stuff\"` → verify hook blocks\n   - Attempt commit with good message: `git commit -m \"feat: add test feature\"` → verify passes\n   - Test skip: `SKIP_COMMIT_FORMAT=1 git commit -m \"stuff\"` → verify passes\n\n5. **Pre-Compaction Test**:\n   - Make some changes\n   - Run pre-compact.sh\n   - Verify state file contains:\n     - Active task\n     - Task Master tag\n     - TDD phase\n     - Branch name\n     - Uncommitted change count\n\n6. **REVIEW Phase Test**:\n   - Run `/phase-check REVIEW` → check all prerequisites\n   - Fix any failures\n   - Run `/code-review`\n\n7. **SHIPPING Phase Test**:\n   - Run `/phase-check SHIPPING` → verify PR/changelog warnings\n   - Create PR or mark complete\n\n**Edge Case Tests**:\n- Test with Superpowers not installed → verify fallback to advisory TDD\n- Test user override of Superpowers → verify acknowledgment required\n- Test multi-task session → verify one in-progress at a time\n- Test session resume with handoff doc → verify priority order\n\n**Integration Points to Verify**:\n- pre-commit-check.sh respects all SKIP_* variables\n- /phase-check detects phase correctly from context\n- Phase transition pattern triggers /phase-check\n- authority-hierarchy is respected (Rules > Superpowers > Instincts)\n- workflow-enforcement.md is comprehensive and consistent",
+        "testStrategy": "Manual walkthrough with checklist:\n- [ ] IDEATION: /phase-check passes\n- [ ] PLANNING: PRD detection works\n- [ ] PLANNING: Parse detection works\n- [ ] BUILDING: Main branch blocked\n- [ ] BUILDING: Feature branch allowed\n- [ ] BUILDING: Task in-progress warning works\n- [ ] COMMIT: Bad format blocked\n- [ ] COMMIT: Good format allowed\n- [ ] COMMIT: Skip variables work\n- [ ] COMPACT: All state fields saved\n- [ ] REVIEW: Prerequisites checked\n- [ ] SHIPPING: PR/changelog warnings shown\n- [ ] EDGE: Superpowers fallback works\n- [ ] EDGE: Authority hierarchy respected",
+        "priority": "high",
+        "dependencies": [
+          3,
+          4,
+          5,
+          6
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Test IDEATION and PLANNING Phase Transitions",
+            "description": "Validate phase-check command and phase transition logic for IDEATION and PLANNING phases, including PRD creation detection and parse-prd verification.",
+            "dependencies": [],
+            "details": "Execute the following test sequence:\n\n1. **IDEATION Phase Test**:\n   - Run `/phase-check IDEATION` → verify it passes (always should)\n   - Run `/brainstorm` command to explore a test feature\n   - Document brainstorm output and verify skill invocation works\n   - Verify phase-check suggests brainstorm when no context exists\n\n2. **PLANNING Phase Test - Negative Cases**:\n   - Run `/phase-check PLANNING` with no PRD → verify fails with 'create PRD' suggestion\n   - Run `/phase-check PLANNING` with PRD but unparsed → verify fails with 'parse-prd' suggestion\n   - Verify error messages include actionable fix commands\n\n3. **PLANNING Phase Test - Positive Cases**:\n   - Create test PRD in `.taskmaster/docs/prd_test.txt`\n   - Parse PRD: `task-master parse-prd --input=.taskmaster/docs/prd_test.txt --num-tasks=0`\n   - Run `/phase-check PLANNING` → verify passes\n   - Run `task-master analyze-complexity` → verify output\n   - Run `task-master expand --id=<complex-task-id>` if any flagged\n\n4. **Document Results**:\n   - Record pass/fail for each checkpoint\n   - Note any unexpected behaviors or error messages\n   - Verify phase detection auto-detects correctly from context",
+            "status": "pending",
+            "testStrategy": "Checklist verification:\n- [ ] IDEATION: /phase-check passes with brainstorm suggestion\n- [ ] PLANNING: No PRD → fails with create suggestion\n- [ ] PLANNING: PRD exists, not parsed → fails with parse-prd suggestion\n- [ ] PLANNING: PRD parsed → passes\n- [ ] analyze-complexity runs without error\n- [ ] expand works on flagged tasks"
+          },
+          {
+            "id": 2,
+            "title": "Test BUILDING Phase Branch Protection and TDD Flow",
+            "description": "Validate main branch protection, feature branch workflow, task claiming, and Superpowers TDD guidance during the BUILDING phase.",
+            "dependencies": [
+              1
+            ],
+            "details": "Execute the following test sequence:\n\n1. **Main Branch Protection Test**:\n   - Ensure on main branch: `git checkout main`\n   - Run `/phase-check BUILDING` → verify fails with branch creation suggestion\n   - Attempt any commit on main → verify pre-commit hook blocks\n   - Verify error message suggests creating feature branch\n\n2. **Feature Branch Workflow**:\n   - Create feature branch: `git checkout -b feature/integration-test`\n   - Run `/phase-check BUILDING` → verify passes (or warns about no task)\n   - Claim a task: `task-master set-status 1 in-progress`\n   - Run `/phase-check BUILDING` again → verify passes with task context\n\n3. **TDD Flow Verification**:\n   - Attempt to write production code without test → observe Superpowers guidance\n   - Verify Superpowers prompts for test-first approach\n   - Write a failing test (RED phase)\n   - Write implementation to make test pass (GREEN phase)\n   - Refactor if needed (REFACTOR phase)\n   - Verify TDD cycle is enforced/guided\n\n4. **Task Status Tracking**:\n   - Verify only one task is in-progress at a time\n   - Test attempting to claim second task → verify warning\n   - Complete task: `task-master set-status 1 done`\n\n5. **Document Results**:\n   - Record each checkpoint pass/fail\n   - Note Superpowers interaction quality\n   - Document any friction points",
+            "status": "pending",
+            "testStrategy": "Checklist verification:\n- [ ] BUILDING on main → blocked with branch suggestion\n- [ ] Commit on main → hook blocks\n- [ ] Feature branch → phase-check passes\n- [ ] Task claiming works\n- [ ] TDD guidance appears when writing code without test\n- [ ] Single in-progress task enforced\n- [ ] Task completion updates status"
+          },
+          {
+            "id": 3,
+            "title": "Test Commit Format Validation and Skip Variables",
+            "description": "Validate conventional commit format enforcement, including proper blocking of bad messages and honoring of SKIP_* environment variables.",
+            "dependencies": [
+              2
+            ],
+            "details": "Execute the following test sequence:\n\n1. **Bad Commit Format Tests**:\n   - Stage a test change: `echo 'test' >> test-file.txt && git add test-file.txt`\n   - Attempt commit with bad message: `git commit -m \"stuff\"` → verify blocks\n   - Attempt: `git commit -m \"fix\"` (no colon/description) → verify blocks\n   - Attempt: `git commit -m \"Fix the thing\"` (wrong case, no colon) → verify blocks\n   - Verify error message explains correct format\n\n2. **Good Commit Format Tests**:\n   - Attempt: `git commit -m \"feat: add test feature\"` → verify passes\n   - Attempt: `git commit -m \"fix: resolve null pointer\"` → verify passes\n   - Attempt: `git commit -m \"docs: update README\"` → verify passes\n   - Attempt with scope: `git commit -m \"feat(api): add endpoint\"` → verify passes\n   - Attempt with body (heredoc format) → verify passes\n\n3. **Skip Variable Tests**:\n   - Attempt: `SKIP_COMMIT_FORMAT=1 git commit -m \"stuff\"` → verify passes\n   - Attempt: `SKIP_MAIN_BRANCH=1 git commit -m \"fix: test\"` on main → verify passes\n   - Reset changes after each test\n\n4. **Hook Behavior Verification**:\n   - Verify hook outputs clear error messages\n   - Verify hook suggests correct format examples\n   - Verify hook respects all documented SKIP_* variables\n\n5. **Document Results**:\n   - Record each format pattern tested\n   - Note any edge cases that passed unexpectedly\n   - Document skip variable behavior",
+            "status": "pending",
+            "testStrategy": "Checklist verification:\n- [ ] Bad format \"stuff\" → blocked\n- [ ] Bad format \"fix\" (no description) → blocked\n- [ ] Good format \"feat: description\" → passes\n- [ ] Good format with scope \"fix(scope): desc\" → passes\n- [ ] SKIP_COMMIT_FORMAT=1 bypasses check\n- [ ] SKIP_MAIN_BRANCH=1 bypasses branch check\n- [ ] Error messages are helpful"
+          },
+          {
+            "id": 4,
+            "title": "Test Pre-Compaction State Preservation",
+            "description": "Validate that pre-compact.sh correctly captures and preserves all required session state fields for recovery after context compaction.",
+            "dependencies": [
+              2
+            ],
+            "details": "Execute the following test sequence:\n\n1. **Setup Test State**:\n   - Ensure on feature branch with changes\n   - Have at least one task in-progress: `task-master set-status <id> in-progress`\n   - Be in a known TDD phase (write a failing test)\n   - Have some uncommitted changes staged\n   - Set a Task Master tag if applicable\n\n2. **Run Pre-Compact Hook**:\n   - Execute: `.claude/hooks/pre-compact.sh`\n   - Verify script runs without error\n   - Check output file location: `.claude/sessions/pre-compact-state.md`\n\n3. **Verify State File Contents**:\n   - Open the state file and verify it contains:\n     - [ ] Active Task Master task ID and title\n     - [ ] Current Task Master tag (if any)\n     - [ ] TDD phase (RED/GREEN/REFACTOR or none)\n     - [ ] Current git branch name\n     - [ ] Uncommitted change count (staged + unstaged)\n     - [ ] Recent commit hashes (last 3-5)\n     - [ ] Timestamp of capture\n\n4. **Test Edge Cases**:\n   - Run with no active task → verify graceful handling\n   - Run with no uncommitted changes → verify shows 0\n   - Run on main branch → verify branch captured\n   - Run with Superpowers not active → verify TDD phase shows 'unknown' or 'none'\n\n5. **Document Results**:\n   - Record all fields captured\n   - Note any missing fields\n   - Document format consistency",
+            "status": "pending",
+            "testStrategy": "Checklist verification:\n- [ ] pre-compact.sh runs without error\n- [ ] State file created at correct location\n- [ ] Active task captured correctly\n- [ ] Task Master tag captured\n- [ ] TDD phase captured (or 'none' if not in TDD)\n- [ ] Branch name captured\n- [ ] Uncommitted count accurate\n- [ ] Edge cases handled gracefully"
+          },
+          {
+            "id": 5,
+            "title": "Test Edge Cases and Authority Hierarchy",
+            "description": "Validate edge case behaviors including Superpowers fallback, user override handling, multi-task session management, and proper authority hierarchy enforcement.",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "details": "Execute the following test sequence:\n\n1. **Superpowers Fallback Test**:\n   - Simulate Superpowers not installed (if possible via config)\n   - Attempt to write code → verify fallback to advisory TDD mode\n   - Verify advisory guidance suggests test-first but doesn't block\n   - Document the fallback behavior quality\n\n2. **User Override Test**:\n   - When Superpowers suggests TDD, explicitly override with 'I want to skip tests'\n   - Verify acknowledgment is required\n   - Verify the override is logged/noted\n   - Test that subsequent code writing proceeds without blocking\n\n3. **Multi-Task Session Test**:\n   - Claim a task: `task-master set-status 1 in-progress`\n   - Attempt to claim another: `task-master set-status 2 in-progress`\n   - Verify warning about multiple in-progress tasks\n   - Verify only one task should be active per session\n   - Complete first task before claiming second\n\n4. **Session Resume with Handoff Test**:\n   - Create a handoff doc at `.claude/sessions/handoff-test.md`\n   - Start a new session (or simulate)\n   - Verify handoff doc is detected and prioritized\n   - Verify priority order: handoff > session-summary > task-master\n\n5. **Authority Hierarchy Test**:\n   - Create a scenario where Rules, Superpowers, and Instincts conflict\n   - Verify Rules take precedence over Superpowers\n   - Verify Superpowers takes precedence over Instincts\n   - Document: Rules > Superpowers > Instincts > Defaults\n\n6. **Integration Point Verification**:\n   - Verify pre-commit-check.sh respects all SKIP_* variables\n   - Verify /phase-check auto-detects phase correctly\n   - Verify phase transition triggers appropriate checks\n   - Verify workflow-enforcement.md is comprehensive\n\n7. **Create Test Report**:\n   - Compile all results into `.claude/sessions/integration-test-report.md`\n   - Include pass/fail for each test\n   - Document any bugs or inconsistencies found\n   - Recommend fixes for any failures",
+            "status": "pending",
+            "testStrategy": "Checklist verification:\n- [ ] Superpowers fallback provides advisory TDD\n- [ ] User override requires acknowledgment\n- [ ] Multi-task warning appears\n- [ ] Session resume prioritizes handoff doc\n- [ ] Authority hierarchy: Rules > Superpowers > Instincts\n- [ ] All SKIP_* variables respected\n- [ ] Phase detection works from context\n- [ ] Test report created with all results"
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Documentation Review and Gap Closure Verification",
+        "description": "Review all changes against the original 14 identified gaps to verify complete coverage, ensure no contradictions remain, and document any remaining gaps.",
+        "details": "Perform final verification against the PRD's success criteria:\n\n**Success Criteria Checklist:**\n\n1. **\"/phase-check in each phase reports clear prerequisites\"**:\n   - Test each phase (IDEATION, PLANNING, BUILDING, REVIEW, SHIPPING)\n   - Verify output format is clear and actionable\n   - Verify fix suggestions are correct commands\n\n2. **\"Committing with bad format on main is blocked\"**:\n   - Test: `git commit -m \"bad\"` on main → blocked\n   - Test: `git commit -m \"fix: good\"` on main → blocked (branch protection)\n   - Test: `git commit -m \"fix: good\"` on feature → allowed\n\n3. **\"All 14 identified gaps have explicit documentation or enforcement\"**:\n   Review the 14 gaps from the audit:\n   - Gap 1: [Document coverage]\n   - Gap 2: [Document coverage]\n   - ... (enumerate all 14)\n\n4. **\"No contradictions remain between rules\"**:\n   - Cross-reference authority-hierarchy.md with superpowers-integration.md\n   - Cross-reference workflow-enforcement.md with workflow-guide.md\n   - Cross-reference proactive-steering.md with all workflow rules\n   - Document any remaining tensions\n\n5. **\"New user can understand correct workflow from workflow-enforcement.md alone\"**:\n   - Have someone unfamiliar with the template read workflow-enforcement.md\n   - Verify they can answer: \"How do I implement a feature?\"\n   - Verify they can answer: \"How do I fix a bug?\"\n   - Verify they can answer: \"What's the difference between small/medium/large refactors?\"\n\n**Gap Documentation:**\nCreate `.taskmaster/docs/prd_workflow_guardrails_completed.md` documenting:\n- Each of the 14 original gaps\n- How each is now addressed (enforcement hook, rule, command, or documented exception)\n- Any gaps that remain as \"advisory only\" with rationale\n\n**Final Consistency Check:**\n- All template-version comments are 2.0.0\n- All template-file comments point to correct paths\n- No duplicate definitions between rules\n- No circular dependencies between rules",
+        "testStrategy": "Verification checklist:\n- [ ] All 5 success criteria documented as passing\n- [ ] All 14 gaps enumerated with resolution\n- [ ] No contradictions found (or documented with resolution)\n- [ ] New user test completed successfully\n- [ ] Final consistency check passed\n- [ ] Gap closure documentation created",
+        "priority": "medium",
+        "dependencies": [
+          7
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Enumerate and Document All 14 Original Gaps",
+            "description": "Review the original PRD audit to identify and list all 14 gaps that were identified, creating a comprehensive enumeration for verification tracking.",
+            "dependencies": [],
+            "details": "Extract the 14 gaps from the original PRD workflow guardrails document or audit findings. Create a structured list in `.taskmaster/docs/prd_workflow_guardrails_completed.md` with each gap numbered 1-14, including: (1) the original gap description, (2) the severity/priority assigned, (3) placeholder for resolution status. This serves as the master tracking document for gap closure verification. Reference `.taskmaster/docs/prd_workflow_guardrails.txt` and any complexity reports for the original gap definitions.",
+            "status": "pending",
+            "testStrategy": "Verify that exactly 14 gaps are enumerated, each with clear description matching original audit findings. Cross-reference against PRD source document to ensure no gaps are missed or duplicated."
+          },
+          {
+            "id": 2,
+            "title": "Verify Success Criteria 1-3: Phase-Check and Commit Protection",
+            "description": "Test the first three success criteria: /phase-check functionality across all phases, and commit format/branch protection enforcement.",
+            "dependencies": [
+              1
+            ],
+            "details": "Execute systematic tests: (1) Run `/phase-check` in each phase (IDEATION, PLANNING, BUILDING, REVIEW, SHIPPING) and verify output is clear with actionable fix suggestions. (2) Test commit blocking: `git commit -m \"bad\"` on main should be blocked, `git commit -m \"fix: good\"` on main should be blocked (branch protection), `git commit -m \"fix: good\"` on feature branch should be allowed. Document pass/fail for each test case. Record actual output messages to verify clarity.",
+            "status": "pending",
+            "testStrategy": "Create test script or manual checklist documenting actual command outputs. Each test must show: command executed, expected result, actual result, pass/fail status."
+          },
+          {
+            "id": 3,
+            "title": "Map Each Gap to Its Resolution Mechanism",
+            "description": "For each of the 14 gaps, document how it is now addressed through enforcement hooks, rules, commands, or documented exceptions.",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "Update `.taskmaster/docs/prd_workflow_guardrails_completed.md` with resolution details for each gap. For each gap, document: (1) Resolution mechanism type: enforcement hook (pre-commit-check.sh, etc.), rule file (workflow-enforcement.md, etc.), command (/phase-check, etc.), or advisory-only with rationale. (2) Specific file/command providing coverage. (3) Verification evidence (test results from subtask 2 or rule file references). Gaps remaining as advisory-only must include clear rationale for why hard enforcement is inappropriate.",
+            "status": "pending",
+            "testStrategy": "Each gap entry must have: resolution mechanism type, specific implementation reference, and either test evidence or rule file citation. No gaps should be marked 'unresolved' without escalation plan."
+          },
+          {
+            "id": 4,
+            "title": "Cross-Reference Rules for Contradictions and Consistency",
+            "description": "Systematically compare rule files to identify and document any contradictions, performing the final consistency check on template versions and file paths.",
+            "dependencies": [
+              3
+            ],
+            "details": "Perform cross-reference analysis: (1) authority-hierarchy.md vs superpowers-integration.md - verify Superpowers tier is correctly positioned. (2) workflow-enforcement.md vs workflow-guide.md - verify no conflicting phase definitions. (3) proactive-steering.md vs all workflow rules - verify tool invocation recommendations align. (4) Verify all template-version comments are 2.0.0. (5) Verify all template-file comments point to correct paths. (6) Check for duplicate definitions between rules. (7) Check for circular dependencies. Document any tensions found with proposed resolutions.",
+            "status": "pending",
+            "testStrategy": "Create contradiction matrix comparing key rules. Each potential conflict must be marked as: resolved (no conflict), documented tension (acceptable with rationale), or needs fix (requires action)."
+          },
+          {
+            "id": 5,
+            "title": "New User Test and Final Documentation",
+            "description": "Perform the new user perspective test using workflow-enforcement.md and finalize the gap closure documentation with all findings.",
+            "dependencies": [
+              4
+            ],
+            "details": "Conduct new user test: (1) Read workflow-enforcement.md in isolation (without prior template knowledge). (2) Attempt to answer: 'How do I implement a feature?', 'How do I fix a bug?', 'What's the difference between small/medium/large refactors?' (3) Document comprehension gaps if answers are unclear. Finalize `.taskmaster/docs/prd_workflow_guardrails_completed.md` with: summary of all 14 gaps and resolutions, success criteria verification results (5/5 must pass), contradiction analysis findings, new user test results, final recommendation (complete vs needs additional work).",
+            "status": "pending",
+            "testStrategy": "New user test passes if all three questions can be answered correctly from workflow-enforcement.md alone. Final document must include explicit pass/fail for each success criterion with evidence."
+          }
+        ]
+      }
+    ],
+    "metadata": {
+      "created": "2026-02-23T06:23:51.616Z",
+      "updated": "2026-02-23T06:27:59.895Z",
+      "description": "Tasks for workflow-guardrails context"
     }
   }
 }
