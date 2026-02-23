@@ -39,7 +39,10 @@ jobs:
       # Stage 1: Tests (exit code 5 = no tests collected, OK for template)
       - name: Run tests
         run: |
-          pytest --tb=short -q; rc=$?
+          set +e
+          pytest --tb=short -q
+          rc=$?
+          set -e
           if [ "$rc" -eq 5 ]; then
             echo "No tests collected — expected for a fresh template"
             exit 0
