@@ -20,7 +20,7 @@ TEMPLATE_SOURCE_FILE="$PROJECT_DIR/.template/source"
 SYNC_SCRIPT="$PROJECT_DIR/scripts/sync-template.sh"
 
 # Current template version (update when releasing new versions)
-CURRENT_TEMPLATE_VERSION="2.3.0"
+CURRENT_TEMPLATE_VERSION="2.3.1"
 
 # Only run for projects using this template
 # Check for registry OR template tracking OR resembling structure
