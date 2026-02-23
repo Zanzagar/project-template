@@ -4,6 +4,11 @@ All notable changes to this project template are documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+- **scripts/check-upstream.sh** - Checks all 5 upstream sources (Superpowers, ECC, Anthropic Official, Task Master, wshobson/agents) for changes since last sync. Compares installed vs latest versions, shows commit counts, supports `--verbose` and `--since` flags.
+
 ## [2.2.0] - 2026-02-22
 
 Comprehensive release: ECC feature parity (17 new skills, 9 new hooks), project-type presets, template overlay infrastructure, continuous learning v2, real multi-model integration, and real plugin downloads. Template now has 14 agents, 40 skills, 50 commands, 13 rules, 18 hooks.
