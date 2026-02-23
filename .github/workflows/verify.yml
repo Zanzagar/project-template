@@ -36,9 +36,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]" 2>/dev/null || pip install ruff pytest pytest-cov mypy
 
-      # Stage 1: Tests
+      # Stage 1: Tests (exit code 5 = no tests collected, OK for template)
       - name: Run tests
-        run: pytest --tb=short -q
+        run: |
+          pytest --tb=short -q; rc=$?
+          if [ "$rc" -eq 5 ]; then
+            echo "No tests collected — expected for a fresh template"
+            exit 0
+          fi
+          exit "$rc"
         continue-on-error: false
 
       # Stage 2: Coverage (WARN, not FAIL — new projects may be below threshold)
