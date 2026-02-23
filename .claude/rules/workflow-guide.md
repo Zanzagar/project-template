@@ -59,8 +59,8 @@ User has decided what to build, needs structured plan.
 **Do:**
 - Check for existing PRD in `.taskmaster/docs/` or `.prd/`
 - Use `task-master parse-prd` to generate tasks
-- Use `task-master expand` to break down complex tasks
-- Use `task-master next` to identify starting point
+- Use `task-master analyze-complexity`, then `task-master expand --id=<id>` for complex tasks
+- Use `task-master list --ready --blocking` to find highest-impact starting point
 - Ask about priorities and dependencies
 
 **Don't:**
@@ -72,7 +72,7 @@ User has decided what to build, needs structured plan.
 Actively implementing features or fixes.
 
 **Do:**
-- Check current task with `task-master get-task`
+- Check current task with `task-master show <id>` or `task-master next`
 - Follow Superpowers TDD workflow: RED → GREEN → REFACTOR
 - Run /test and /lint before considering done
 - Commit frequently (per claude-behavior.md rules)

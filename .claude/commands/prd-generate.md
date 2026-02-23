@@ -226,14 +226,14 @@ Before presenting the PRD, verify:
 Show the user:
 1. **Summary** of the PRD (5-10 lines)
 2. **File location** where the PRD was saved
-3. **Next step** command: `task-master parse-prd .taskmaster/docs/prd_<slug>.txt --num-tasks 0`
+3. **Next step** command: `task-master parse-prd --input=.taskmaster/docs/prd_<slug>.txt --num-tasks=0`
 4. **Ask** if any sections need refinement before parsing
 
 ### 5.3 Parse on Approval
 
 If the user approves, run:
 ```bash
-task-master parse-prd .taskmaster/docs/prd_<slug>.txt --num-tasks 0
+task-master parse-prd --input=.taskmaster/docs/prd_<slug>.txt --num-tasks=0
 ```
 
 Then suggest: `task-master expand --id=<first-task-id>` for complex tasks.

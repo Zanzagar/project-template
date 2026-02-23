@@ -15,7 +15,7 @@ Every non-trivial task follows this pipeline:
 ```
 1. IDEATE    → superpowers:brainstorming (explore, clarify, propose approaches)
 2. SPECIFY   → /prd-generate or manual PRD (create .taskmaster/docs/prd_*.txt)
-3. DECOMPOSE → task-master parse-prd --num-tasks 0
+3. DECOMPOSE → task-master parse-prd --input=<file> --num-tasks=0
 4. ANALYZE   → task-master analyze-complexity (research task difficulty)
 5. EXPAND    → task-master expand (guided by complexity analysis)
 6. IMPLEMENT → superpowers:test-driven-development (RED-GREEN-REFACTOR per task)
@@ -32,7 +32,7 @@ Every non-trivial task follows this pipeline:
 1. **Save the design doc** as the brainstorming skill instructs (`docs/plans/YYYY-MM-DD-<topic>-design.md`)
 2. **Do NOT invoke `writing-plans`.** Instead:
 3. **Create a PRD** from the brainstorming output using `/prd-generate` or manually write it to `.taskmaster/docs/prd_<slug>.txt`
-4. **Parse the PRD** into Task Master: `task-master parse-prd <file> --num-tasks 0`
+4. **Parse the PRD** into Task Master: `task-master parse-prd --input=<file> --num-tasks=0`
 5. **Analyze complexity**: `task-master analyze-complexity`
 6. **Expand tasks** guided by the complexity report: `task-master expand --id=<id>` for tasks flagged as complex
 7. **Then implement** using Superpowers TDD per task

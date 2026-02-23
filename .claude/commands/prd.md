@@ -11,5 +11,5 @@ Available PRDs in `.taskmaster/docs/`:
 
 To generate tasks from a PRD:
 ```bash
-task-master parse-prd --file .taskmaster/docs/<prd_file>
+task-master parse-prd --input=.taskmaster/docs/<prd_file> --num-tasks=0
 ```

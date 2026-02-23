@@ -10,6 +10,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **scripts/check-upstream.sh** - Checks all 5 upstream sources (Superpowers, ECC, Anthropic Official, Task Master, wshobson/agents) for changes since last sync. Compares installed vs latest versions, shows commit counts, supports `--verbose` and `--since` flags.
 
 ### Changed
+- **CLAUDE.md** - Expanded Taskmaster Commands section with v0.43.0 syntax: positional `set-status`, `--ready`/`--blocking` filters, compact/JSON output modes, `analyze-complexity`, cross-tag queries, tag listing with `--ready`
+- **commands/tasks.md** - `/tasks` now supports `ready`, `blocking`, and `compact` arguments for token-efficient task listing
+- **commands/task-status.md** - Simplified to positional syntax (`set-status <id> <status>`), added `cancelled` status
+- **commands/prd.md, prd-generate.md** - Fixed `--file` → `--input` flag (matches actual CLI), added `--num-tasks=0`
+- **rules/proactive-steering.md** - Auto-invoke table now suggests `--ready --blocking` for feature work start
+- **rules/workflow-guide.md** - Planning phase uses `analyze-complexity` → `expand` sequence, Building phase uses `show`/`next` instead of deprecated `get-task`
+- **rules/superpowers-integration.md** - Pipeline examples use correct `--input=` flag syntax
 - **MCP_SETUP.md** - Document Task Master token optimization: deferred MCP loading (`ENABLE_EXPERIMENTAL_MCP_CLI`), configurable tool modes (`TASK_MASTER_TOOLS=core`), and task metadata (`TASK_MASTER_ALLOW_METADATA_UPDATES`). Updated token cost table with per-mode costs.
 
 ## [2.2.0] - 2026-02-22

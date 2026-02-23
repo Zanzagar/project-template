@@ -64,26 +64,33 @@ mypy src/
 ### Commands
 
 ```bash
-# List tasks for current tag
-task-master list --with-subtasks
+# List tasks (current tag)
+task-master list                        # Default view
+task-master list all                    # Include subtasks
+task-master list --ready                # Only actionable tasks (deps satisfied)
+task-master list --blocking             # Tasks on the critical path
+task-master list --ready --blocking     # Highest-impact tasks to work on next
+task-master list -c                     # Compact one-line output (fewer tokens)
+task-master list --json                 # Machine-readable JSON output
+task-master list --all-tags --ready     # Cross-tag actionable tasks
 
-# Show specific task details
-task-master show <id>
+# Show / navigate
+task-master show <id>                   # Task details
+task-master next                        # Next recommended task
 
-# Update task status
-task-master set-status --id <id> --status=<status>
+# Status updates (positional syntax)
+task-master set-status <id> <status>    # e.g., set-status 3 done
 
-# Get next recommended task
-task-master next
+# Task decomposition
+task-master expand --id=<id>            # Break task into subtasks
+task-master analyze-complexity          # Complexity report (run before expand)
 
-# Expand task into subtasks
-task-master expand --id=<id>
+# PRD → tasks
+task-master parse-prd --input=<file> --num-tasks=0
 
-# Parse PRD to generate tasks (use --num-tasks 0 to let AI decide count)
-task-master parse-prd <prdfile> --num-tasks 0
-
-# Switch tag context
-task-master tags use <tag-name>
+# Tag management
+task-master tags use <tag-name>         # Switch active tag
+task-master tags list --ready           # Tags with actionable task counts
 ```
 
 ## Development Workflow

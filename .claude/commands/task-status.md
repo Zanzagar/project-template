@@ -4,9 +4,9 @@ Usage: `/task-status <id> <status> [tag]`
 
 Example: `/task-status 3 done master`
 
-Valid statuses: `pending`, `in-progress`, `done`, `blocked`, `review`, `deferred`
+Valid statuses: `pending`, `in-progress`, `done`, `blocked`, `review`, `deferred`, `cancelled`
 
 Execute:
 ```bash
-task-master set-status --id <id> --status=<status> --tag <tag>
+task-master set-status $ARGUMENTS
 ```

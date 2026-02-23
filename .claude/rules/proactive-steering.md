@@ -69,7 +69,7 @@ I notice we might be stuck. Let me help:
 | Context Signal | Auto-Invoke |
 |----------------|-------------|
 | "I have an idea for..." | /brainstorm |
-| Starting new feature work | `task-master next` or `task-master get-task` |
+| Starting new feature work | `task-master next` or `task-master list --ready --blocking` |
 | About to write code | Superpowers TDD flow |
 | Code complete, need review | /code-review |
 | Ready to merge | /pr |
