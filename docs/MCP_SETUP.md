@@ -590,6 +590,38 @@ See: [github.com/GowayLee/cchooks](https://github.com/GowayLee/cchooks)
 | **CC Notify** | Desktop notifications with VS Code integration |
 | **Claudio** | OS-native sounds for Claude events |
 
+### Task Master CLI-Only Features
+
+These Task Master features are **terminal commands** — they launch Claude Code sessions themselves, so they cannot be used from *within* a session. Run them from your regular terminal.
+
+| Command | What It Does | When to Use |
+|---------|-------------|-------------|
+| `task-master start <id>` | Launches Claude with full task context pre-loaded | Starting focused work on a specific task |
+| `task-master loop` | Runs Claude iteratively, one task per session | Autonomous batch processing |
+
+**`tm start <id>`** sets the task to `in-progress` and launches `claude` with the task's title, description, implementation details, and test strategy injected as the initial prompt. Use `--dry-run` to preview the prompt without launching. Good for ensuring Claude starts with full task context.
+
+**`tm loop`** spawns `claude -p <prompt> --dangerously-skip-permissions` repeatedly, one task per iteration. Each iteration: finds next task via `task-master next`, implements it, marks done, commits. Supports presets:
+
+| Preset | Focus | Completion Signal |
+|--------|-------|-------------------|
+| `default` | Implement one task per iteration | All tasks done |
+| `test-coverage` | Add tests to reach coverage target | Coverage target met |
+| `linting` | Fix lint errors iteratively | Zero errors |
+| `duplication` | Reduce code duplication | Low duplication threshold |
+| `entropy` | Reduce code complexity | Low entropy threshold |
+
+**Compatibility with this template:**
+
+| Concern | Impact |
+|---------|--------|
+| TDD enforcement | **Bypassed** — loop presets say "write tests alongside", not RED-GREEN-REFACTOR |
+| Superpowers skills | **Not loaded** — fresh `-p` sessions don't activate plugins |
+| Permissions | **Unrestricted** — uses `--dangerously-skip-permissions` |
+| Task selection | **Automatic** — `task-master next`, no user steering |
+
+**Recommendation**: Use `tm start` freely for focused task work. Use `tm loop` only for low-risk batch work (linting fixes, test backfill) where TDD discipline is less critical. For feature implementation, use our interactive workflow with Superpowers enforcement.
+
 ### Resources
 
 For the full ecosystem of 150+ tools:

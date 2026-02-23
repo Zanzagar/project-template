@@ -245,3 +245,4 @@ Then suggest: `task-master expand --id=<first-task-id>` for complex tasks.
 - Maximum 3 Context7 calls to stay token-conscious
 - Mermaid diagrams should be functional, not decorative — if a diagram doesn't add clarity, omit it
 - The PRD format is optimized for `task-master parse-prd` consumption
+- **For complex multi-module projects**: Consider the RPG (Repository Planning Graph) method template at `.taskmaster/docs/TEMPLATE_prd_rpg.txt`. It separates functional decomposition (WHAT) from structural decomposition (HOW) and produces explicit dependency graphs that Task Master can parse into properly-ordered tasks. Best for greenfield projects with many interdependent modules.

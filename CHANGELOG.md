@@ -8,6 +8,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 - **scripts/check-upstream.sh** - Checks all 5 upstream sources (Superpowers, ECC, Anthropic Official, Task Master, wshobson/agents) for changes since last sync. Compares installed vs latest versions, shows commit counts, supports `--verbose` and `--since` flags.
+- **TEMPLATE_prd_rpg.txt** - RPG (Repository Planning Graph) PRD template from Task Master. Structured dependency-aware PRDs with functional/structural decomposition and explicit dependency graphs. Referenced from `/prd` and `/prd-generate`.
+- **MCP_SETUP.md** - Documented `tm start` and `tm loop` CLI-only features with compatibility analysis. `tm loop` bypasses Superpowers TDD — recommended only for low-risk batch work (lint fixes, test backfill).
 
 ### Changed
 - **CLAUDE.md** - Expanded Taskmaster Commands section with v0.43.0 syntax: positional `set-status`, `--ready`/`--blocking` filters, compact/JSON output modes, `analyze-complexity`, cross-tag queries, tag listing with `--ready`
