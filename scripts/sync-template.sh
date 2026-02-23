@@ -515,5 +515,8 @@ else
         echo "     /mcps"
         echo ""
         echo "  5. Start Claude Code and run /setup for guided configuration"
+        echo ""
+        echo -e "  ${YELLOW}NOTE: If Claude Code is already running, restart it.${NC}"
+        echo "     Hooks, rules, and CLAUDE.md only load at session startup."
     fi
 fi

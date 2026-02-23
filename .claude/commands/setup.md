@@ -219,10 +219,15 @@ Completed:
   ✓ MCPs configured ({preset})
   ✓ Git repository ready
 
+RESTART REQUIRED:
+  Hooks, rules, and CLAUDE.md load at session startup.
+  Exit Claude Code and restart for changes to take effect.
+
 Next Steps:
-  1. Create your PRD: .taskmaster/docs/prd.txt
-  2. Generate tasks: task-master parse-prd
-  3. Start coding: task-master next
+  1. Restart Claude Code in this directory
+  2. Create your PRD: .taskmaster/docs/prd.txt
+  3. Generate tasks: task-master parse-prd
+  4. Start coding: task-master next
 ```
 
 ## For Research Groups
