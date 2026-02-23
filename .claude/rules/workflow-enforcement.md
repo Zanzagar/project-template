@@ -91,6 +91,40 @@ For production-critical issues requiring immediate resolution:
 
 Hotfixes are the **only** scenario where the full planning pipeline is skipped, but TDD is never skipped entirely.
 
+### Branch Completion (Post-Implementation)
+
+After all tasks on a branch are done, follow this sequence:
+
+1. **Review**: Run `/code-review` on changed files. Address critical/high findings.
+2. **Push**: `git push -u origin <branch>`
+3. **Create PR**: `/pr` — squash merge is the default (one feature = one commit on main).
+4. **Verify CI**: `gh run list --branch <branch> --limit 1` → `gh run watch <run-id>`. Fix failures before merging.
+5. **Merge**: Squash merge via GitHub (or `gh pr merge --squash`).
+6. **Sync local**: `git checkout main && git pull origin main`
+7. **Clean up branch**: `git branch -d <branch>` (local). GitHub auto-deletes remote if configured.
+8. **Update tasks**: `task-master set-status <id> done` for all completed tasks.
+9. **Tag if release-worthy**: `git tag -a v<version> -m "description"` → `git push origin v<version>`
+
+**Merge strategy by branch type:**
+
+| Branch Type | Strategy | Rationale |
+|-------------|----------|-----------|
+| Feature (`feature/`) | Squash merge | Clean main history — one feature = one commit |
+| Bugfix (`bugfix/`) | Squash merge | Single fix = single commit |
+| Hotfix (`hotfix/`) | Squash merge | Urgent fix, minimal history |
+| Release (`release/`) | Merge commit | Preserve release branch history |
+
+**When to tag a release:**
+
+| Change | Tag? | Version Bump |
+|--------|------|-------------|
+| New `feat:` merged | Yes, minor (`v2.3.0`) | New functionality added |
+| Only `fix:`/`docs:`/`chore:` | Optional, patch (`v2.3.1`) | Maintenance only |
+| Breaking change | Yes, major (`v3.0.0`) | API or behavior change |
+| Multiple features accumulated | Yes, minor | Batch release at natural milestone |
+
+**Do not present merge strategy as a choice.** Use the default from the table above. Only deviate if the user explicitly requests a different strategy.
+
 ## Session Management
 
 ### Multi-Feature Sessions
@@ -137,6 +171,7 @@ Not all normative rules have hard enforcement. Some rely on Claude following the
 
 **Normative only (no hook enforcement):**
 - Feature workflow pipeline (brainstorm → PRD → tasks → TDD)
+- Branch completion sequence (review → PR → merge → cleanup)
 - Bug fix size thresholds
 - Refactoring scope thresholds
 - One task in-progress at a time
