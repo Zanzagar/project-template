@@ -72,11 +72,7 @@ case "${1:-start}" in
             rm -f "$PID_FILE"
         fi
 
-        # Kill any orphaned observers (PID file lost but process still running)
-        for orphan_pid in $(pgrep -f "start-observer.sh" 2>/dev/null); do
-            [ "$orphan_pid" != "$$" ] && kill "$orphan_pid" 2>/dev/null || true
-        done
-        sleep 0.5
+        # Note: if zombies accumulate (PID file lost), run: pkill -f start-observer
 
         echo "Starting observer agent..."
 
@@ -106,7 +102,7 @@ case "${1:-start}" in
                 # which only auto-approves permissions without restricting access).
                 # --max-turns 15 is a safety net, not a constraint — normal runs use ~5-8 turns.
                 if command -v claude &> /dev/null; then
-                    CLAUDECODE= claude --model haiku --max-turns 15 \
+                    CLAUDECODE= claude --model haiku --max-turns 50 \
                         --tools "Read,Write,Glob" --print \
                         "You are an autonomous background agent. Do NOT ask questions or request permission — act immediately. Read the last 100 lines of $OBSERVATIONS_FILE (use Read with offset if large). Identify tool usage patterns with 3+ occurrences. For each pattern found, immediately Write a JSON file to $PERSONAL_DIR/<pattern-id>.json with fields: id, pattern, action, trigger, confidence (0.3-0.7), domain, source. Create at most 3 instinct files. Do not explain — just read and write." \
                         >> "$LOG_FILE" 2>&1 || true
