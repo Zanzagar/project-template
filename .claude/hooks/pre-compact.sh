@@ -34,18 +34,50 @@ fi
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 CURRENT_BRANCH="(no git)"
 UNCOMMITTED=""
+UNCOMMITTED_COUNT=0
 ACTIVE_TASK=""
+ACTIVE_TAG="master"
+TDD_PHASE="unknown"
 
+# --- Git state ---
 if [ -d "$PROJECT_DIR/.git" ]; then
     CURRENT_BRANCH=$(cd "$PROJECT_DIR" && git branch --show-current 2>/dev/null || echo "detached")
     UNCOMMITTED=$(cd "$PROJECT_DIR" && git status --porcelain 2>/dev/null | head -10 || true)
+    UNCOMMITTED_COUNT=$(cd "$PROJECT_DIR" && git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+    if [ "$UNCOMMITTED_COUNT" -gt 0 ] 2>/dev/null; then
+        echo "WARNING: $UNCOMMITTED_COUNT uncommitted changes will not be preserved." >&2
+    fi
 fi
 
+# --- Active Task Master task ---
 ACTIVE_TASK=$(task-master list --status in-progress --json 2>/dev/null \
     | jq -r '.tasks[] | "- \(.title) (ID: \(.id))"' 2>/dev/null \
     | head -5)
 [ -z "$ACTIVE_TASK" ] && ACTIVE_TASK="none"
 
+# --- Active Task Master tag (R2.1) ---
+if [ -f "$PROJECT_DIR/.taskmaster/state.json" ]; then
+    ACTIVE_TAG=$(jq -r '.currentTag // .activeTag // "master"' "$PROJECT_DIR/.taskmaster/state.json" 2>/dev/null)
+fi
+[ -z "$ACTIVE_TAG" ] && ACTIVE_TAG="master"
+
+# --- TDD Phase detection (R2.2) ---
+# Best-effort: infer from test execution status
+if [ -d "$PROJECT_DIR/tests" ]; then
+    if command -v pytest &> /dev/null; then
+        if pytest -q --tb=no "$PROJECT_DIR/tests" > /dev/null 2>&1; then
+            TDD_PHASE="GREEN or REFACTOR (tests passing)"
+        else
+            TDD_PHASE="RED (tests failing)"
+        fi
+    else
+        TDD_PHASE="unknown (pytest not available)"
+    fi
+else
+    TDD_PHASE="N/A (no tests directory)"
+fi
+
+# --- Write enhanced state file ---
 cat > "$STATE_FILE" << EOF
 # Pre-Compaction State
 *Saved: $TIMESTAMP*
@@ -53,9 +85,15 @@ cat > "$STATE_FILE" << EOF
 ## Active Task
 $ACTIVE_TASK
 
+## Task Master Tag
+$ACTIVE_TAG
+
+## TDD Phase
+$TDD_PHASE
+
 ## Branch: $CURRENT_BRANCH
 
-## Uncommitted Changes
+## Uncommitted Changes ($UNCOMMITTED_COUNT files)
 \`\`\`
 ${UNCOMMITTED:-none}
 \`\`\`

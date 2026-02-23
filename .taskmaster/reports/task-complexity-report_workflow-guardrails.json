@@ -1,0 +1,77 @@
+{
+	"meta": {
+		"generatedAt": "2026-02-23T06:39:28.802Z",
+		"tasksAnalyzed": 8,
+		"totalTasks": 8,
+		"analysisCount": 8,
+		"thresholdScore": 5,
+		"projectName": "__PROJECT_NAME__",
+		"usedResearch": false
+	},
+	"complexityAnalysis": [
+		{
+			"taskId": 1,
+			"taskTitle": "Create workflow-enforcement.md Rule",
+			"complexityScore": 6,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break down into: 1) Create file structure with header and introduction explaining normative vs enforcement distinction, 2) Document Feature Implementation (R3.1), Bug Fix (R3.2), and Refactoring (R3.3) workflows with thresholds, 3) Document Documentation (R3.4), Dependency Update (R3.5), and Emergency Hotfix (R3.6) workflows, 4) Document Session Management (R3.7-R3.8), Tag Management (R3.9), and Enforcement Note (R3.10) sections. Each subtask should verify consistency with existing rules (superpowers-integration.md, workflow-guide.md).",
+			"reasoning": "This is a greenfield documentation task creating a new rule file (~200-300 lines). The task is well-specified with 10 subsections to write. Complexity comes from: (1) ensuring consistency with 3 existing rule files that define overlapping concepts (superpowers-integration.md has the pipeline, workflow-guide.md has phases, authority-hierarchy.md has precedence), (2) distilling workflows into clear decision tables with thresholds, (3) ensuring the 'normative vs enforcement' distinction is clear. No code to write, but requires careful cross-referencing. 4 subtasks: header+intro, core workflows (R3.1-R3.3), auxiliary workflows (R3.4-R3.6), session/tag/enforcement (R3.7-R3.10)."
+		},
+		{
+			"taskId": 2,
+			"taskTitle": "Update authority-hierarchy.md with Superpowers Tier",
+			"complexityScore": 4,
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "Single edit task: Update precedence order from 3 to 4 tiers, add Superpowers Authority section (R4.2) explaining enforcement behavior, add User Override Behavior table (R4.3), add fallback behavior note (R4.4), and add new examples to table (R4.5). Verify no contradictions with superpowers-integration.md.",
+			"reasoning": "The existing authority-hierarchy.md is 55 lines. This task adds ~30-40 lines across 3 sections (precedence update, new Superpowers Authority section, new examples). The changes are well-specified in the task description with exact markdown to add. Low risk - mostly additive changes to an existing well-structured file. No subtasks needed as this is a single focused edit with clear requirements. The main challenge is ensuring the override behavior doesn't contradict superpowers-integration.md which says rules take precedence - this is aligned, so no conflict."
+		},
+		{
+			"taskId": 3,
+			"taskTitle": "Enhance pre-commit-check.sh with Commit Format and Branch Protection",
+			"complexityScore": 7,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break down into: 1) Add branch protection check (R1.2) that blocks commits on main/master with SKIP_BRANCH_CHECK variable, 2) Add conventional commit format validation (R1.1) with regex matching and SKIP_COMMIT_FORMAT variable, 3) Add Task Master in-progress warning (R1.3) as advisory check, 4) Wrap existing checks with SKIP_* variables (R1.4-R1.5) and add documentation header. Each subtask should include shell tests to verify the check works correctly.",
+			"reasoning": "The existing pre-commit-check.sh is 71 lines. This task adds significant new functionality: branch protection, commit message validation with regex, task-in-progress check, and skip variables. Complexity factors: (1) bash regex for conventional commit parsing is tricky (heredoc messages, -m quotes), (2) extracting commit message from various command formats requires careful parsing, (3) task-master CLI integration for in-progress check, (4) maintaining backward compatibility with existing checks. The test strategy specifies 8 distinct test cases. 4 subtasks align with the 4 main additions."
+		},
+		{
+			"taskId": 4,
+			"taskTitle": "Enhance pre-compact.sh with Extended State Preservation",
+			"complexityScore": 5,
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "Single enhancement task: Add active tag capture from .taskmaster/state.json, add TDD phase detection via test execution, add uncommitted change count with warning, update state file template to include new sections. Test each addition verifies expected output format.",
+			"reasoning": "The existing pre-compact.sh is 72 lines. This task adds 4 new pieces of state: active tag, TDD phase, uncommitted count, branch (already captured). The additions are straightforward bash: (1) jq query on existing state.json for tag, (2) pytest check to detect RED/GREEN, (3) wc -l on git status for count, (4) template update. The task is well-specified with exact bash code. No subtasks needed - all additions are small, independent, and can be done in a single edit session. Test strategy has 8 cases but they're simple verification tests."
+		},
+		{
+			"taskId": 5,
+			"taskTitle": "Create /phase-check Command",
+			"complexityScore": 7,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Break down into: 1) Create command file structure with phase detection logic (auto-detect from context signals), 2) Implement IDEATION and PLANNING phase prerequisite checks with fix suggestions, 3) Implement BUILDING and REVIEW phase prerequisite checks with fix suggestions, 4) Implement SHIPPING phase prerequisite checks, 5) Create output formatting with pass/warn/fail table and actionable summary. Each phase check should use only local state (git, filesystem, task-master CLI).",
+			"reasoning": "This is a new command file (~150-200 lines). Complexity factors: (1) auto-detection logic must interpret multiple context signals (task status, PRD existence, git state, uncommitted changes), (2) 5 distinct phases with different prerequisite checks, (3) each phase has multiple checks with pass/warn/fail states, (4) output formatting with table display, (5) fix suggestions must be accurate CLI commands. The 8 test cases cover different phase/condition combinations. 5 subtasks: file structure + detection, 2 subtasks for phase pairs (IDEATION+PLANNING, BUILDING+REVIEW), 1 for SHIPPING, 1 for output formatting."
+		},
+		{
+			"taskId": 6,
+			"taskTitle": "Update proactive-steering.md with Phase Transition Pattern",
+			"complexityScore": 3,
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "Single edit task: Add two rows to Auto-Invoke table (phase transition, commitment checkpoint), add Phase Transition pattern section after Post-Push CI Verification pattern, update Integration table to reference workflow-enforcement.md. Verify pattern style matches existing patterns in file.",
+			"reasoning": "The existing proactive-steering.md is 336 lines. This task adds ~40 lines: 2 table rows to Auto-Invoke section and a new pattern section. The additions are well-specified with exact content. The file already has 6 steering patterns, so the new one follows an established format. Low complexity - mostly additive markdown following existing conventions. No subtasks needed as the changes are localized and the pattern format is clear from existing examples."
+		},
+		{
+			"taskId": 7,
+			"taskTitle": "Integration Testing - End-to-End Workflow Validation",
+			"complexityScore": 8,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Break down into: 1) Test IDEATION and PLANNING phase transitions (PRD creation, parse-prd, phase-check validation), 2) Test BUILDING phase (branch protection, task claiming, TDD flow), 3) Test commit format validation (good/bad messages, skip variables), 4) Test pre-compaction state preservation (all state fields captured), 5) Test edge cases (Superpowers fallback, user override, multi-task session, authority hierarchy). Document results in test report.",
+			"reasoning": "This is a manual integration testing task requiring execution of the full workflow. Complexity factors: (1) end-to-end testing requires all prior tasks to be complete, (2) 7 distinct phase tests with multiple checkpoints, (3) 14 edge case verifications, (4) requires setting up test conditions (creating PRDs, tasks, branches, commits), (5) verifying integration between 4 components (rule, hooks, command, steering). The checklist has 14 items. 5 subtasks: 2 for phase testing, 1 for commit format, 1 for pre-compact, 1 for edge cases."
+		},
+		{
+			"taskId": 8,
+			"taskTitle": "Documentation Review and Gap Closure Verification",
+			"complexityScore": 5,
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "Single verification task: Create checklist mapping all 14 PRD gaps to their resolutions, verify 5 success criteria pass, cross-reference rules for contradictions, perform new user test with workflow-enforcement.md, document findings in .taskmaster/docs/prd_workflow_guardrails_completed.md. No code changes expected.",
+			"reasoning": "This is a documentation review and verification task. Complexity factors: (1) requires understanding the original 14 gaps (not enumerated in provided context), (2) cross-referencing 4+ rule files for contradictions, (3) simulating 'new user' perspective for usability test, (4) creating final gap closure documentation. However, no code changes are needed - this is purely verification and documentation. The task depends on task 7 completing successfully. No subtasks needed as it's a single verification pass with documentation output."
+		}
+	]
+}

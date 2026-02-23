@@ -58,7 +58,7 @@ Every non-trivial task follows this pipeline:
 2. `task-master analyze-complexity` → produces a complexity report
 3. Review the report — it recommends which tasks need expansion and how deep
 4. `task-master expand --id=<id>` for each task flagged as needing subtasks
-5. Simple tasks (complexity < threshold) may not need subtasks at all
+5. Simple tasks (complexity < 5) may not need subtasks at all
 
 This prevents over-decomposition of simple tasks and under-decomposition of complex ones.
 
