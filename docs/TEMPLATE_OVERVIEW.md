@@ -261,14 +261,31 @@ pattern-extraction.sh (session end) ──► candidates/
 Authority: Rules > Instincts > Defaults (always)
 ```
 
-**Session Persistence:**
+**Session Persistence (three layers):**
+
+Each layer captures different information — they complement, not duplicate:
+
+| Layer | Mechanism | Captures | Cannot Capture |
+|-------|-----------|----------|----------------|
+| **Automatic snapshots** | `session-end.sh` (Stop hook) | Git diff, commits, modified files, active tasks | Intent, decisions, reasoning |
+| **Pre-compaction state** | `pre-compact.sh` (UserPromptSubmit hook) | Branch, uncommitted changes, active task at that moment | Anything beyond a point-in-time snapshot |
+| **Handoff documents** | Claude writes manually | Why decisions were made, exact next steps, continuation instructions | Automated — requires Claude to synthesize |
+
 ```
-.claude/sessions/session_*.md ──── Detailed summaries (from Stop hooks)
-.claude/sessions/pre-compact-state.md ── State before compaction
-.claude/work-log.md ──── Manual decision ledger
-.claude/instincts/ ───── Learned patterns (survive sessions)
-.taskmaster/ ──────────── Task state (survive sessions)
+Automatic (hooks):
+  session-end.sh ──► .claude/sessions/session_*.md   (what changed)
+  pre-compact.sh ──► .claude/sessions/pre-compact-state.md (snapshot)
+
+Manual (Claude-written):
+  Handoff docs ────► .claude/sessions/handoff-*.md    (what it means + what's next)
+  Work log ────────► .claude/work-log.md              (decisions + reasoning)
+
+Always persistent:
+  Instincts ───────► .claude/instincts/               (learned patterns)
+  Tasks ───────────► .taskmaster/                     (task state)
 ```
+
+Hooks capture **observable state** (what git and task-master report). Handoff documents capture **interpreted state** (what the work means and what to do next). Start a new session with `Read .claude/sessions/handoff-*.md and MEMORY.md` to resume complex multi-session work.
 
 ### Component Summary
 
