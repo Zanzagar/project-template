@@ -15,7 +15,7 @@ Hooks are shell scripts that run automatically at specific points in Claude's wo
 |--------|-------|---------|---------|
 | `session-init.sh` | SessionStart | No | Project state detection, session reload (<24h), phase guidance |
 | `project-index.sh` | SessionStart | No | Generates codebase structure index for sub-agents |
-| `pre-commit-check.sh` | PreToolUse (Bash) | **Yes** | Validates code before git commits (lint, tests, secrets) |
+| `pre-commit-check.sh` | PreToolUse (Bash) | **Yes** | Branch protection, conventional commit format, lint, tests, secrets (22 tests) |
 | `dev-server-blocker.sh` | PreToolUse (Bash) | **Yes** | Blocks dev servers outside tmux to prevent terminal capture |
 | `long-running-tmux-hint.sh` | PreToolUse (Bash) | No | Advisory tmux reminder for long-running commands |
 | `protect-sensitive-files.sh` | PreToolUse (Edit\|Write) | **Yes** | Blocks edits to .env, keys, credentials |
@@ -25,7 +25,7 @@ Hooks are shell scripts that run automatically at specific points in Claude's wo
 | `typescript-check.sh` | PostToolUse (Edit) | No | Runs tsc --noEmit on .ts/.tsx files |
 | `build-analysis.sh` | PostToolUse (Bash) | No | Advisory error/warning analysis after builds |
 | `pr-url-extract.sh` | PostToolUse (Bash) | No | Extracts PR URL from git push output |
-| `pre-compact.sh` | UserPromptSubmit | No | Saves working state before context compaction |
+| `pre-compact.sh` | UserPromptSubmit | No | Saves task, tag, TDD phase, branch, uncommitted changes (17 tests) |
 | `suggest-compact.sh` | UserPromptSubmit | No | Suggests compaction at 50+ tool calls |
 | `session-end.sh` | Stop | No | Generates detailed per-session summary for cross-session continuity |
 | `session-summary.sh` | Stop | No | Appends lightweight entry to rolling session log |

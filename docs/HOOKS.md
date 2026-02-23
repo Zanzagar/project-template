@@ -22,13 +22,17 @@ This template includes 18 ready-to-use hooks in `.claude/hooks/`:
 
 ### pre-commit-check.sh
 **Event:** PreToolUse (matcher: "Bash")
-**Purpose:** Validates code before git commits
+**Purpose:** Validates code and workflow discipline before git commits
+**Tests:** 22 passing
 
+- **Blocks** direct commits to main/master branch (branch protection)
+- **Blocks** non-conventional commit messages (validates `type: description` format)
 - Runs linter (ruff) if available
 - Runs tests (pytest) if available
 - Checks for debug statements (pdb, breakpoint, console.log)
 - Scans for hardcoded secrets
-- **Blocks** commit if validation fails
+- **Advisory warning** when no Task Master task is in-progress
+- All checks individually skippable: `SKIP_BRANCH_CHECK=1`, `SKIP_COMMIT_FORMAT=1`, `SKIP_LINT=1`, `SKIP_TESTS=1`, `SKIP_TASK_CHECK=1`
 
 ### post-edit-format.sh
 **Event:** PostToolUse (matcher: "Edit|Write")
@@ -75,14 +79,16 @@ Creates entries in `.claude/logs/sessions.log` with:
 
 ### pre-compact.sh
 **Event:** UserPromptSubmit (auto) or manual
-**Purpose:** Saves working state before context compaction
+**Purpose:** Saves comprehensive working state before context compaction
+**Tests:** 17 passing
 
 Preserves:
-- Active Task Master task
-- Current branch and uncommitted changes
+- Active Task Master task and **active tag** (from `.taskmaster/state.json`)
+- Current branch and **uncommitted changes count** (with stderr warning)
+- **TDD phase detection** (RED = tests failing, GREEN/REFACTOR = tests passing)
 - Placeholder for manual context notes
 
-**Auto-trigger:** Fires when user message matches `/compact` or compact-related keywords.
+**Auto-trigger:** Fires on every user prompt (saves state continuously).
 **Manual trigger:** `./claude/hooks/pre-compact.sh`
 
 Saved state is detected by `session-init.sh` on next session start.

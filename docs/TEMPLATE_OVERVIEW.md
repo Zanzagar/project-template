@@ -2,7 +2,7 @@
 
 **Author:** Corey Hoydic
 **Date:** February 13, 2026
-**Version:** 2.2.0
+**Version:** 2.3.0
 **Repository:** github.com/Zanzagar/project-template
 
 ---
@@ -16,9 +16,9 @@ The template was developed through systematic analysis and integration of best p
 **By the numbers:**
 - 14 specialized AI agents
 - 40 skills (domain-specific knowledge modules)
-- 50 slash commands
-- 13 behavior rules (8 core + 5 language-specific)
-- 18 automation hooks
+- 51 slash commands
+- 14 behavior rules (9 core + 5 language-specific)
+- 18 automation hooks (enhanced with workflow guardrails)
 - 5 project-type presets for one-command scaffolding
 - Multi-model collaboration (Claude + Gemini + GPT)
 - Continuous learning system with cross-session memory
@@ -144,7 +144,7 @@ This section shows **what fires when** across all 190 components during a projec
 | Component | Type | Purpose |
 |-----------|------|---------|
 | CLAUDE.md | Config | Project name, tech stack, patterns, constraints |
-| 8 core rules | Auto-loaded | Commit style, git workflow, reasoning patterns, phase detection, context management, proactive steering, authority hierarchy, Superpowers integration |
+| 9 core rules | Auto-loaded | Commit style, git workflow, reasoning patterns, phase detection, context management, proactive steering, authority hierarchy, Superpowers integration, workflow enforcement |
 | 5 language rules | Conditional | Load only when matching files are edited (.py, .ts, .go, .java, .jsx/.vue) |
 | task-master-ai MCP | Tools | Task management (list, show, set-status, next, expand, parse-prd) |
 | context7 MCP | Tools | Up-to-date library documentation lookup |
@@ -160,7 +160,7 @@ This section shows **what fires when** across all 190 components during a projec
 - `observe.sh` (pre+post) — Logs tool usage to `observations.jsonl` for continuous learning
 
 **Every User Prompt:**
-- `pre-compact.sh` — Saves working state if `/compact` detected
+- `pre-compact.sh` — Saves working state including active tag, TDD phase, and uncommitted changes (17 tests)
 - `suggest-compact.sh` — Nudges at 50 tool calls, `/learn` nudge at 75
 
 **On File Edit/Write:**
@@ -171,7 +171,7 @@ This section shows **what fires when** across all 190 components during a projec
 - `typescript-check.sh` — Runs `tsc --noEmit` after .ts/.tsx edits
 
 **On Bash Commands:**
-- `pre-commit-check.sh` — Lint + test + staged file scan before `git commit`
+- `pre-commit-check.sh` — Conventional commit format validation, main branch protection, lint + test + staged file scan before `git commit` (22 tests)
 - `dev-server-blocker.sh` — **BLOCKS** dev servers outside tmux
 - `long-running-tmux-hint.sh` — Advisory tmux reminder for slow commands
 - `build-analysis.sh` — Advisory analysis after build commands
@@ -237,10 +237,22 @@ For each task, the TDD cycle runs:
 
 ### Phase 5: Shipping ("Get it out the door")
 
-| Action | Component | Type |
-|--------|-----------|------|
-| Finish branch | `superpowers:finishing-a-development-branch` | Skill (mandatory) |
-| Create PR | `/pr` → `pr-url-extract.sh` fires after push | Command + Hook |
+The branch completion workflow (`workflow-enforcement.md`) defines the prescribed sequence:
+
+| Step | Action | Component | Type |
+|------|--------|-----------|------|
+| 1 | Review code | `/code-review` → code-reviewer agent | Command + Agent |
+| 2 | Push branch | `git push -u origin <branch>` → `pr-url-extract.sh` | Git + Hook |
+| 3 | Create PR | `/pr` (squash merge default) | Command |
+| 4 | Verify CI | `gh run list` → `gh run watch` | Git + CLI |
+| 5 | Merge | Squash merge via GitHub | GitHub |
+| 6 | Sync local | `git checkout main && git pull` | Git |
+| 7 | Cleanup | `git branch -d <branch>` | Git |
+| 8 | Update tasks | `task-master set-status <id> done` | MCP |
+| 9 | Tag release | `git tag -a v<version>` (if release-worthy) | Git |
+
+| Also available | Component | Type |
+|----------------|-----------|------|
 | Update changelog | `/changelog` | Command |
 | Sync issues | `/github-sync` | Command |
 | Quality snapshot | `/eval [--save]` | Command |
@@ -294,15 +306,15 @@ Hooks capture **observable state** (what git and task-master report). Handoff do
 
 | Type | Count | Loading | Token Cost |
 |------|-------|---------|-----------|
-| Rules (core) | 8 | Always | ~5k |
+| Rules (core) | 9 | Always | ~5k |
 | Rules (language) | 5 | On file edit | 0 at startup |
 | Agents | 14 | On invocation | 0 at startup |
 | Skills | 40 | On relevance | 0 at startup |
-| Commands | 50 | On `/command` | 0 at startup |
+| Commands | 51 | On `/command` | 0 at startup |
 | Hooks | 18 | On event trigger | 0 (shell scripts) |
 | MCP tools | ~42 | Always | ~25k |
 | Superpowers | 13 skills | Always | ~3-5k |
-| **Total** | **190 components** | | **~35k startup** |
+| **Total** | **~193 components** | | **~35k startup** |
 
 ---
 
@@ -388,8 +400,9 @@ Rules are **auto-loaded constraints** that define how Claude behaves. They're th
 - **workflow-guide.md** — Phase detection (ideation → planning → building → review → shipping), tool selection
 - **context-management.md** — Thinking modes, compaction strategy, session persistence
 - **proactive-steering.md** — Project co-pilot behaviors, scope management, milestone tracking
-- **authority-hierarchy.md** — Rules > Instincts > Defaults precedence
+- **authority-hierarchy.md** — Rules > Superpowers > Instincts > Defaults (4-tier precedence)
 - **superpowers-integration.md** — Overrides Superpowers brainstorming→writing-plans routing to use PRD→Task Master pipeline instead
+- **workflow-enforcement.md** — Explicit decision thresholds for 6 workflow types, branch completion sequence, session/tag management
 
 **Language Rules (loaded only when editing matching files):**
 - Python, TypeScript, Go, Java, Frontend (React/Vue/Svelte)
@@ -523,6 +536,49 @@ The template gracefully degrades when API keys aren't available — `/multi-plan
 
 ## Workflow Enforcement
 
+### Three Enforcement Tiers
+
+The template uses a layered enforcement model — hard gates where violations are costly, advisory checks where context matters, and normative rules where Claude's judgment applies:
+
+| Tier | Mechanism | What It Covers | Can Override? |
+|------|-----------|----------------|---------------|
+| **Hard (hooks)** | `pre-commit-check.sh` | Commit format, branch protection, lint, tests | `SKIP_*` env vars |
+| **Hard (plugin)** | Superpowers TDD | Tests before production code | Explicit user acknowledgment |
+| **Advisory** | `/phase-check` | Phase prerequisites (PRD exists, tests pass, etc.) | Always — reports only |
+| **Normative (rules)** | `workflow-enforcement.md` | Pipeline sequence, size thresholds, merge strategy | Claude discipline |
+
+### The End-to-End Pipeline
+
+Every non-trivial feature follows this complete sequence, defined in `workflow-enforcement.md`:
+
+```
+IDEATE     → superpowers:brainstorming (explore, clarify, propose)
+SPECIFY    → /prd-generate or manual PRD
+DECOMPOSE  → task-master parse-prd → analyze-complexity → expand
+IMPLEMENT  → superpowers:test-driven-development (RED-GREEN-REFACTOR per task)
+REVIEW     → /code-review, /security-audit
+SHIP       → push → /pr (squash merge) → verify CI → sync main → cleanup → tag
+```
+
+The **branch completion** step (SHIP) is explicitly prescribed — squash merge is the default for feature/bugfix/hotfix branches, merge commit for release branches. Claude does not present merge strategy as a choice.
+
+### Workflow Decision Thresholds
+
+`workflow-enforcement.md` defines explicit size thresholds so there is no ambiguity:
+
+| Work Type | Size | Workflow |
+|-----------|------|----------|
+| **Feature** | Multi-task | Full pipeline (brainstorm → PRD → tasks → TDD) |
+| **Feature** | Single task | TDD directly, skip brainstorm/PRD |
+| **Bug fix** | < 10 lines | Direct TDD, no task needed |
+| **Bug fix** | 10-50 lines | Create task, then TDD |
+| **Bug fix** | > 50 lines | systematic-debugging first, then task + TDD |
+| **Refactor** | < 50 lines | Direct with tests |
+| **Refactor** | 50-200 lines | Create task + TDD |
+| **Refactor** | 200+ lines | Full pipeline (PRD, tasks, TDD per subtask) |
+| **Docs** | Any | No TDD. `docs:` commit prefix. |
+| **Hotfix** | Any | `hotfix/` branch, minimal TDD, skip PRD |
+
 ### The TDD Cycle
 
 The template doesn't just suggest test-driven development — it **enforces** it:
@@ -551,15 +607,26 @@ SKIP (tool not installed) is distinct from FAIL — the template adapts to whate
 
 ### Proactive Phase Detection
 
-The template automatically detects what phase of development you're in and adjusts behavior:
+The template automatically detects what phase of development you're in and adjusts behavior. The `/phase-check` command validates prerequisites before phase transitions:
 
-| Phase | Signals | Behavior |
-|-------|---------|----------|
-| **Ideation** | "I want to build..." | Brainstorming, research, NO code |
-| **Planning** | PRD exists, creating tasks | Task breakdown, dependency mapping |
-| **Building** | Task in progress | TDD enforcement, frequent commits |
-| **Review** | Code complete | Security audit, quality review |
-| **Shipping** | Ready to merge | PR creation, changelog, issue sync |
+| Phase | Signals | Behavior | `/phase-check` Validates |
+|-------|---------|----------|-------------------------|
+| **Ideation** | "I want to build..." | Brainstorming, research, NO code | Always passes |
+| **Planning** | PRD exists, creating tasks | Task breakdown, dependency mapping | PRD exists, tasks parsed, complexity analyzed |
+| **Building** | Task in progress | TDD enforcement, frequent commits | Task claimed, feature branch, tests exist |
+| **Review** | Code complete | Security audit, quality review | Tests passing, linter clean, no debug stmts |
+| **Shipping** | Ready to merge | PR creation, changelog, issue sync | Branch pushed, CHANGELOG updated, task done |
+
+### Authority Hierarchy
+
+When guidance from different sources conflicts:
+
+```
+1. Rules (.claude/rules/)     — Highest. Cannot be overridden.
+2. Superpowers (plugin)       — Hard enforcement. Override requires explicit acknowledgment.
+3. Instincts (.claude/instincts/) — Learned patterns. Override freely.
+4. Defaults (Claude behavior) — Baseline. Override freely.
+```
 
 ---
 
@@ -958,4 +1025,4 @@ Any student using this template starts their project with the workflow enforceme
 ---
 
 *Built with Claude Code (Anthropic) | Informed by Everything Claude Code (45K+ stars)*
-*Template version 2.2.0 | 14 agents, 40 skills, 50 commands, 13 rules, 18 hooks | 5 project-type presets*
+*Template version 2.3.0 | 14 agents, 40 skills, 51 commands, 14 rules, 18 hooks | 5 project-type presets*

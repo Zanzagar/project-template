@@ -4,22 +4,42 @@ All notable changes to this project template are documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [2.3.0] - 2026-02-23
 
-### Added
-- **scripts/check-upstream.sh** - Checks all 5 upstream sources (Superpowers, ECC, Anthropic Official, Task Master, wshobson/agents) for changes since last sync. Compares installed vs latest versions, shows commit counts, supports `--verbose` and `--since` flags.
-- **TEMPLATE_prd_rpg.txt** - RPG (Repository Planning Graph) PRD template from Task Master. Structured dependency-aware PRDs with functional/structural decomposition and explicit dependency graphs. Referenced from `/prd` and `/prd-generate`.
-- **MCP_SETUP.md** - Documented `tm start` and `tm loop` CLI-only features with compatibility analysis. `tm loop` bypasses Superpowers TDD — recommended only for low-risk batch work (lint fixes, test backfill).
+Workflow guardrails release: closes 14 enforcement gaps identified in a deep audit. Adds hard enforcement hooks for commit quality, normative rules for 6 workflow types, and a prescribed branch completion sequence. The template now has an unambiguous end-to-end pipeline from ideation to merged-on-main.
 
-### Changed
-- **CLAUDE.md** - Expanded Taskmaster Commands section with v0.43.0 syntax: positional `set-status`, `--ready`/`--blocking` filters, compact/JSON output modes, `analyze-complexity`, cross-tag queries, tag listing with `--ready`
-- **commands/tasks.md** - `/tasks` now supports `ready`, `blocking`, and `compact` arguments for token-efficient task listing
-- **commands/task-status.md** - Simplified to positional syntax (`set-status <id> <status>`), added `cancelled` status
-- **commands/prd.md, prd-generate.md** - Fixed `--file` → `--input` flag (matches actual CLI), added `--num-tasks=0`
-- **rules/proactive-steering.md** - Auto-invoke table now suggests `--ready --blocking` for feature work start
-- **rules/workflow-guide.md** - Planning phase uses `analyze-complexity` → `expand` sequence, Building phase uses `show`/`next` instead of deprecated `get-task`
-- **rules/superpowers-integration.md** - Pipeline examples use correct `--input=` flag syntax
-- **MCP_SETUP.md** - Document Task Master token optimization: deferred MCP loading (`ENABLE_EXPERIMENTAL_MCP_CLI`), configurable tool modes (`TASK_MASTER_TOOLS=core`), and task metadata (`TASK_MASTER_ALLOW_METADATA_UPDATES`). Updated token cost table with per-mode costs.
+### Added - Workflow Enforcement
+- **workflow-enforcement.md** (new rule) - Normative rule defining explicit decision thresholds for every common workflow scenario: feature implementation (mandatory pipeline), bug fixes (3 size tiers), refactoring (3 scope tiers), documentation, dependency updates, emergency hotfixes, session management, and tag discipline
+- **Branch completion workflow** - Prescribed post-implementation sequence (review → push → PR → verify CI → squash merge → sync → cleanup → tag) with merge strategy defaults by branch type. Eliminates ambiguity about how to finish a branch.
+- **/phase-check command** - Validates prerequisites for 5 workflow phases (IDEATION, PLANNING, BUILDING, REVIEW, SHIPPING) with actionable fix suggestions. Advisory enforcement — reports but does not block.
+
+### Added - Hard Enforcement Hooks
+- **pre-commit-check.sh** enhancements (22 tests):
+  - Conventional commit format validation (blocks non-conforming messages)
+  - Main/master branch protection (blocks direct commits)
+  - Task Master in-progress advisory warning (soft, doesn't block)
+  - All checks individually skippable via `SKIP_*` env vars
+- **pre-compact.sh** enhancements (17 tests):
+  - Saves active Task Master tag from `.taskmaster/state.json`
+  - Detects TDD phase (RED = tests failing, GREEN/REFACTOR = passing)
+  - Warns about uncommitted changes with file count
+
+### Changed - Authority & Steering
+- **authority-hierarchy.md** - Now 4-tier precedence: Rules > Superpowers > Instincts > Defaults. Superpowers override requires explicit user acknowledgment. Fallback documented: TDD becomes advisory when Superpowers not installed.
+- **proactive-steering.md** - Added `/phase-check` to auto-invoke table on phase transitions. Added Phase Transition steering pattern for prerequisite validation before phase changes.
+- **superpowers-integration.md** - Added explicit >= 5 complexity threshold for task expansion
+
+### Fixed
+- **pre-compact.sh** used `.activeTag` but Task Master's `state.json` uses `.currentTag` — fixed with fallback chain supporting both current and legacy field names
+
+### Also includes (from [Unreleased])
+- **scripts/check-upstream.sh** - Checks all 5 upstream sources for changes since last sync
+- **TEMPLATE_prd_rpg.txt** - RPG PRD template from Task Master
+- **MCP_SETUP.md** - Documented `tm start` and `tm loop` CLI-only features
+- **CLAUDE.md** - Task Master v0.43.0 syntax updates
+- **commands/tasks.md, task-status.md, prd.md, prd-generate.md** - CLI flag fixes and new arguments
+- **rules/proactive-steering.md, workflow-guide.md, superpowers-integration.md** - Syntax and workflow updates
+- **MCP_SETUP.md** - Token optimization settings documentation
 
 ## [2.2.0] - 2026-02-22
 
@@ -283,6 +303,7 @@ Major release integrating patterns from [Everything Claude Code](https://github.
 - Python coding standards with testing and error handling patterns
 - Plugin system with marketplace support
 
+[2.3.0]: https://github.com/Zanzagar/project-template/releases/tag/v2.3.0
 [2.2.0]: https://github.com/Zanzagar/project-template/releases/tag/v2.2.0
 [2.1.0]: https://github.com/Zanzagar/project-template/releases/tag/v2.1.0
 [2.0.0]: https://github.com/Zanzagar/project-template/releases/tag/v2.0.0
