@@ -62,7 +62,7 @@ case "${1:-start}" in
         ;;
 
     start)
-        # Check if already running
+        # Check if already running via PID file
         if [ -f "$PID_FILE" ]; then
             pid=$(cat "$PID_FILE")
             if kill -0 "$pid" 2>/dev/null; then
@@ -71,6 +71,12 @@ case "${1:-start}" in
             fi
             rm -f "$PID_FILE"
         fi
+
+        # Kill any orphaned observers (PID file lost but process still running)
+        for orphan_pid in $(pgrep -f "start-observer.sh" 2>/dev/null); do
+            [ "$orphan_pid" != "$$" ] && kill "$orphan_pid" 2>/dev/null || true
+        done
+        sleep 0.5
 
         echo "Starting observer agent..."
 
@@ -99,8 +105,8 @@ case "${1:-start}" in
 
                 if command -v claude &> /dev/null; then
                     exit_code=0
-                    CLAUDECODE= claude --model haiku --max-turns 5 --print \
-                        "Read the last 100 lines of $OBSERVATIONS_FILE (use offset/limit if large) and identify tool usage patterns. If you find 3+ occurrences of the same pattern (e.g., always reading a file before editing, repeated tool sequences, common file types), create an instinct JSON file in $PERSONAL_DIR/ with fields: id, pattern, action, trigger, confidence (0.3-0.7), domain, source. Be conservative — only create instincts for clear, repeated patterns. Create at most 3 instincts per run." \
+                    CLAUDECODE= claude --model haiku --max-turns 15 --allowedTools "Read,Write,Glob" --print \
+                        "You are an autonomous background agent. Do NOT ask questions or request permission — act immediately. Read the last 100 lines of $OBSERVATIONS_FILE (use Read with offset if large). Identify tool usage patterns with 3+ occurrences. For each pattern found, immediately Write a JSON file to $PERSONAL_DIR/<pattern-id>.json with fields: id, pattern, action, trigger, confidence (0.3-0.7), domain, source. Create at most 3 instinct files. Do not explain — just read and write." \
                         >> "$LOG_FILE" 2>&1 || exit_code=$?
                     if [ "$exit_code" -ne 0 ]; then
                         echo "[$(date)] Claude analysis failed (exit $exit_code)" >> "$LOG_FILE"
