@@ -79,6 +79,8 @@ I notice we might be stuck. Let me help:
 | "review this thoroughly" | `/orchestrate review` |
 | Multi-model planning needed | `/multi-plan` |
 | After `git push` to CI branch | `gh run list` → `gh run watch` (verify CI) |
+| Phase transition detected | `/phase-check` (validate prerequisites) |
+| Commitment checkpoint stated | `/phase-check` (validate before proceeding) |
 
 ### 5. Manage Scope Proactively
 
@@ -274,6 +276,30 @@ After pushing to a branch with CI configured, **proactively verify the pipeline 
 - The push is a documentation-only change with no CI triggers
 - The user explicitly says to skip verification
 
+### Pattern: Phase Transition
+
+When transitioning between workflow phases, validate prerequisites before proceeding.
+
+**Trigger:** Any commitment checkpoint that changes phase (e.g., "PHASE: BUILDING").
+
+**Steps:**
+1. Detect phase change from commitment checkpoint
+2. Run `/phase-check <new-phase>`
+3. If all prerequisites pass: proceed with new phase behaviors
+4. If prerequisites fail:
+   ```
+   Phase transition: [PHASE]
+
+   Missing prerequisites:
+   - [Prerequisite]: [Fix suggestion]
+
+   Options:
+   1. Fix prerequisites, then continue
+   2. Override: "Proceed despite missing prerequisites"
+   ```
+
+**Note:** `/phase-check` is advisory (soft enforcement). It reports missing prerequisites but doesn't block. The user can explicitly override if they understand the implications.
+
 ## Quality Guardrails
 
 ### Don't Over-Commit
@@ -305,6 +331,7 @@ This rule orchestrates the others:
 | Rule | How Steering Uses It |
 |------|---------------------|
 | workflow-guide.md | Phase detection, tool selection |
+| workflow-enforcement.md | Phase prerequisites, correct workflows |
 | reasoning-patterns.md | Clarification, brainstorming patterns |
 | context-management.md | Token awareness, session management |
 | claude-behavior.md | Commit frequency, communication style |
