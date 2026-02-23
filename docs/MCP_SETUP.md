@@ -467,7 +467,11 @@ Each MCP server consumes context tokens for its tool definitions. These costs ar
 
    Set in your MCP server config: `export TASK_MASTER_TOOLS='core'`
 
-   The 7 core tools are: `get_tasks`, `get_task`, `set_task_status`, `next_task`, `add_task`, `add_subtask`, `update_subtask`. AI ops (parse-prd, expand, analyze-complexity) go through the CLI anyway.
+   You can also use a **custom comma-separated list** for surgical precision:
+   ```
+   TASK_MASTER_TOOLS='get_tasks,next_task,get_task,set_task_status,update_subtask,parse_prd,expand_task,add_subtask,analyze_project_complexity'
+   ```
+   This gives you exactly 9 tools — core workflow + the two most-used standard tools. Recommended for this template's workflow where AI-heavy ops (update, scope, research) go through the CLI.
 
 3. **Enable task metadata** for GitHub issue linking:
    ```
