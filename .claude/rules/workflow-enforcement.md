@@ -105,6 +105,18 @@ After all tasks on a branch are done, follow this sequence:
 8. **Update tasks**: `task-master set-status <id> done` for all completed tasks.
 9. **Tag if release-worthy**: `git tag -a v<version> -m "description"` → `git push origin v<version>`
 
+**Why this sequence matters (squash merge + branch safety):**
+
+Squash merges rewrite commits into a single new commit, which breaks git's ability to verify branch ancestry. The order above ensures `git branch -d` (lowercase, safe) always works:
+
+| Approach | `branch -d` works? | Why |
+|----------|-------------------|-----|
+| Squash via GitHub PR → pull → delete | Yes | GitHub tracks provenance; pulled commit matches |
+| Local `git merge --squash` → delete | No — requires `-D` | New commit has no parent link to branch |
+| Local `git merge --no-ff` → delete | Yes | Merge commit preserves ancestry |
+
+**Always merge via GitHub PR** (steps 2-5 above). This is the default. Local `merge --squash` + `branch -D` is a shortcut that bypasses git's safety check — avoid it unless working solo with no remote.
+
 **Merge strategy by branch type:**
 
 | Branch Type | Strategy | Rationale |
