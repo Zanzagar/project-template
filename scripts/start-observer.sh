@@ -93,10 +93,14 @@ case "${1:-start}" in
                 # Use Claude Code with Haiku to analyze observations
                 # Must unset CLAUDECODE to avoid nested-session detection when
                 # observer is started from within a Claude Code session (via session-init.sh)
+                # Count instincts before analysis to detect if new ones were created
+                local before_count
+                before_count=$(find "$PERSONAL_DIR" -name "*.md" -o -name "*.json" 2>/dev/null | wc -l)
+
                 if command -v claude &> /dev/null; then
                     exit_code=0
-                    CLAUDECODE= claude --model haiku --max-turns 3 --print \
-                        "Read $OBSERVATIONS_FILE and identify patterns. If you find 3+ occurrences of the same pattern, create an instinct file in $PERSONAL_DIR/ using YAML frontmatter format with id, trigger, confidence, domain, source fields. Be conservative - only create instincts for clear patterns." \
+                    CLAUDECODE= claude --model haiku --max-turns 5 --print \
+                        "Read the last 100 lines of $OBSERVATIONS_FILE (use offset/limit if large) and identify tool usage patterns. If you find 3+ occurrences of the same pattern (e.g., always reading a file before editing, repeated tool sequences, common file types), create an instinct JSON file in $PERSONAL_DIR/ with fields: id, pattern, action, trigger, confidence (0.3-0.7), domain, source. Be conservative — only create instincts for clear, repeated patterns. Create at most 3 instincts per run." \
                         >> "$LOG_FILE" 2>&1 || exit_code=$?
                     if [ "$exit_code" -ne 0 ]; then
                         echo "[$(date)] Claude analysis failed (exit $exit_code)" >> "$LOG_FILE"
@@ -107,7 +111,18 @@ case "${1:-start}" in
                     return  # Don't archive without analysis
                 fi
 
-                # Archive only after successful analysis
+                # Verify instincts were actually created (not just max-turns exit)
+                local after_count
+                after_count=$(find "$PERSONAL_DIR" -name "*.md" -o -name "*.json" 2>/dev/null | wc -l)
+
+                if [ "$after_count" -le "$before_count" ]; then
+                    echo "[$(date)] Analysis ran but created no instincts (before=$before_count, after=$after_count) — keeping observations for retry" >> "$LOG_FILE"
+                    return  # Don't archive — nothing was produced
+                fi
+
+                echo "[$(date)] Created $((after_count - before_count)) instinct(s)" >> "$LOG_FILE"
+
+                # Archive only after verified instinct creation
                 if [ -f "$OBSERVATIONS_FILE" ]; then
                     archive_dir="$CONFIG_DIR/observations.archive"
                     mkdir -p "$archive_dir"
