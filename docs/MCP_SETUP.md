@@ -429,7 +429,7 @@ Each MCP server consumes context tokens for its tool definitions. These costs ar
 
 | MCP Server | Tools | Tokens | Notes |
 |------------|-------|--------|-------|
-| **task-master-ai** | 46 | ~7,100 | Task management, autopilot, tags |
+| **task-master-ai** | 7-36 | ~1,200-7,100 | Core: 7 tools (~1.2k), Standard: 15 (~3.5k), All: 36 (~7.1k) |
 | **paypal** | 28 | ~9,900 | Invoices, subscriptions, orders, disputes |
 | **wpcom-mcp** | 16 | ~5,900 | WordPress.com site management |
 | **mongodb** | 16 | ~3,600 | Queries, aggregations, Atlas |
@@ -451,16 +451,38 @@ Each MCP server consumes context tokens for its tool definitions. These costs ar
 
 ### Cost Optimization Strategies
 
-1. **Disable unused MCPs per-project**:
+1. **Enable deferred MCP loading** (saves ~33k tokens for Task Master alone):
+   ```bash
+   # Add to ~/.bashrc or ~/.zshrc
+   export ENABLE_EXPERIMENTAL_MCP_CLI=true
+   ```
+   This makes Claude Code load MCP tool definitions lazily instead of at startup. Savings apply to ALL MCP servers.
+
+2. **Reduce Task Master tool count** via `TASK_MASTER_TOOLS` env var:
+   | Mode | Tools | Best For |
+   |------|-------|----------|
+   | `all` | 36 | Full access (default) |
+   | `standard` | 15 | Most workflows |
+   | `core` | 7 | AI-heavy workflows using CLI for expansions (recommended) |
+
+   Set in your MCP server config: `export TASK_MASTER_TOOLS='core'`
+
+   The 7 core tools are: `get_tasks`, `get_task`, `set_task_status`, `next_task`, `add_task`, `add_subtask`, `update_subtask`. AI ops (parse-prd, expand, analyze-complexity) go through the CLI anyway.
+
+3. **Enable task metadata** for GitHub issue linking:
+   ```
+   export TASK_MASTER_ALLOW_METADATA_UPDATES='true'
+   ```
+   Enables the `metadata` field on tasks for storing arbitrary JSON (GitHub issue URLs, story points, sprint IDs).
+
+4. **Disable unused MCPs per-project**:
    ```bash
    claude mcp disable paypal --scope project
    ```
 
-2. **Use presets matching your project type** (see below)
+5. **Use presets matching your project type** (see below)
 
-3. **Check overhead with `/context`** after changes
-
-4. **Essential MCPs only**: `task-master-ai` + `context7` = ~8k tokens
+6. **Essential MCPs only**: `task-master-ai` + `context7` = ~8k tokens (or ~1-2k with deferred loading)
 
 ### The 10/80 Rule
 

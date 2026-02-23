@@ -9,6 +9,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 - **scripts/check-upstream.sh** - Checks all 5 upstream sources (Superpowers, ECC, Anthropic Official, Task Master, wshobson/agents) for changes since last sync. Compares installed vs latest versions, shows commit counts, supports `--verbose` and `--since` flags.
 
+### Changed
+- **MCP_SETUP.md** - Document Task Master token optimization: deferred MCP loading (`ENABLE_EXPERIMENTAL_MCP_CLI`), configurable tool modes (`TASK_MASTER_TOOLS=core`), and task metadata (`TASK_MASTER_ALLOW_METADATA_UPDATES`). Updated token cost table with per-mode costs.
+
 ## [2.2.0] - 2026-02-22
 
 Comprehensive release: ECC feature parity (17 new skills, 9 new hooks), project-type presets, template overlay infrastructure, continuous learning v2, real multi-model integration, and real plugin downloads. Template now has 14 agents, 40 skills, 50 commands, 13 rules, 18 hooks.
