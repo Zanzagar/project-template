@@ -191,9 +191,20 @@ When user requests comprehensive review of existing code:
 - "Refactor this module safely"
 - Multiple review aspects mentioned (quality + security + database)
 
-### Pattern: Session Wrap-Up
+### Pattern: Session Wrap-Up & Handoff
 
-At the end of significant sessions, append to `.claude/work-log.md`:
+Sessions end for many reasons — context limits, task boundaries, natural breakpoints. Use the right persistence mechanism for the situation.
+
+#### Two persistence tools, different purposes:
+
+| Tool | File | Purpose | Loaded |
+|------|------|---------|--------|
+| **Work log** | `.claude/work-log.md` | Decisions and reasoning ledger | Never auto-loaded |
+| **Handoff** | `.claude/sessions/handoff-YYYYMMDD[-topic].md` | Continuation state for next session | On demand by next session |
+
+#### Work Log (decisions that outlive sessions)
+
+Append to `.claude/work-log.md` when sessions include decisions that won't fit in commit messages:
 
 ```markdown
 ## YYYY-MM-DD - [Brief Session Focus]
@@ -206,17 +217,39 @@ At the end of significant sessions, append to `.claude/work-log.md`:
 ---
 ```
 
-**When to log:**
-- End of a focused work session (multiple commits)
-- Before suggesting a fresh session
-- After completing a major milestone
-- When context includes decisions that won't fit in commit messages
+#### Handoff Document (continuation state)
 
-**Token cost:** ~50-100 tokens (write-only, never auto-loaded)
+When a session ends with unfinished work, create `.claude/sessions/handoff-YYYYMMDD[-topic].md`:
 
-This creates a lightweight ledger of work beyond git commits—capturing research, decisions, and context that would otherwise be lost.
+```markdown
+# Session Handoff — YYYY-MM-DD
 
-**Automated session persistence:** If `session-end.sh` hook is enabled, detailed summaries are saved automatically to `.claude/sessions/` on Stop events. The `session-init.sh` hook detects these on next startup and displays recent summaries (<24h). This reduces the need for manual work-log entries but doesn't replace them for capturing *decisions* and *reasoning*.
+## What Was Done
+[Completed work, commits, key outcomes]
+
+## Current State
+[Branch, working tree, CI status, what's deployed/tagged]
+
+## Next Steps (ordered)
+[Exactly what the next session should do, with file paths and line numbers]
+```
+
+**When to create a handoff:**
+- Context is running low and work remains
+- User requests a continuation message
+- Switching to a completely different task domain
+- Before a planned fresh session
+
+**When NOT to create a handoff:**
+- Work is complete (commit messages + work-log suffice)
+- `session-end.sh` hook captures everything needed automatically
+- The remaining work is trivially discoverable from git status + task-master
+
+**Key principle:** The handoff is the *start message* for the next session. Include only what the next session needs to be productive immediately — not a full history. The user should be able to paste "Read .claude/sessions/handoff-YYYYMMDD.md and MEMORY.md" and have the next agent pick up cleanly.
+
+#### Automated persistence
+
+If `session-end.sh` hook is enabled, summaries save automatically to `.claude/sessions/` on Stop events. The `session-init.sh` hook detects and displays recent summaries (<24h) on startup. This handles routine session boundaries — handoff documents are for *intentional* continuation of complex, multi-session work.
 
 ### Pattern: Post-Push CI Verification
 
