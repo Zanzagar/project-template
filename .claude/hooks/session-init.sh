@@ -20,7 +20,7 @@ TEMPLATE_SOURCE_FILE="$PROJECT_DIR/.template/source"
 SYNC_SCRIPT="$PROJECT_DIR/scripts/sync-template.sh"
 
 # Current template version (update when releasing new versions)
-CURRENT_TEMPLATE_VERSION="2.2.0"
+CURRENT_TEMPLATE_VERSION="2.3.0"
 
 # Only run for projects using this template
 # Check for registry OR template tracking OR resembling structure
@@ -72,14 +72,33 @@ fi
 [ -d "$PROJECT_DIR/src" ] && HAS_SRC=true
 [ -f "$SYNC_SCRIPT" ] && HAS_SYNC_SCRIPT=true
 
-# Check for Superpowers plugin (marker file or plugin cache locations)
-# Users can also create .superpowers-installed to confirm installation
+# Check for Superpowers plugin
+# Detection methods (any match = installed):
+# 1. Explicit marker file (user-created to dismiss warning)
+# 2. Plugin directory in various cache locations
+# 3. Superpowers skills directory (most reliable runtime indicator)
+# 4. Find-based search of plugin cache (fallback for unknown layouts)
 if [ -f "$PROJECT_DIR/.superpowers-installed" ] || \
    [ -d "$HOME/.claude/plugins/superpowers" ] || \
    [ -d "$HOME/.claude/plugins/cache/superpowers-marketplace/superpowers" ] || \
    [ -d "$HOME/.claude/plugins/marketplaces/superpowers-marketplace" ] || \
    [ -f "$PROJECT_DIR/.claude/superpowers.json" ]; then
     HAS_SUPERPOWERS=true
+fi
+
+# Fallback: search plugin cache for any superpowers directory
+if [ "$HAS_SUPERPOWERS" = false ] && [ -d "$HOME/.claude/plugins" ]; then
+    if find "$HOME/.claude/plugins" -maxdepth 4 -type d -name "superpowers" 2>/dev/null | grep -q .; then
+        HAS_SUPERPOWERS=true
+    fi
+fi
+
+# Fallback: check if superpowers skills are loaded (runtime detection)
+if [ "$HAS_SUPERPOWERS" = false ]; then
+    if [ -d "$PROJECT_DIR/.claude/skills/superpowers" ] || \
+       [ -L "$PROJECT_DIR/.claude/skills/superpowers" ]; then
+        HAS_SUPERPOWERS=true
+    fi
 fi
 
 # Get installed template version

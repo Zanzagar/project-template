@@ -62,11 +62,12 @@ Explain to the user:
 |--------|------|-------------|
 | minimal | task-master-ai, context7 | ~4,300 |
 | python-backend | + github, postgres | ~7,500 |
-| frontend | + github, playwright, magic | ~9,600 |
+| frontend | + github, playwright, magic, figma | ~10,200 |
 | fullstack | + github, playwright, postgres | ~10,800 |
 | e-commerce | + github, paypal, postgres | ~11,500 |
 | content | + github, wpcom-mcp | ~8,800 |
 | testing | + playwright | ~6,800 |
+| data-engineering | + github, postgres, mongodb | ~9,100 |
 
 ## Example Dialog
 

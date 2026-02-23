@@ -6,6 +6,7 @@ Usage:
 - `/tasks ready` — show only actionable tasks (dependencies satisfied)
 - `/tasks blocking` — show tasks on the critical path
 - `/tasks compact` — minimal one-line output (fewer tokens)
+- `/tasks all` — include subtasks in output
 
 If no tag specified, uses current tag from `.taskmaster/state.json`.
 
@@ -26,7 +27,17 @@ If `$ARGUMENTS` is "compact":
 task-master list -c
 ```
 
-Otherwise (tag name or empty):
+If `$ARGUMENTS` is "all":
+```bash
+task-master list --with-subtasks
+```
+
+If `$ARGUMENTS` is empty (no arguments provided):
+```bash
+task-master list
+```
+
+Otherwise (treat as tag name):
 ```bash
 task-master list --tag $ARGUMENTS --with-subtasks
 ```

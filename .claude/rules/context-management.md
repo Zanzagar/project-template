@@ -99,6 +99,30 @@ If you've been writing decisions to CLAUDE.md, task notes to Task Master, and co
 4. **Monitor symptoms, not numbers**: Quality decline matters more than token counts
 5. **Trust the tools**: Auto-compacting exists for a reason - don't preemptively reset
 
+### Execution Readiness Check
+
+**Before starting implementation of 3+ tasks, verify context budget.**
+
+When a plan or task list calls for executing multiple tasks in the current session, pause and assess:
+
+| Context Used | Action |
+|-------------|--------|
+| < 70% | Proceed with implementation |
+| 70–80% | Present the task list to the user and ask: "We have N tasks remaining and context is at ~X%. Proceed now or defer to a fresh session?" |
+| > 80% | Default to deferring. Recommend: commit current work, create a handoff doc, start fresh. Only proceed if the user explicitly overrides. |
+
+**Why this exists:** At high context usage, quality degrades gradually — forgotten instructions, repeated mistakes, missed connections. Starting multi-task execution late in a session risks compounding errors across all tasks. A fresh session with a handoff doc is almost always faster than fighting context degradation.
+
+**This check applies to:**
+- Executing a plan with multiple implementation steps
+- Running `task-master list --ready` and starting a batch of tasks
+- Any moment where 3+ non-trivial tasks will be executed sequentially
+
+**This check does NOT apply to:**
+- Single-task implementation (proceed normally)
+- Research or exploration (read-only, low risk)
+- Quick fixes (< 10 lines each, even if multiple)
+
 ### When to Start Fresh
 
 Start a fresh session when you observe **symptoms**, not arbitrary thresholds:
@@ -257,9 +281,14 @@ Context feeling sluggish?
 ├─► Major milestone complete?
 │   └─ Natural breakpoint → Good time for fresh session
 │
-└─► Complex task ahead?
-    ├─ Well-defined? → think hard, proceed
-    └─ Exploratory? → ultrathink, then decompose
+├─► Complex task ahead?
+│   ├─ Well-defined? → think hard, proceed
+│   └─ Exploratory? → ultrathink, then decompose
+│
+└─► About to execute 3+ tasks?
+    ├─ Context < 70% → Proceed
+    ├─ Context 70-80% → Ask user: proceed or fresh session?
+    └─ Context > 80% → Default: handoff doc + fresh session
 
 Token optimization:
 ├─► Using default settings?

@@ -51,8 +51,24 @@ MIN_TEMPLATE_SUBDIRS=4
 # Max parent levels to walk when auto-detecting
 MAX_PARENT_DEPTH=5
 
-# Default template path (can be overridden by --template or $TEMPLATE_PATH)
-DEFAULT_TEMPLATE_PATH="$HOME/projects/project-template"
+# Default template path detection:
+# 1. $TEMPLATE_PATH env var (explicit override)
+# 2. $CLAUDE_PROJECT_DIR (set by Claude Code when running from template)
+# 3. Script's own location (if init-project.sh lives in template/scripts/)
+# 4. Hardcoded fallback
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_PARENT="$(dirname "$SCRIPT_DIR")"
+
+if [ -n "${TEMPLATE_PATH:-}" ]; then
+    DEFAULT_TEMPLATE_PATH="$TEMPLATE_PATH"
+elif [ -n "${CLAUDE_PROJECT_DIR:-}" ] && [ -d "${CLAUDE_PROJECT_DIR}/.claude/commands" ]; then
+    DEFAULT_TEMPLATE_PATH="$CLAUDE_PROJECT_DIR"
+elif [ -d "$SCRIPT_PARENT/.claude/commands" ]; then
+    # Script is in template/scripts/, so parent is the template root
+    DEFAULT_TEMPLATE_PATH="$SCRIPT_PARENT"
+else
+    DEFAULT_TEMPLATE_PATH="$HOME/projects/project-template"
+fi
 
 # --- Colors ---
 RED='\033[0;31m'

@@ -198,9 +198,6 @@ Available commands for common tasks:
 | `/orchestrate <pipeline>` | Multi-agent analysis pipeline (review, security, refactor) |
 | `/multi-plan <requirements>` | Multi-perspective planning (queries Gemini + GPT if API keys set) |
 | `/multi-execute <task>` | Multi-perspective implementation (queries Gemini + GPT if API keys set) |
-| `/multi-backend <task>` | Backend-focused development (NOT IMPLEMENTED — needs codeagent-wrapper) |
-| `/multi-frontend <task>` | Frontend-focused development (NOT IMPLEMENTED — needs codeagent-wrapper) |
-| `/multi-workflow <task>` | Full-stack collaborative workflow (NOT IMPLEMENTED — needs codeagent-wrapper) |
 | `/checkpoint [label]` | Manual session state save |
 | `/sessions` | Session history viewer with cleanup |
 | `/skill-create` | Auto-generate skills from git history |
