@@ -20,7 +20,7 @@ Features integrated from [Everything Claude Code](https://github.com/anthropics/
 | Health check MCP audit | ECC budget monitoring | `.claude/commands/health.md` |
 | **Phase 2** | | |
 | AgentShield security scanning | ECC config security | `docs/SECURITY.md`, `/health` integration |
-| 9 additional agents | ECC agent library | `.claude/agents/` (13 total) |
+| 9 additional agents | ECC agent library | `.claude/agents/` (14 total) |
 | 10 multi-language skills | ECC skill library | `.claude/skills/` (20 total after Phase 2) |
 | Continuous learning v2 | ECC instinct patterns | `.claude/instincts/`, `/evolve` |
 | Authority hierarchy | ECC rule precedence | `.claude/rules/authority-hierarchy.md` |
@@ -37,8 +37,8 @@ Features integrated from [Everything Claude Code](https://github.com/anthropics/
 | Java rules | ECC polyglot patterns | `.claude/rules/java/coding-standards.md` |
 | Frontend component rules | ECC polyglot patterns | `.claude/rules/frontend/component-standards.md` |
 | **Phase 2.2** | | |
-| 12 domain skills | ECC skill parity | `.claude/skills/` (33 total with python-data-science) |
-| 6 automation hooks | ECC hook patterns | `.claude/hooks/` (15 total) |
+| 12 domain skills | ECC skill parity | `.claude/skills/` (39 total with python-data-science) |
+| 6 automation hooks | ECC hook patterns | `.claude/hooks/` (18 total) |
 
 ## Quick Start
 
@@ -98,7 +98,7 @@ alias claude-research='claude --append-system-prompt "$(cat .claude/contexts/res
 
 **Target:** Max 10 MCPs, 80 tools. Keeps startup overhead at ~15-20% of context.
 
-### Agents (13 total)
+### Agents (14 total)
 
 Invoke via Task tool with agent-specific prompts. Definitions in `.claude/agents/`:
 
@@ -117,6 +117,7 @@ Invoke via Task tool with agent-specific prompts. Definitions in `.claude/agents
 | go-reviewer | sonnet | Read-only | Go patterns, goroutine leaks |
 | go-build-resolver | sonnet | All | Go module/CGO/cross-compilation |
 | python-reviewer | sonnet | Read-only | Python async, metaclasses, GIL |
+| observer | haiku | All tools | Background pattern analysis, instinct creation |
 
 ### Continuous Learning
 
@@ -140,13 +141,13 @@ Instincts are lightweight JSON in `.claude/instincts/` with confidence scoring (
 ### Multi-Model Collaboration
 
 ```bash
-/multi-plan <requirements>    # Claude + Gemini + Codex perspectives
+/multi-plan <requirements>    # Claude + Gemini + GPT perspectives
 /multi-execute <task>         # Parallel implementation, Claude synthesizes
 ```
 
 Requires optional API keys in `.env`:
 - `GOOGLE_AI_KEY` — Gemini (alternative perspectives)
-- `OPENAI_API_KEY` — Codex/GPT (implementation patterns)
+- `OPENAI_API_KEY` — GPT (implementation patterns)
 
 Gracefully degrades to Claude-only if keys are missing.
 
@@ -163,14 +164,14 @@ See `docs/SECURITY.md` for details.
 
 | Component | Tokens | Loaded |
 |-----------|--------|--------|
-| Core rules (7 files) | ~5k | Every session (auto-loaded) |
+| Core rules (8 files) | ~5k | Every session (auto-loaded) |
 | Language rules (5 files) | 0 at startup | Only when matching files edited |
-| Skills (33 skills) | 0 at startup | Only when invoked via `/skill-name` |
+| Skills (39 skills) | 0 at startup | Only when invoked via `/skill-name` |
 | Instincts (JSON) | ~50-200 each | Only when continuous-learning skill active |
 | Agents | 0 at startup | Only when spawned via Task tool |
 | AgentShield | 0 | External tool (npx), no context cost |
 
-**Key insight**: Phases 2-2.2 add significant capability (33 skills, 15 hooks, 13 agents) without increasing startup overhead. Skills, agents, instincts, and language rules are all on-demand.
+**Key insight**: Phases 2-2.2 add significant capability (39 skills, 18 hooks, 14 agents) without increasing startup overhead. Skills, agents, instincts, and language rules are all on-demand.
 
 ## Migration Notes
 
@@ -242,5 +243,5 @@ See `docs/SECURITY.md` for details.
 
 8. **Multi-model setup** (optional) — Add to `.env`:
    - `GOOGLE_AI_KEY=your_key` (Gemini)
-   - `OPENAI_API_KEY=your_key` (Codex/GPT)
+   - `OPENAI_API_KEY=your_key` (GPT)
    - See `.claude/examples/multi-model-config.json`

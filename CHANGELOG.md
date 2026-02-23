@@ -6,7 +6,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [2.2.0] - 2026-02-22
 
-Comprehensive release: ECC feature parity (17 new skills, 9 new hooks), project-type presets, template overlay infrastructure, continuous learning v2, real multi-model integration, and real plugin downloads. Template now has 14 agents, 39 skills, 49 commands, 13 rules, 18 hooks.
+Comprehensive release: ECC feature parity (17 new skills, 9 new hooks), project-type presets, template overlay infrastructure, continuous learning v2, real multi-model integration, and real plugin downloads. Template now has 14 agents, 39 skills, 50 commands, 13 rules, 18 hooks.
 
 ### Added - Project-Type Presets
 - **project-presets.json** - Registry of 5 project-type presets: `python-fastapi`, `node-nextjs`, `go-api`, `java-spring`, `python-data-science`
@@ -158,7 +158,7 @@ Major release integrating patterns from [Everything Claude Code](https://github.
 
 #### Added - Slash Commands (12 new, 27+ total)
 - `/orchestrate [pipeline]` - Multi-agent pipeline execution (feature, review, refactor)
-- `/multi-plan <requirements>` - Parallel planning with Claude + Gemini + Codex
+- `/multi-plan <requirements>` - Parallel planning with Claude + Gemini + GPT
 - `/multi-execute <task>` - Parallel implementation with multiple models
 - `/verify [scope]` - Structured verification pipeline (test + lint + types + security)
 - `/eval [--save]` - Code quality metrics with trend tracking
@@ -178,7 +178,7 @@ Major release integrating patterns from [Everything Claude Code](https://github.
 - Skill evolution via `/evolve` command (cluster instincts into skills)
 
 #### Added - Multi-Model Collaboration
-- `/multi-plan` sends requirements to Claude + Gemini + Codex in parallel
+- `/multi-plan` sends requirements to Claude + Gemini + GPT in parallel
 - `/multi-execute` divides implementation across models, synthesizes results
 - Graceful degradation when API keys are missing
 - Configuration example at `.claude/examples/multi-model-config.json`

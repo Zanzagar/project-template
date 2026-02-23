@@ -16,11 +16,11 @@ The template was developed through systematic analysis and integration of best p
 **By the numbers:**
 - 14 specialized AI agents
 - 39 skills (domain-specific knowledge modules)
-- 49 slash commands
+- 50 slash commands
 - 13 behavior rules (8 core + 5 language-specific)
 - 18 automation hooks
 - 5 project-type presets for one-command scaffolding
-- Multi-model collaboration (Claude + Gemini + Codex)
+- Multi-model collaboration (Claude + Gemini + GPT)
 - Continuous learning system with cross-session memory
 - Status line with context %, model, branch, and session duration
 
@@ -56,7 +56,7 @@ Here's what they don't realize happened:
 | **Discipline** | The AI writes whatever you ask for, including insecure code, untested features, and broken commits. | TDD enforcement (Superpowers deletes untested code), security gates, conventional commit rules, and verification pipelines make bad practices harder than good ones. |
 | **Resources** | 50K+ tokens consumed by unused tools at startup. Quality degrades silently mid-session with no recovery. | Token-conscious design (35K startup, 165K working). Strategic compaction, tiered documentation lookups, and on-demand skill loading maximize working context. |
 | **Context** | Generic "textbook" code that doesn't fit the project's patterns, framework idioms, or architectural decisions. | 13 behavior rules, 39 domain skills, and language-specific coding standards teach the AI your project's conventions. |
-| **Specialization** | One general-purpose model handles security review, architecture planning, test generation, and documentation with equal (shallow) depth. | 13 purpose-built agents with appropriate model tiers, tool access, and domain training produce categorically deeper results in each specialty. |
+| **Specialization** | One general-purpose model handles security review, architecture planning, test generation, and documentation with equal (shallow) depth. | 14 purpose-built agents with appropriate model tiers, tool access, and domain training produce categorically deeper results in each specialty. |
 
 ### What a well-configured template provides
 
@@ -65,11 +65,11 @@ Here's what they don't realize happened:
 | **Session continuity** | Forgets everything | Persistent memory, session summaries, work logs |
 | **Code quality** | Whatever you ask for | TDD enforcement, automated linting, security gates |
 | **Architecture** | Generic patterns | Project-specific rules, conventions, prior decisions |
-| **Specialization** | One model does all | 13 purpose-built agents (security, architecture, review...) |
+| **Specialization** | One model does all | 14 purpose-built agents (security, architecture, review...) |
 | **Resource efficiency** | Burns through context | Token-conscious presets, strategic compaction, tiered lookups |
 | **Workflow** | Reactive (does what you say) | Proactive (detects phase, suggests next steps, catches mistakes) |
 | **Learning** | Starts fresh daily | Instinct system captures patterns, evolves into skills |
-| **Collaboration** | Single model | Multi-model parallel execution (Claude + Gemini + Codex) |
+| **Collaboration** | Single model | Multi-model parallel execution (Claude + Gemini + GPT) |
 
 The difference is analogous to the difference between giving someone a text editor and giving them an IDE. The underlying capability is the same, but the **scaffolding around it** determines whether that capability translates into reliable, high-quality output.
 
@@ -81,7 +81,7 @@ The difference is analogous to the difference between giving someone a text edit
 project-template/
 ├── .claude/
 │   ├── agents/          # 14 specialized sub-agents
-│   ├── commands/        # 49 slash commands (user-invocable)
+│   ├── commands/        # 50 slash commands (user-invocable)
 │   ├── skills/          # 39 domain knowledge modules (on-demand)
 │   ├── rules/           # 13 behavior rules (auto-loaded)
 │   ├── hooks/           # 18 automation hooks
@@ -97,7 +97,10 @@ project-template/
 │   ├── smoke-test.sh      # Validate template overlay deployments
 │   ├── sync-template.sh   # Sync/adopt template updates into existing projects
 │   ├── manage-mcps.sh     # MCP server management
-│   └── manage-plugins.sh  # Plugin management
+│   ├── manage-plugins.sh  # Plugin management
+│   ├── multi-model-query.py  # Gemini/OpenAI API integration
+│   ├── instinct-cli.py       # Instinct management CLI
+│   └── start-observer.sh     # Observer daemon lifecycle
 ├── docs/
 │   ├── TEMPLATE_OVERVIEW.md
 │   ├── TEMPLATE_OVERLAY_FRICTION.md  # Overlay testing results and fix status
@@ -134,7 +137,7 @@ This design ensures maximum working context. Previous iterations loaded everythi
 
 ## Project Lifecycle Pipeline
 
-This section shows **what fires when** across all 188 components during a project lifecycle. Use this as a reference for understanding the system and identifying gaps.
+This section shows **what fires when** across all 189 components during a project lifecycle. Use this as a reference for understanding the system and identifying gaps.
 
 ### Always Active (every session, ~35k tokens)
 
@@ -295,11 +298,11 @@ Hooks capture **observable state** (what git and task-master report). Handoff do
 | Rules (language) | 5 | On file edit | 0 at startup |
 | Agents | 14 | On invocation | 0 at startup |
 | Skills | 39 | On relevance | 0 at startup |
-| Commands | 49 | On `/command` | 0 at startup |
+| Commands | 50 | On `/command` | 0 at startup |
 | Hooks | 18 | On event trigger | 0 (shell scripts) |
 | MCP tools | ~42 | Always | ~25k |
 | Superpowers | 13 skills | Always | ~3-5k |
-| **Total** | **188 components** | | **~35k startup** |
+| **Total** | **189 components** | | **~35k startup** |
 
 ---
 
@@ -328,7 +331,7 @@ Rather than using one general-purpose model for everything, the template deploys
 
 **Why this matters:** A security review by a dedicated security agent with OWASP training produces categorically better results than asking a general-purpose model "does this code have security issues?" The specialization is in the system prompt, tool access, and model selection — not just the question asked.
 
-### 2. Slash Commands (49)
+### 2. Slash Commands (50)
 
 Commands are user-invocable workflows triggered by typing `/command-name`. They range from simple shortcuts to complex multi-step pipelines:
 
@@ -468,8 +471,8 @@ The template addresses this by enabling **parallel execution across multiple AI 
 /multi-plan "Design spatial interpolation pipeline for soil contamination mapping"
 
     ┌───────────────────────────────────────────────────────────┐
-    │  Claude (Opus)            Gemini                Codex     │
-    │  ─────────────            ──────                ─────     │
+    │  Claude (Opus)            Gemini                GPT       │
+    │  ─────────────            ──────                ───       │
     │  Ordinary Kriging with    Random Forest with    Gaussian  │
     │  automatic variogram      spatial features      Process   │
     │  fitting. Cross-          (lat, lon, elevation, Regression│
@@ -487,7 +490,7 @@ The template addresses this by enabling **parallel execution across multiple AI 
     │    the geostatistics audience, provides defensible UQ     │
     │  Adopted from Gemini: Add RF as comparison model to show  │
     │    kriging outperforms ML on this sparse-data problem     │
-    │  Adopted from Codex: Use GPR's RBF kernel as a           │
+    │  Adopted from GPT: Use GPR's RBF kernel as a              │
     │    third comparison — mathematically equivalent to kriging │
     │    but connects to the ML literature                      │
     │  Rejected: Gemini's "no variogram needed" — the thesis    │
@@ -503,7 +506,7 @@ Each model brings different strengths:
 |-------|----------|----------|
 | **Claude (Opus)** | Deep reasoning, mathematical rigor, understanding of statistical methodology | Can over-engineer, favors complexity |
 | **Gemini** | Broad knowledge across ML literature, strong on recent papers and alternative approaches | Less depth on classical geostatistics |
-| **Codex/GPT** | Practical implementation patterns, strong on NumPy/scikit-learn/PyTorch code generation | Less methodological reasoning |
+| **GPT** | Practical implementation patterns, strong on NumPy/scikit-learn/PyTorch code generation | Less methodological reasoning |
 
 When all three agree, you can be highly confident in the approach. When they disagree, the disagreement itself is valuable — it surfaces trade-offs that a single model might gloss over.
 
@@ -511,8 +514,8 @@ When all three agree, you can be highly confident in the approach. When they dis
 
 For a research project, multi-model collaboration means:
 - **Methodology decisions** get three independent perspectives before code is written — reducing the risk of choosing an approach just because it was the first one the AI suggested
-- **Implementation** can route numerical computation to the model strongest at NumPy/SciPy (Codex) and experimental design to the model strongest at methodology (Claude), with results synthesized
-- **Literature awareness** from Gemini surfaces recent papers and alternative approaches that Claude or Codex might miss, broadening the student's awareness of the field
+- **Implementation** can route numerical computation to the model strongest at NumPy/SciPy (GPT) and experimental design to the model strongest at methodology (Claude), with results synthesized
+- **Literature awareness** from Gemini surfaces recent papers and alternative approaches that Claude or GPT might miss, broadening the student's awareness of the field
 
 The template gracefully degrades when API keys aren't available — `/multi-plan` works with just Claude, but produces richer results with all three models.
 
@@ -808,7 +811,7 @@ The first step beyond ECC feature parity: **one-command project scaffolding.** P
 
 #### v3.0 Phase 2: Template Overlay Infrastructure (Completed)
 
-Real-world overlay testing on three projects (analog_image_generator, rideshare-rescue, postiz-social-automation) revealed a **critical architectural finding**: Claude Code's parent-directory traversal registers rules and CLAUDE.md from parent directories, but does NOT register commands, skills, or hooks. This meant all 49 slash commands and 39 skills were silently broken for any project that didn't have its own local `.claude/` directory.
+Real-world overlay testing on three projects (analog_image_generator, rideshare-rescue, postiz-social-automation) revealed a **critical architectural finding**: Claude Code's parent-directory traversal registers rules and CLAUDE.md from parent directories, but does NOT register commands, skills, or hooks. This meant all 50 slash commands and 39 skills were silently broken for any project that didn't have its own local `.claude/` directory.
 
 **What was built to fix this:**
 

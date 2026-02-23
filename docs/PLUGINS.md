@@ -252,6 +252,11 @@ To add new plugins or presets to this template:
 | `requesting-code-review` | Initiate peer review |
 | `receiving-code-review` | Process and address feedback |
 | `finishing-a-development-branch` | Verify and merge workflow |
+| `verification-before-completion` | Evidence-based completion checks |
+| `subagent-driven-development` | Parallel agent task dispatch |
+| `dispatching-parallel-agents` | Independent task parallelization |
+| `using-superpowers` | Skill discovery and routing |
+| `writing-skills` | Skill creation and verification |
 
 ### Key Enforcement Rules
 

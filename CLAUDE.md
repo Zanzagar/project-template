@@ -157,9 +157,14 @@ Available commands for common tasks:
 | `/setup` | Guided project setup wizard |
 | `/health` | Project health check (includes AgentShield status) |
 | `/tasks` | List Taskmaster tasks |
+| `/task-status` | Update Taskmaster task status |
 | `/test` | Run pytest test suite |
 | `/lint` | Run ruff linter |
 | `/verify` | Full verification pipeline (test + lint + types + security) |
+| `/plan` | Create implementation plan before coding |
+| `/tdd` | Enforce test-driven development workflow |
+| `/build-fix` | Fix build and type errors incrementally |
+| `/test-coverage` | Analyze coverage gaps, generate missing tests |
 | `/eval [--save]` | Code quality metrics with trend tracking |
 | `/commit [message]` | Create conventional commit |
 | `/pr [title]` | Create GitHub Pull Request |
@@ -169,7 +174,14 @@ Available commands for common tasks:
 | `/prd-generate <concept>` | Deep research PRD generation with architecture diagrams |
 | `/generate-tests <file>` | Generate tests for a file |
 | `/security-audit` | Security vulnerability scan (code-level OWASP) |
+| `/code-review` | Comprehensive code review (quality + security) |
+| `/python-review` | Python-specific review (PEP 8, type hints, idioms) |
+| `/go-review` | Go-specific review (idioms, concurrency, security) |
+| `/e2e` | Generate and run end-to-end tests (Playwright/Cypress) |
 | `/optimize <file>` | Performance analysis |
+| `/refactor-clean` | Safe dead code removal with test verification |
+| `/go-build` | Fix Go build errors and linter issues |
+| `/go-test` | Go TDD with table-driven tests and coverage |
 | `/settings [preset]` | Configure Claude Code settings |
 | `/plugins` | Manage plugins |
 | `/mcps` | Manage MCP servers |
@@ -183,6 +195,7 @@ Available commands for common tasks:
 | `/multi-frontend <task>` | Frontend-focused development (NOT IMPLEMENTED — needs codeagent-wrapper) |
 | `/multi-workflow <task>` | Full-stack collaborative workflow (NOT IMPLEMENTED — needs codeagent-wrapper) |
 | `/checkpoint [label]` | Manual session state save |
+| `/sessions` | Session history viewer with cleanup |
 | `/skill-create` | Auto-generate skills from git history |
 | `/update-codemaps` | Generate architecture docs in `docs/CODEMAPS/` |
 | `/update-docs [scope]` | Trigger doc-updater agent on changed files |
@@ -190,6 +203,7 @@ Available commands for common tasks:
 | `/instinct-import <file>` | Import instincts from shared JSON |
 | `/instinct-export` | Export instincts for sharing |
 | `/evolve` | Cluster instincts into new skills |
+| `/learn` | Extract reusable patterns from current session |
 
 ## Context Modes (CLI Aliases)
 

@@ -18,7 +18,7 @@ Hooks are shell scripts that run automatically during Claude Code's workflow, en
 
 ## Available Hook Scripts
 
-This template includes eight ready-to-use hooks in `.claude/hooks/`:
+This template includes 18 ready-to-use hooks in `.claude/hooks/`:
 
 ### pre-commit-check.sh
 **Event:** PreToolUse (matcher: "Bash")
@@ -129,6 +129,162 @@ Generates `.claude/project-index.json` containing:
 **Token benefit:** Instead of reading 10 files to understand structure (~5-10k tokens), reference the index (~500-1k tokens).
 
 Supports: Python, TypeScript, JavaScript
+
+### suggest-compact.sh
+**Event:** UserPromptSubmit
+**Purpose:** Suggests context compaction at optimal times
+
+Tracks tool call count across the session and suggests `/compact` at phase transitions or after significant activity. Uses a configurable threshold (default: 50 tool calls) with recurring reminders every 25 calls after the threshold.
+
+- First suggestion at 50 tool calls (configurable via `COMPACT_THRESHOLD` env var)
+- Recurring suggestions every 25 calls after threshold
+- One-time `/learn` suggestion at 75 tool calls for pattern capture
+- Per-session isolation using `CLAUDE_SESSION_ID` or `PPID`
+- Stores counter state in `.claude/sessions/compact-state-*.tmp`
+- **Advisory only** -- prints suggestions to stderr, never blocks
+
+### doc-file-blocker.sh
+**Event:** PreToolUse (matcher: "Write")
+**Purpose:** Prevents creation of unnecessary documentation files
+
+LLMs tend to create stray `.md`, `.txt`, and `.rst` files unprompted. This hook restricts documentation file creation to approved locations.
+
+Allowed files (by name):
+- `README.md`, `CLAUDE.md`, `CHANGELOG.md`, `CONTRIBUTING.md`
+- `LICENSE.md`, `LICENSE`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `SKILL.md`
+
+Allowed directories:
+- `docs/`, `.claude/`, `.taskmaster/`, `.prd/`
+
+- **Blocks** documentation files written outside approved locations
+- Non-documentation files (`.py`, `.ts`, `.json`, etc.) are always allowed
+
+### console-log-audit.sh
+**Event:** PostToolUse (matcher: "Edit|Write")
+**Purpose:** Warns about debug statements left in edited files
+
+Scans edited files for common debug statements that should not be committed. Language-aware detection:
+
+| Language | Detected Statements |
+|----------|-------------------|
+| Python | `print()`, `breakpoint()`, `pdb.set_trace()`, `import pdb` |
+| JavaScript/TypeScript | `console.log`, `console.debug`, `console.warn`, `debugger` |
+| Go | `fmt.Print`, `fmt.Println`, `log.Print`, `log.Println` |
+| Java | `System.out.print`, `System.err.print`, `e.printStackTrace()` |
+| Ruby | `puts`, `p`, `pp`, `binding.pry`, `byebug` |
+
+- Shows up to 5 matches per category with line numbers
+- Respects `# noqa` comments in Python
+- **Advisory only** -- warns but never blocks
+
+### pattern-extraction.sh
+**Event:** Stop
+**Purpose:** Extracts patterns from session git history for continuous learning
+
+Analyzes commits from the last 4 hours to identify work patterns and generate instinct candidates. This is the engine that powers cross-session learning without manual `/learn` invocations.
+
+- Requires 3+ commits to activate (skips trivial sessions)
+- Deduplicates by HEAD commit SHA (won't re-extract same state)
+- Categorizes sessions by commit type distribution: `debugging-approach`, `testing-strategy`, `coding-style`, `architecture-preference`, or `general`
+- Detects primary language from file extensions touched
+- Saves candidate JSON files to `.claude/instincts/candidates/session_*.json`
+- Candidates start at confidence 0.3 and can be promoted via `/learn`
+- **Advisory only** -- best-effort, never blocks or fails
+
+### build-analysis.sh
+**Event:** PostToolUse (matcher: "Bash")
+**Purpose:** Provides advisory analysis of build command output
+
+Detects build commands and analyzes their output for errors and warnings. Supports multiple build systems:
+
+| Build Type | Commands Detected |
+|------------|------------------|
+| Node.js | `npm run build`, `npx tsc`, `yarn build` |
+| Rust | `cargo build`, `cargo check` |
+| Go | `go build`, `go vet` |
+| Java | `mvn compile`, `mvn package`, `gradle build` |
+| Python | `python -m py_compile`, `python setup.py`, `pip install` |
+| Native | `make`, `cmake` |
+
+- On failure: reports error/warning counts and suggests `/build-fix`
+- On success with >3 warnings: reports warning count
+- On clean success: stays silent
+- **Advisory only** -- never blocks
+
+### typescript-check.sh
+**Event:** PostToolUse (matcher: "Edit|Write")
+**Purpose:** Runs type checking after editing TypeScript files
+
+When a `.ts` or `.tsx` file is edited, automatically runs `tsc --noEmit` to catch type errors immediately. Walks up from the edited file to find the nearest `tsconfig.json`.
+
+- Only activates for `.ts` and `.tsx` files
+- Requires `npx` to be available
+- Filters `tsc` output to show only errors in the edited file (up to 5)
+- Skips silently if no `tsconfig.json` is found
+- **Advisory only** -- reports type errors but never blocks
+
+### dev-server-blocker.sh
+**Event:** PreToolUse (matcher: "Bash")
+**Purpose:** Prevents dev servers from capturing the terminal
+
+Dev servers run indefinitely and capture the terminal, which blocks Claude Code from doing further work. This hook detects common dev server commands and blocks them unless they are running safely.
+
+Detected commands:
+- Node.js: `npm run dev`, `npm start`, `npx next dev`, `pnpm dev`, `yarn dev`
+- Python: `flask run`, `uvicorn --reload`, `manage.py runserver`
+- Static: `hugo server`, `jekyll serve`
+- Rust: `cargo watch`
+
+Allowed when:
+- Running inside tmux (`$TMUX` is set)
+- Command ends with `&` (background mode)
+- Using Claude Code's `run_in_background` parameter
+
+- **Blocks** dev server commands that would capture the terminal
+- Provides three alternative approaches in the block message
+
+### pr-url-extract.sh
+**Event:** PostToolUse (matcher: "Bash")
+**Purpose:** Extracts PR creation URLs from git push output
+
+After a `git push` command completes, scans stdout and stderr for pull request or merge request creation URLs. Supports GitHub (`/pull/new/` and `/compare/`) and GitLab (`/merge_requests/new`) URL patterns.
+
+When a URL is detected, displays:
+- The PR creation URL
+- Quick action commands: `/pr`, `gh pr create --web`, `gh pr view --web`
+
+- Only activates for `git push` commands
+- Checks both stdout and stderr (git push writes to stderr)
+- **Advisory only** -- never blocks
+
+### long-running-tmux-hint.sh
+**Event:** PreToolUse (matcher: "Bash")
+**Purpose:** Advisory tmux reminder for potentially long-running commands
+
+Complements `dev-server-blocker.sh` by covering commands that are long-running but not indefinite. Suggests tmux for session persistence when not already in a tmux session.
+
+Detected commands:
+- Package managers: `npm install`, `npm ci`, `pnpm install`, `yarn install`, `pip install`, `poetry install`, `pdm install`
+- Test suites: `pytest`, `python -m pytest`, `cargo test`, `go test`
+- Build tools: `cargo build`, `make`, `cmake --build`, `go build`, `mvn`, `gradle`
+- Containers: `docker build`, `docker-compose up`, `docker compose up`
+
+- Skips silently if already inside tmux (`$TMUX` is set)
+- **Advisory only** -- suggests tmux but never blocks the command
+
+### observe.sh
+**Event:** PreToolUse / PostToolUse (matcher: "*")
+**Purpose:** Captures tool use events for continuous learning pattern analysis
+
+Core component of the Continuous Learning v2 system. Records every tool invocation as a JSONL observation for later analysis by the observer daemon. Runs as both a PreToolUse and PostToolUse hook, with the phase passed as a CLI argument (`pre` or `post`).
+
+- Logs observations to `.claude/instincts/observations.jsonl`
+- Truncates large inputs/outputs to 5000 characters
+- Auto-archives observation file when it exceeds 10 MB
+- Signals the observer daemon (via `USR1`) when new observations arrive
+- Can be disabled by creating `.claude/instincts/disabled`
+- Falls back to logging raw input on parse errors
+- **Advisory only** -- best-effort, never blocks or fails
 
 ## Configuration
 
@@ -250,7 +406,7 @@ Write to stdout/stderr for feedback shown to Claude.
 
 ## Security Considerations
 
-⚠️ **Hooks execute shell commands automatically.** Review any hook scripts before enabling:
+Hooks execute shell commands automatically. Review any hook scripts before enabling:
 
 - Don't blindly copy hooks from untrusted sources
 - Test hooks manually first
