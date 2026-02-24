@@ -21,10 +21,15 @@ PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 INDEX_FILE="$PROJECT_DIR/.claude/project-index.json"
 INDEX_DIR="$PROJECT_DIR/.claude"
 
-# Only run for projects with source code
-if [ ! -d "$PROJECT_DIR/src" ] && [ ! -d "$PROJECT_DIR/lib" ] && [ ! -d "$PROJECT_DIR/app" ]; then
-    # Check for common source patterns
-    SRC_COUNT=$(find "$PROJECT_DIR" -maxdepth 2 -name "*.py" -o -name "*.ts" -o -name "*.js" 2>/dev/null | head -5 | wc -l)
+# Only run for projects with source code OR template-managed projects
+# Template-managed projects (with .claude/settings.json) always get an index —
+# even Docker/infra projects benefit from directory structure in the index.
+if [ -f "$PROJECT_DIR/.claude/settings.json" ]; then
+    # Template-managed project — always generate index
+    :
+elif [ ! -d "$PROJECT_DIR/src" ] && [ ! -d "$PROJECT_DIR/lib" ] && [ ! -d "$PROJECT_DIR/app" ]; then
+    # Check for common source and infrastructure patterns
+    SRC_COUNT=$(find "$PROJECT_DIR" -maxdepth 2 \( -name "*.py" -o -name "*.ts" -o -name "*.js" -o -name "*.yaml" -o -name "*.yml" -o -name "*.sh" -o -name "Dockerfile" \) 2>/dev/null | head -5 | wc -l)
     if [ "$SRC_COUNT" -eq 0 ]; then
         exit 0
     fi
@@ -51,6 +56,8 @@ generate_index() {
            [[ "$file" == *"__pycache__"* ]] || \
            [[ "$file" == *".git"* ]] || \
            [[ "$file" == *".claude"* ]] || \
+           [[ "$file" == *".taskmaster"* ]] || \
+           [[ "$file" == *".template"* ]] || \
            [[ "$file" == *".next"* ]] || \
            [[ "$file" == *"dist/"* ]] || \
            [[ "$file" == *"build/"* ]] || \
@@ -80,6 +87,18 @@ generate_index() {
                 signatures=$(grep -n "^export \|^class \|^function \|^const .* = \|^interface \|^type " "$file" 2>/dev/null | head -20 | sed 's/"/\\"/g' | tr '\n' '|' | sed 's/|$//')
                 imports=$(grep -n "^import " "$file" 2>/dev/null | head -10 | sed 's/"/\\"/g' | tr '\n' '|' | sed 's/|$//')
                 ;;
+            yaml|yml)
+                # YAML: Extract top-level keys (services, volumes, etc.)
+                signatures=$(grep -n "^[a-zA-Z_]" "$file" 2>/dev/null | head -15 | sed 's/"/\\"/g' | tr '\n' '|' | sed 's/|$//')
+                ;;
+            sh)
+                # Shell: Extract function definitions
+                signatures=$(grep -n "^[a-zA-Z_]*() " "$file" 2>/dev/null | head -10 | sed 's/"/\\"/g' | tr '\n' '|' | sed 's/|$//')
+                ;;
+            toml)
+                # TOML: Extract section headers
+                signatures=$(grep -n "^\[" "$file" 2>/dev/null | head -10 | sed 's/"/\\"/g' | tr '\n' '|' | sed 's/|$//')
+                ;;
         esac
 
         if [ "$first" = true ]; then
@@ -97,7 +116,7 @@ generate_index() {
         fi
         output+='}'
 
-    done < <(find "$PROJECT_DIR" -type f \( -name "*.py" -o -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" \) -print0 2>/dev/null)
+    done < <(find "$PROJECT_DIR" -type f \( -name "*.py" -o -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.yaml" -o -name "*.yml" -o -name "*.sh" -o -name "Dockerfile" -o -name "*.toml" \) -print0 2>/dev/null)
 
     output+='],'
 
@@ -110,6 +129,9 @@ generate_index() {
            [[ "$dir" == *".venv"* ]] || \
            [[ "$dir" == *"__pycache__"* ]] || \
            [[ "$dir" == *".git"* ]] || \
+           [[ "$dir" == *".claude"* ]] || \
+           [[ "$dir" == *".taskmaster"* ]] || \
+           [[ "$dir" == *".template"* ]] || \
            [[ "$dir" == *".next"* ]] || \
            [[ "$dir" == *"dist"* ]] || \
            [[ "$dir" == *"build"* ]] || \

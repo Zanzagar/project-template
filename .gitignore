@@ -36,6 +36,12 @@ htmlcov/
 *.log
 *.tmp
 
+# Claude Code local MCP config — overrides global ~/.claude.json for same-name servers.
+# If Claude Code prompts to "enable Task Master AI as a local MCP", DECLINE if you
+# already have a working global MCP config. Local .mcp.json with placeholder keys
+# will silently break AI operations (parse_prd, expand_task, etc.).
+.mcp.json
+
 # Logs
 logs
 npm-debug.log*

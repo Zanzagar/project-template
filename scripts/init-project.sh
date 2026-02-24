@@ -16,12 +16,15 @@
 #   - If a parent directory contains .claude/commands/ with >10 files, uses symlinks
 #   - Otherwise, copies from --template path
 #
-# What it creates in local .claude/:
-#   commands/   - Slash commands (/health, /commit, etc.)
-#   skills/     - Skills (/code-review, /debugging, etc.)
-#   agents/     - Sub-agent definitions (planner, code-reviewer, etc.)
-#   contexts/   - Context modes (dev, review, research)
-#   hooks/      - Automation hooks (session-init, pre-commit, etc.)
+# What it creates:
+#   .claude/commands/   - Slash commands (/health, /commit, etc.)
+#   .claude/skills/     - Skills (/code-review, /debugging, etc.)
+#   .claude/agents/     - Sub-agent definitions (planner, code-reviewer, etc.)
+#   .claude/contexts/   - Context modes (dev, review, research)
+#   .claude/hooks/      - Automation hooks (session-init, pre-commit, etc.)
+#   .claude/settings.json - Hook definitions (without this, zero hooks fire)
+#   .taskmaster/        - Task Master directories + tuned config.json
+#   .template/          - Version tracking for template updates
 #
 # What it does NOT touch:
 #   instincts/  - User-specific learned patterns
@@ -427,20 +430,83 @@ case $MODE in
         ;;
 esac
 
-# Ensure Task Master directory structure exists
-# The CLI expects .taskmaster/tasks/ and .taskmaster/reports/ but doesn't auto-create them.
-# Without these, `task-master tags add` and `task-master analyze-complexity` fail.
-if [ -d "$PROJECT_DIR/.taskmaster" ]; then
-    for tm_dir in "tasks" "reports" "docs"; do
-        if [ ! -d "$PROJECT_DIR/.taskmaster/$tm_dir" ]; then
-            if [ "$DRY_RUN" = true ]; then
-                log_dry "Would create .taskmaster/$tm_dir/"
-            else
-                mkdir -p "$PROJECT_DIR/.taskmaster/$tm_dir"
-                log_info "Created .taskmaster/$tm_dir/"
-            fi
+# Copy root-level .claude/settings.json (hook definitions)
+# This file lives at .claude/settings.json, NOT inside any of the TARGET_DIRS
+# subdirectories, so the directory copy/symlink logic above misses it.
+# Without settings.json, zero hooks fire on session start.
+SETTINGS_SRC="$TEMPLATE_PATH/.claude/settings.json"
+SETTINGS_DST="$PROJECT_DIR/.claude/settings.json"
+if [ -f "$SETTINGS_SRC" ]; then
+    if [ ! -f "$SETTINGS_DST" ] || [ "$FORCE" = true ]; then
+        if [ "$DRY_RUN" = true ]; then
+            log_dry "Would copy .claude/settings.json (hook definitions)"
+        else
+            cp "$SETTINGS_SRC" "$SETTINGS_DST"
+            log_create ".claude/settings.json (hook definitions)"
         fi
-    done
+    else
+        log_skip ".claude/settings.json (already exists — use --force to replace)"
+    fi
+fi
+
+# Ensure Task Master directory structure and config exist
+# Creates .taskmaster/ with subdirectories that the CLI expects.
+# Also copies the template's config.json with tuned settings (claude-code provider,
+# opus/sonnet models, 200k tokens) — overwriting task-master init's wrong defaults.
+for tm_dir in "tasks" "reports" "docs"; do
+    if [ ! -d "$PROJECT_DIR/.taskmaster/$tm_dir" ]; then
+        if [ "$DRY_RUN" = true ]; then
+            log_dry "Would create .taskmaster/$tm_dir/"
+        else
+            mkdir -p "$PROJECT_DIR/.taskmaster/$tm_dir"
+            log_info "Created .taskmaster/$tm_dir/"
+        fi
+    fi
+done
+
+# Copy template's Task Master config with project name substitution
+# Both `task-master init` (CLI) and MCP `initialize_project` create configs with
+# wrong defaults (wrong provider, wrong models, wrong maxTokens). This ensures the
+# template's tuned values are always applied: provider=claude-code, opus/sonnet, 200k tokens.
+TM_CONFIG_SRC="$TEMPLATE_PATH/.taskmaster/config.json"
+TM_CONFIG_DST="$PROJECT_DIR/.taskmaster/config.json"
+if [ -f "$TM_CONFIG_SRC" ]; then
+    TM_PROJECT_NAME=$(basename "$PROJECT_DIR")
+    # Escape sed-special characters in project name (& and \ have meaning in replacement)
+    TM_PROJECT_NAME_SAFE=$(printf '%s' "$TM_PROJECT_NAME" | sed 's/[\/&]/\\&/g')
+    TM_CONFIG_ACTION="configured"
+    [ -f "$TM_CONFIG_DST" ] && TM_CONFIG_ACTION="updated"
+    if [ "$DRY_RUN" = true ]; then
+        log_dry "Would configure .taskmaster/config.json (project: $TM_PROJECT_NAME)"
+    else
+        sed "s/__PROJECT_NAME__/$TM_PROJECT_NAME_SAFE/g" "$TM_CONFIG_SRC" > "$TM_CONFIG_DST"
+        log_create ".taskmaster/config.json ($TM_CONFIG_ACTION, project: $TM_PROJECT_NAME)"
+    fi
+else
+    log_warn ".taskmaster/config.json not found in template — Task Master will use its own defaults"
+fi
+
+# Create .template/ tracking directory (version + source)
+# Without this, session-init.sh classifies copy-mode projects as "proto-templates"
+# and shows sync recommendations instead of the phase/status display.
+# Also enables version comparison for future template updates.
+TEMPLATE_TRACK_DIR="$PROJECT_DIR/.template"
+if [ ! -d "$TEMPLATE_TRACK_DIR" ] || [ "$FORCE" = true ]; then
+    if [ "$DRY_RUN" = true ]; then
+        log_dry "Would create .template/ tracking (version + source)"
+    else
+        mkdir -p "$TEMPLATE_TRACK_DIR"
+        if [ -f "$TEMPLATE_PATH/.template/version" ]; then
+            cp "$TEMPLATE_PATH/.template/version" "$TEMPLATE_TRACK_DIR/version"
+        else
+            echo "unknown" > "$TEMPLATE_TRACK_DIR/version"
+        fi
+        echo "$TEMPLATE_PATH" > "$TEMPLATE_TRACK_DIR/source"
+        INSTALLED_VERSION=$(cat "$TEMPLATE_TRACK_DIR/version" 2>/dev/null | tr -d '[:space:]')
+        log_create ".template/ (version: ${INSTALLED_VERSION:-unknown}, source: $TEMPLATE_PATH)"
+    fi
+else
+    log_skip ".template/ (already exists — use --force to replace)"
 fi
 
 # Security verification for symlinks
@@ -463,8 +529,20 @@ fi
 
 if [ "$CREATED" -gt 0 ] && [ "$DRY_RUN" = false ]; then
     echo ""
-    echo -e "${GREEN}Done!${NC} Slash commands and skills should now be available."
-    echo "Start a new Claude Code session to pick up the changes."
+    echo -e "${GREEN}Done!${NC} Project initialized from template."
+    echo ""
+    echo "What was set up:"
+    echo "  • Slash commands, skills, agents, hooks, rules, contexts"
+    [ -f "$PROJECT_DIR/.claude/settings.json" ] && echo "  • .claude/settings.json (hook definitions)"
+    [ -f "$PROJECT_DIR/.taskmaster/config.json" ] && echo "  • .taskmaster/config.json (claude-code provider, tuned settings)"
+    [ -d "$PROJECT_DIR/.template" ] && echo "  • .template/ tracking (version management)"
+    echo ""
+    echo "Next steps:"
+    echo "  1. Customize CLAUDE.md with your project details"
+    echo "  2. Start a new Claude Code session to pick up hooks and rules"
+    echo ""
+    echo -e "${YELLOW}Note:${NC} If you later run 'task-master init', re-run this script"
+    echo "to restore the template's Task Master config."
 fi
 
 exit 0
