@@ -228,6 +228,32 @@ echo "│  Project Status                                             │"
 echo "└─────────────────────────────────────────────────────────────┘"
 echo ""
 
+# Always show version and phase when available
+VERSION_DISPLAY=""
+if [ -n "$INSTALLED_VERSION" ]; then
+    VERSION_DISPLAY="v$INSTALLED_VERSION"
+elif [ -f "$TEMPLATE_VERSION_FILE" ]; then
+    VERSION_DISPLAY="v$(cat "$TEMPLATE_VERSION_FILE" 2>/dev/null | tr -d '[:space:]')"
+fi
+
+PHASE_EMOJI=""
+case $PROJECT_PHASE in
+    ideation)  PHASE_EMOJI="💭" ;;
+    planning)  PHASE_EMOJI="📝" ;;
+    building)  PHASE_EMOJI="🔨" ;;
+    review)    PHASE_EMOJI="🔍" ;;
+    shipping)  PHASE_EMOJI="🚀" ;;
+    *)         PHASE_EMOJI="📦" ;;
+esac
+
+if [ -n "$VERSION_DISPLAY" ] || [ -n "$PROJECT_PHASE" ]; then
+    INFO_LINE=""
+    [ -n "$VERSION_DISPLAY" ] && INFO_LINE="Template: $VERSION_DISPLAY"
+    [ -n "$PROJECT_PHASE" ] && INFO_LINE="$INFO_LINE  $PHASE_EMOJI Phase: $PROJECT_PHASE"
+    echo "$INFO_LINE"
+    echo ""
+fi
+
 # Critical issues first
 CRITICAL_ISSUES=()
 SETUP_NEEDED=()
