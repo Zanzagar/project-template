@@ -463,15 +463,24 @@ Each MCP server consumes context tokens for its tool definitions. These costs ar
    |------|-------|----------|
    | `all` | 36 | Full access (default) |
    | `standard` | 15 | Most workflows |
-   | `core` | 7 | AI-heavy workflows using CLI for expansions (recommended) |
+   | `core` | 7 | AI-heavy workflows using CLI for expansions |
+   | **`recommended`** | **6** | **This template's workflow (recommended)** |
 
-   Set in your MCP server config: `export TASK_MASTER_TOOLS='core'`
+   **Recommended 6-tool configuration:**
+   ```
+   TASK_MASTER_TOOLS='get_tasks,next_task,get_task,set_task_status,update_subtask,add_subtask'
+   ```
 
-   You can also use a **custom comma-separated list** for surgical precision:
+   This **excludes** `parse_prd`, `expand_task`, and `analyze_project_complexity` from MCP entirely. These AI operations **must** use CLI (see `.claude/rules/taskmaster-usage.md`):
+   - The `claude-code` provider spawns a nested subprocess that gets blocked via MCP
+   - Dogfood testing showed Claude used MCP for these 4 times despite documentation — removing them from the palette prevents this entirely
+
+   Set in your MCP server config (e.g., `~/.claude/mcp.json` launch args):
+   ```bash
+   export TASK_MASTER_TOOLS='get_tasks,next_task,get_task,set_task_status,update_subtask,add_subtask'
    ```
-   TASK_MASTER_TOOLS='get_tasks,next_task,get_task,set_task_status,update_subtask,parse_prd,expand_task,add_subtask,analyze_project_complexity'
-   ```
-   This gives you exactly 9 tools — core workflow + the two most-used standard tools. Recommended for this template's workflow where AI-heavy ops (update, scope, research) go through the CLI.
+
+   **Why not 9 tools?** The previous recommendation included `parse_prd`, `expand_task`, and `analyze_project_complexity` in the custom list. In practice, having these visible as MCP tools causes Claude to use them via MCP instead of CLI, defeating the purpose of the CLI-only rule. Removing them is the only reliable enforcement.
 
 3. **Enable task metadata** for GitHub issue linking:
    ```
