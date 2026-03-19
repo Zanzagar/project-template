@@ -81,6 +81,8 @@ I notice we might be stuck. Let me help:
 | After `git push` to CI branch | `gh run list` → `gh run watch` (verify CI) |
 | Phase transition detected | `/phase-check` (validate prerequisites) |
 | Commitment checkpoint stated | `/phase-check` (validate before proceeding) |
+| Building UI components | `frontend-design` skill + Magic MCP tools (if connected) |
+| "build a page/dashboard/form" | `frontend-design` skill for design direction first |
 
 ### 5. Manage Scope Proactively
 
