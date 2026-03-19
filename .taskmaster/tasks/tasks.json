@@ -3311,7 +3311,7 @@
   "component-audit": {
     "tasks": [
       {
-        "id": "1",
+        "id": 1,
         "title": "Create Audit Foundation Schema and Templates",
         "description": "Define the JSON schema for upstream-manifest.json and create standardized decision matrix templates for consistent audit documentation across all phases.",
         "details": "1. Extend existing `.claude/upstream-manifest.json` schema to include:\n   - `_schema.lastSyncCheck`: ISO date of last upstream check\n   - `_schema.categories`: map of category to file count for quick stats\n   \n2. Create `docs/audit/DECISION_TEMPLATE.md` with standardized format:\n   ```markdown\n   # [Category] Audit Decisions\n   \n   ## Summary\n   | Verdict | Count |\n   |---------|-------|\n   | Adopt | X |\n   | Adapt | X |\n   | Keep | X |\n   | New | X |\n   | Skip | X |\n   \n   ## Comparison Matrix\n   | Our File | ECC Equivalent | Verdict | Reasoning |\n   |----------|---------------|---------|------------|\n   \n   ## Detailed Analysis\n   ### [Component Name]\n   **Our implementation**: [description]\n   **ECC implementation**: [description]\n   **Verdict**: [Adopt|Adapt|Keep|New|Skip]\n   **Reasoning**: [specific technical justification]\n   ```\n\n3. Create `docs/audit/.gitkeep` to ensure audit directory structure exists\n\n4. Update AUDIT_SUMMARY.md with links to decision templates as they're created",
@@ -3326,7 +3326,7 @@
         "updatedAt": "2026-03-19T05:44:31.689Z"
       },
       {
-        "id": "2",
+        "id": 2,
         "title": "Audit Hook Scripts (18 ours vs 25 ECC)",
         "description": "Compare all 18 template hook scripts against ECC's 25 hook scripts. Identify overlapping hooks by function, fetch ECC implementations via gh api, assess architecture/features/error handling, and assign verdicts.",
         "details": "1. Create inventory of both hook sets:\n   **Our hooks (18)**:\n   - session-init.sh, session-end.sh, pre-compact.sh\n   - post-edit-format.sh, protect-sensitive-files.sh, project-index.sh\n   - suggest-compact.sh, session-summary.sh, doc-file-blocker.sh\n   - console-log-audit.sh, pattern-extraction.sh, build-analysis.sh\n   - typescript-check.sh, dev-server-blocker.sh, long-running-tmux-hint.sh\n   - pre-commit-check.sh, pr-url-extract.sh, observe.sh\n   \n   **ECC hooks (25)**: Fetch list via `gh api repos/affaan-m/everything-claude-code/contents/scripts/hooks`\n\n2. For each overlapping hook (per PRD table):\n   ```bash\n   # Fetch ECC version\n   gh api repos/affaan-m/everything-claude-code/contents/scripts/hooks/<name>.js \\\n     -H 'Accept: application/vnd.github.raw' > /tmp/ecc-<name>.js\n   ```\n   \n3. Assessment criteria for each:\n   - **Architecture**: Modular? Uses run-with-flags? Error isolation?\n   - **Features**: What does each version do that the other doesn't?\n   - **Error handling**: Silent fails vs user feedback? Recovery paths?\n   - **Performance**: Startup time? Resource usage?\n   - **Cross-platform**: Windows/WSL compatibility?\n\n4. Apply verdict with explicit reasoning:\n   - Adopt: Their version better in 4+ dimensions\n   - Adapt: Their skeleton better but we have genuine improvements\n   - Keep: Ours genuinely superior (document specific reason)\n   - New: We have something they don't\n   - Skip: They have something we don't need\n\n5. Document in `docs/audit/hooks-decisions.md`\n\n**Known priority comparisons:**\n- session-init.sh vs session-start.js (ours has phase detection)\n- session-end.sh vs session-end.js (theirs reads transcripts)\n- dev-server-blocker.sh vs auto-tmux-dev.js (theirs auto-launches tmux)\n- doc-file-blocker.sh vs doc-file-warning.js (ours blocks, theirs warns)",
@@ -3423,7 +3423,7 @@
         "updatedAt": "2026-03-19T05:58:51.212Z"
       },
       {
-        "id": "3",
+        "id": 3,
         "title": "Audit Hook Libraries (lib/ directory)",
         "description": "Compare remaining hook library files beyond the 4 already adopted. Evaluate ECC libraries we should adopt (utils.js, resolve-formatter.js, project-detect.js) and document libraries we don't need.",
         "details": "**Already adopted (in f9963ad):**\n- hook-flags.js ✓\n- run-with-flags.js ✓\n- run-with-flags-shell.sh ✓\n- check-hook-enabled.js ✓\n\n**ECC libraries to evaluate:**\n\n1. `scripts/lib/utils.js` - Cross-platform utilities\n   - Fetch: `gh api repos/affaan-m/everything-claude-code/contents/scripts/lib/utils.js -H 'Accept: application/vnd.github.raw'`\n   - Assess: File operations, platform detection, color output\n   - Compare against: Our inline utility code in various hooks\n   - Verdict criteria: Consolidation benefit vs. dependency overhead\n\n2. `scripts/lib/resolve-formatter.js` - Formatter resolution\n   - Links to v2.5.0 Task 4 (formatter auto-detection)\n   - Assess: How does it detect prettier/eslint/ruff?\n   - If good: Adopt for v2.5.0 Task 4\n\n3. `scripts/lib/project-detect.js` - Project type detection\n   - Links to v2.5.0 Task 3 (language detection)\n   - Assess: Detection logic, supported languages\n   - If good: Adopt for v2.5.0 Task 3\n\n**ECC libraries to skip (document why):**\n- `scripts/lib/install-*.js` - Plugin installation (we use manage-plugins.sh)\n- `scripts/lib/session-*.js` - Session management (evaluate vs ours)\n- `scripts/lib/skill-*.js` - Skill management (we use different structure)\n- `scripts/lib/state-store/` - State persistence (evaluate necessity)\n\n4. Document all decisions in `docs/audit/hooks-decisions.md` (append to hook section)",
@@ -3479,7 +3479,7 @@
         "updatedAt": "2026-03-19T06:02:49.655Z"
       },
       {
-        "id": "4",
+        "id": 4,
         "title": "Audit Skills (43 ours vs 108 ECC)",
         "description": "Map overlapping skills between template and ECC, compare SKILL.md content quality and completeness, assign verdicts for ~30 overlapping skills.",
         "details": "**Our skills (40):**\n```\napi-design, backend-patterns, code-review, continuous-learning-v2, cost-aware-llm-pipeline,\ncpp-coding-standards, cpp-testing, database-migrations, database-patterns, debugging,\ndeployment-patterns, django-patterns, django-security, django-tdd, django-verification,\ndocker-patterns, e2e-testing, eval-harness, frontend-design, frontend-patterns,\ngit-recovery, golang-patterns, golang-testing, iterative-retrieval, java-springboot,\njpa-patterns, postgresql-patterns, python-data-science, python-django, python-patterns,\npython-testing, regex-vs-llm-structured-text, security-scan, spring-boot-security,\nspring-boot-tdd, springboot-verification, strategic-compact, tdd-workflow,\ntypescript-patterns, verification-loop\n```\n\n**Workflow:**\n1. Fetch ECC skill list:\n   ```bash\n   gh api repos/affaan-m/everything-claude-code/contents/skills \\\n     --jq '.[].name' | sort\n   ```\n\n2. For each overlapping skill (~30):\n   ```bash\n   # Fetch ECC SKILL.md\n   gh api repos/affaan-m/everything-claude-code/contents/skills/<name>/SKILL.md \\\n     -H 'Accept: application/vnd.github.raw' > /tmp/ecc-<name>.md\n   # Compare\n   diff -u .claude/skills/<name>/SKILL.md /tmp/ecc-<name>.md\n   ```\n\n3. Assessment criteria:\n   - **Content depth**: Examples, edge cases, best practices\n   - **Currency**: Is it up-to-date with latest library versions?\n   - **Actionability**: Does it guide to concrete implementation?\n   - **Integration**: Does it reference other skills appropriately?\n\n4. **Our unique skills** (document as 'New'):\n   - python-data-science, python-django, frontend-design, git-recovery, debugging\n\n5. **ECC skills to evaluate for adoption:**\n   - agentic-engineering, autonomous-loops, blueprint\n   - ai-regression-testing, claude-api, search-first\n   - deep-research, skill-stocktake\n\n6. Document all in `docs/audit/skills-decisions.md`",
@@ -3488,14 +3488,81 @@
         "dependencies": [
           "1"
         ],
-        "status": "pending",
-        "subtasks": [],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create automated skill comparison script",
+            "description": "Build a script to fetch ECC's 108 skills list via GitHub API and automatically diff against our 40 skills to identify overlapping, unique-to-us, and ECC-only skills.",
+            "dependencies": [],
+            "details": "Create `scripts/audit-skills.sh` that:\n1. Fetches ECC skill list: `gh api repos/affaan-m/everything-claude-code/contents/skills --jq '.[].name' | sort`\n2. Lists our skills: `ls -1 .claude/skills/ | sort`\n3. Uses `comm` to categorize into three groups:\n   - Overlapping (both have): ~30 skills for detailed comparison\n   - Unique to us: python-data-science, frontend-design, git-recovery, debugging, etc.\n   - ECC-only: agentic-engineering, autonomous-loops, blueprint, ai-regression-testing, etc.\n4. For overlapping skills, auto-fetch ECC SKILL.md to `/tmp/ecc-<name>.md` and generate diff output\n5. Output summary to `docs/audit/skills-overlap-report.md` with counts and categorized lists\n\nThis automation reduces manual effort for the ~30 comparison tasks that follow.",
+            "status": "done",
+            "testStrategy": "Run script and verify: 1) ECC skills fetched successfully (expect ~108), 2) Our skills detected correctly (expect 40), 3) Overlap categorization matches manual spot-check of 5 random skills, 4) Diff output is readable and actionable.",
+            "parentId": "undefined",
+            "updatedAt": "2026-03-19T06:15:41.553Z"
+          },
+          {
+            "id": 2,
+            "title": "Audit core development skills",
+            "description": "Deep comparison of fundamental development workflow skills: code-review, tdd-workflow, debugging, verification-loop, and testing skills (python-testing, cpp-testing, golang-testing, e2e-testing).",
+            "dependencies": [
+              1
+            ],
+            "details": "For each core skill, fetch ECC version and assess against four criteria:\n\n**Skills to audit:**\n- code-review, tdd-workflow, debugging, verification-loop\n- python-testing, cpp-testing, golang-testing, e2e-testing\n- eval-harness, continuous-learning-v2\n\n**Assessment per skill:**\n1. **Content depth**: Count examples, edge cases, best practices sections\n2. **Currency**: Check library version references (pytest 8.x?, vitest?, Go 1.22?)\n3. **Actionability**: Does it provide concrete implementation steps vs generic advice?\n4. **Integration**: Does it cross-reference related skills appropriately?\n\n**Verdicts:**\n- KEEP: Ours is superior or equivalent\n- ADOPT: ECC version is clearly better, replace entirely\n- ADAPT: ECC has valuable additions, merge into ours\n- NEW: Unique to us, document as template-specific\n\nDocument findings in `docs/audit/skills-decisions.md` under '## Core Development Skills' section.",
+            "status": "done",
+            "testStrategy": "For skills with ADOPT/ADAPT verdict: verify merged SKILL.md parses correctly, invoke skill via Skill tool to confirm it loads, spot-check one instruction produces reasonable guidance.",
+            "parentId": "undefined",
+            "updatedAt": "2026-03-19T06:15:42.561Z"
+          },
+          {
+            "id": 3,
+            "title": "Audit framework-specific skills",
+            "description": "Compare framework and language-specific skills: django-*, spring-*, python-*, golang-*, typescript-*, cpp-*, java-springboot, jpa-patterns.",
+            "dependencies": [
+              1
+            ],
+            "details": "**Skills to audit (grouped by ecosystem):**\n\n**Django/Python:**\n- django-patterns, django-security, django-tdd, django-verification\n- python-patterns, python-django, python-data-science (unique to us)\n\n**Spring/Java:**\n- java-springboot, spring-boot-security, spring-boot-tdd, springboot-verification\n- jpa-patterns\n\n**Go:**\n- golang-patterns, golang-testing\n\n**TypeScript/Frontend:**\n- typescript-patterns, frontend-patterns, frontend-design (unique to us)\n\n**C++:**\n- cpp-coding-standards, cpp-testing\n\n**Assessment focus for framework skills:**\n- Are version references current? (Django 5.x, Spring Boot 3.x, Go 1.22+)\n- Do security skills cover latest OWASP guidance?\n- Are testing patterns using modern frameworks? (pytest-django, JUnit 5, testing-library)\n\nDocument in `docs/audit/skills-decisions.md` under '## Framework-Specific Skills' section with ecosystem subsections.",
+            "status": "done",
+            "testStrategy": "For framework skills with ADOPT verdict: verify SKILL.md contains no broken links, confirm framework version references are accurate by cross-checking against official docs, invoke skill and verify it references correct patterns.",
+            "parentId": "undefined",
+            "updatedAt": "2026-03-19T06:15:44.084Z"
+          },
+          {
+            "id": 4,
+            "title": "Audit infrastructure and architecture skills",
+            "description": "Compare infrastructure, deployment, database, and API design skills: docker-patterns, deployment-patterns, database-*, api-design, backend-patterns, and related skills.",
+            "dependencies": [
+              1
+            ],
+            "details": "**Skills to audit:**\n\n**Infrastructure:**\n- docker-patterns, deployment-patterns\n- database-patterns, database-migrations, postgresql-patterns\n\n**Architecture:**\n- api-design, backend-patterns\n- cost-aware-llm-pipeline, iterative-retrieval\n- regex-vs-llm-structured-text, strategic-compact\n\n**Security:**\n- security-scan\n\n**Assessment criteria specific to infrastructure:**\n- Docker: Multi-stage builds, security scanning, compose v2 patterns\n- Deployment: CI/CD patterns, blue-green, canary references\n- Database: Index strategies, migration safety, connection pooling\n- API: Versioning strategies, pagination, error handling\n\n**Also evaluate ECC-only infrastructure skills for potential adoption:**\n- Check if ECC has Kubernetes, Terraform, or cloud-specific patterns we lack\n\nDocument in `docs/audit/skills-decisions.md` under '## Infrastructure & Architecture Skills' section.",
+            "status": "done",
+            "testStrategy": "For infrastructure skills: verify patterns are production-safe (no insecure defaults), confirm database migration patterns include rollback strategies, check deployment patterns reference modern CI/CD tools (GitHub Actions, not Travis CI).",
+            "parentId": "undefined",
+            "updatedAt": "2026-03-19T06:15:45.422Z"
+          },
+          {
+            "id": 5,
+            "title": "Document unique skills and evaluate ECC adoption candidates",
+            "description": "Formally document our unique skills as 'New' contributions and evaluate ECC-only skills (agentic-engineering, blueprint, deep-research, etc.) for potential adoption.",
+            "dependencies": [
+              2,
+              3,
+              4
+            ],
+            "details": "**Part A: Document our unique skills (verdict: NEW)**\n\nSkills unique to our template requiring documentation:\n- python-data-science: NumPy, pandas, scikit-learn, Jupyter patterns\n- frontend-design: Creative UI implementation guidance\n- git-recovery: Emergency git troubleshooting\n- debugging: Systematic Python debugging workflow\n\nFor each, add entry to skills-decisions.md:\n```markdown\n### <skill-name>\n**Verdict**: NEW\n**Rationale**: Unique to template, no ECC equivalent\n**Value**: [describe what this skill provides]\n```\n\n**Part B: Evaluate ECC adoption candidates**\n\nECC skills to assess for adoption:\n- agentic-engineering: Patterns for building AI agents\n- autonomous-loops: Self-correcting agent patterns\n- blueprint: Project scaffolding/architecture\n- ai-regression-testing: AI-specific test patterns\n- claude-api: Anthropic API usage patterns\n- search-first: Research-before-code patterns\n- deep-research: Extended research workflows\n- skill-stocktake: Skill inventory management\n\nFor each, fetch SKILL.md, assess value-add, recommend ADOPT/SKIP with rationale.\n\nDocument in `docs/audit/skills-decisions.md` under '## Unique Skills' and '## ECC Adoption Candidates' sections.",
+            "status": "done",
+            "testStrategy": "For ECC skills recommended for adoption: fetch SKILL.md and verify it parses correctly, confirm no ECC-specific dependencies that would break in our template, invoke skill via Skill tool to verify it produces actionable guidance.",
+            "parentId": "undefined",
+            "updatedAt": "2026-03-19T06:15:47.037Z"
+          }
+        ],
         "complexity": 7,
         "recommendedSubtasks": 5,
-        "expansionPrompt": "Break down: 1) Create automated comparison script to fetch ECC skill list and diff against our 40 skills, 2) Audit core development skills (code-review, tdd-workflow, debugging, testing skills), 3) Audit framework-specific skills (django-*, spring-*, python-*, golang-*, typescript-*), 4) Audit infrastructure skills (docker, deployment, database, api-design, backend-patterns), 5) Document unique skills and evaluate ECC skills for adoption (agentic-engineering, blueprint, deep-research)"
+        "expansionPrompt": "Break down: 1) Create automated comparison script to fetch ECC skill list and diff against our 40 skills, 2) Audit core development skills (code-review, tdd-workflow, debugging, testing skills), 3) Audit framework-specific skills (django-*, spring-*, python-*, golang-*, typescript-*), 4) Audit infrastructure skills (docker, deployment, database, api-design, backend-patterns), 5) Document unique skills and evaluate ECC skills for adoption (agentic-engineering, blueprint, deep-research)",
+        "updatedAt": "2026-03-19T06:15:47.037Z"
       },
       {
-        "id": "5",
+        "id": 5,
         "title": "Audit Commands (49 ours vs 57 ECC)",
         "description": "Map overlapping commands between template and ECC, compare command implementations, identify commands we should adopt and document our unique commands.",
         "details": "**Our commands (48):**\n```\nbuild-fix, brainstorm, changelog, checkpoint, code-review, commit, e2e,\neval, evolve, generate-tests, github-sync, go-build, go-review, go-test,\nhealth, instinct-export, instinct-import, instinct-status, learn, lint,\nmcps, multi-execute, multi-plan, optimize, orchestrate, phase-check,\nplan, plugins, pr, prd, prd-generate, python-review, refactor-clean,\nresearch, rollback, security-audit, sessions, settings, setup, skill-create,\ntask-status, tasks, tdd, test, test-coverage, update-codemaps, update-docs, verify\n```\n\n**Workflow:**\n1. Fetch ECC command list:\n   ```bash\n   gh api repos/affaan-m/everything-claude-code/contents/commands \\\n     --jq '.[].name' | sort\n   ```\n\n2. For each overlapping command (~30 per PRD):\n   ```bash\n   # Fetch ECC command\n   gh api repos/affaan-m/everything-claude-code/contents/commands/<name>.md \\\n     -H 'Accept: application/vnd.github.raw' > /tmp/ecc-<name>.md\n   # Compare\n   diff -u .claude/commands/<name>.md /tmp/ecc-<name>.md\n   ```\n\n3. Assessment criteria:\n   - **Feature parity**: Does ECC command do more?\n   - **Integration**: How does it integrate with other components?\n   - **User experience**: Error messages, progress feedback\n   - **Task Master integration**: Does ECC version work with TM?\n\n4. **Our unique commands** (document as 'New'):\n   - changelog, commit, lint, mcps, phase-check, plugins, prd, prd-generate\n   - rollback, settings, setup, task-status, tasks, test\n\n5. **ECC commands to evaluate:**\n   - harness-audit.md (v2.5.0 Task 11 plans this)\n   - model-route.md (v2.5.0 Task 15 plans this)\n   - quality-gate.md (v2.5.0 Task 5 related)\n   - loop-start.md, loop-status.md (autopilot features)\n   - cpp-build/review/test, kotlin-build/review/test, rust-build/review/test\n\n6. Document all in `docs/audit/commands-decisions.md`",
@@ -3511,7 +3578,7 @@
         "expansionPrompt": "Break down: 1) Create inventory comparing our 48 commands (confirmed via glob) against ECC's 57 commands, 2) Audit development workflow commands (commit, pr, test, lint, build-fix, verify), 3) Audit analysis/review commands (code-review, security-audit, optimize, orchestrate, eval), 4) Evaluate ECC-unique commands for adoption (harness-audit, model-route, quality-gate, loop-start, language-specific build/review/test)"
       },
       {
-        "id": "6",
+        "id": 6,
         "title": "Audit Agents (14 ours vs 25 ECC)",
         "description": "Compare all 14 template agents against ECC's 25 agents. Focus on agent definitions, model selection, tool access, and use cases.",
         "details": "**Our agents (14):**\n```\narchitect, build-resolver, code-reviewer, database-reviewer, doc-updater,\ne2e-runner, go-build-resolver, go-reviewer, observer, planner,\npython-reviewer, refactor-cleaner, security-reviewer, tdd-guide\n```\n\n**Workflow:**\n1. Fetch ECC agent list:\n   ```bash\n   gh api repos/affaan-m/everything-claude-code/contents/agents \\\n     --jq '.[].name' | sort\n   ```\n\n2. For each overlapping agent (~12 per PRD):\n   ```bash\n   gh api repos/affaan-m/everything-claude-code/contents/agents/<name>.md \\\n     -H 'Accept: application/vnd.github.raw' > /tmp/ecc-<name>.md\n   diff -u .claude/agents/<name>.md /tmp/ecc-<name>.md\n   ```\n\n3. Assessment criteria:\n   - **Model selection**: Are they using opus/sonnet/haiku appropriately?\n   - **Tool access**: What tools does each agent have?\n   - **Prompt quality**: System prompt clarity, instructions\n   - **Output format**: Structured output, consistency\n\n4. **Our unique agent:**\n   - observer.md (ECC runs observer differently as daemon)\n\n5. **ECC agents to evaluate:**\n   - chief-of-staff.md (orchestration)\n   - docs-lookup.md (documentation retrieval)\n   - harness-optimizer.md (eval optimization)\n   - loop-operator.md (autopilot loops)\n   - Language-specific: java-*, kotlin-*, cpp-*, rust-* agents\n\n6. Document in `docs/audit/agents-decisions.md`",
@@ -3527,7 +3594,7 @@
         "expansionPrompt": "Break down: 1) Create inventory comparing our 14 agents against ECC's 25, 2) Audit reviewer agents (code-reviewer, security-reviewer, database-reviewer, python-reviewer, go-reviewer) and resolver agents (build-resolver, go-build-resolver, refactor-cleaner), 3) Evaluate ECC-unique agents (chief-of-staff, docs-lookup, harness-optimizer, loop-operator, language-specific agents)"
       },
       {
-        "id": "7",
+        "id": 7,
         "title": "Audit Rules (16 ours vs 49 ECC)",
         "description": "Compare template rules against ECC's comprehensive rule structure. Note ECC splits per-language into 5 files while we have 1 consolidated file per language.",
         "details": "**Our rules (16):**\nCore (10):\n```\nauthority-hierarchy, claude-behavior, context-management, git-workflow,\nproactive-steering, reasoning-patterns, superpowers-integration,\ntaskmaster-usage, workflow-enforcement, workflow-guide\n```\nLanguage-specific (5 dirs, 6 files):\n```\npython/coding-standards, typescript/coding-standards, golang/coding-standards,\njava/coding-standards, frontend/component-standards, frontend/workflow\n```\n\n**ECC rule structure:**\n- `rules/common/` (9 files): agents, coding-style, development-workflow, git-workflow, hooks, patterns, performance, security, testing\n- `rules/{language}/` (8 languages x 5 files each): coding-style, hooks, patterns, security, testing\n\n**Workflow:**\n1. Fetch ECC rules structure:\n   ```bash\n   gh api repos/affaan-m/everything-claude-code/contents/rules/common --jq '.[].name'\n   ```\n\n2. For common rules:\n   - Compare our git-workflow vs their git-workflow\n   - Evaluate: hooks.md, performance.md, security.md, testing.md\n   - Check if we should adopt any\n\n3. For language rules:\n   - Compare our consolidated coding-standards.md vs their 5-file split\n   - Assess: Is splitting beneficial? More targeted loading?\n   - Check languages they have that we don't: C++, Kotlin, Rust, Java (we have partial)\n\n4. **Our unique rules** (document as 'New'):\n   - authority-hierarchy, superpowers-integration, taskmaster-usage\n   - workflow-enforcement, proactive-steering, context-management\n\n5. Document in `docs/audit/rules-decisions.md`",
@@ -3543,7 +3610,7 @@
         "expansionPrompt": "Break down: 1) Compare our 10 core rules against ECC's common/ directory (9 files), 2) Evaluate ECC's per-language rule structure (8 languages x 5 files) vs our consolidated approach (5 language dirs with 1 file each), 3) Assess whether to adopt ECC's split structure or keep consolidated, 4) Document our unique rules (authority-hierarchy, superpowers-integration, taskmaster-usage, workflow-enforcement, proactive-steering, context-management)"
       },
       {
-        "id": "8",
+        "id": 8,
         "title": "Audit Scripts and Infrastructure",
         "description": "Compare utility scripts, CI validators, configuration schemas, and settings structure between template and ECC.",
         "details": "**Our scripts (10):**\n```\ncheck-upstream.sh, init-project.sh, instinct-cli.py, manage-mcps.sh,\nmanage-plugins.sh, multi-model-query.py, setup-preset.sh, smoke-test.sh,\nstart-observer.sh, sync-template.sh\n```\n\n**ECC infrastructure to evaluate:**\n\n1. **CI Validators** (`scripts/ci/`):\n   - validate-hooks.js, validate-agents.js, validate-commands.js\n   - validate-rules.js, validate-skills.js\n   - validate-install-manifests.js, no-personal-paths.js\n   - Assess: Should we adopt for PR quality gates?\n\n2. **Schemas** (`schemas/`):\n   - 9 JSON schemas for hooks, plugins, state-store\n   - Assess: Formal schema validation vs informal\n\n3. **Key scripts:**\n   - harness-audit.js — Deterministic scoring engine (v2.5.0 Task 11)\n   - doctor.js — Health check diagnostic tool\n\n4. **Settings/config:**\n   - Compare settings structure\n   - Check for useful config patterns\n\n**Workflow:**\n```bash\n# Fetch ECC scripts directory\ngh api repos/affaan-m/everything-claude-code/contents/scripts \\\n  --jq '.[].name' | sort\n\n# Fetch specific files\ngh api repos/affaan-m/everything-claude-code/contents/scripts/ci/validate-hooks.js \\\n  -H 'Accept: application/vnd.github.raw' > /tmp/ecc-validate-hooks.js\n```\n\n5. Document in:\n   - `docs/audit/scripts-decisions.md`\n   - `docs/audit/infra-decisions.md`",
@@ -3561,21 +3628,83 @@
       {
         "id": "9",
         "title": "Audit Superpowers Skills vs Template Rules",
-        "description": "Compare template workflow rules against Superpowers v5 skill content to ensure alignment. Identify gaps and overlaps between superpowers-integration.md rule and actual Superpowers skills.",
-        "details": "**Superpowers installed path:**\n`~/.claude/plugins/cache/superpowers-marketplace/superpowers/5.0.2/`\n\n**Superpowers skills (14):**\n```\nbrainstorming, dispatching-parallel-agents, executing-plans,\nfinishing-a-development-branch, receiving-code-review,\nrequesting-code-review, subagent-driven-development,\nsystematic-debugging, test-driven-development,\nusing-git-worktrees, using-superpowers, verification-before-completion,\nwriting-plans, writing-skills\n```\n\n**Workflow:**\n1. Read each Superpowers SKILL.md:\n   ```bash\n   for skill in ~/.claude/plugins/cache/superpowers-marketplace/superpowers/5.0.2/skills/*/; do\n     echo \"=== $(basename $skill) ===\"\n     cat \"$skill/SKILL.md\" | head -100\n   done\n   ```\n\n2. Compare against our rules:\n   - superpowers-integration.md — Is the override correct?\n   - workflow-enforcement.md — Does it align with Superpowers phases?\n   - authority-hierarchy.md — Is Superpowers position correct?\n\n3. Check for:\n   - **Conflicts**: Do any Superpowers skills contradict our rules?\n   - **Gaps**: Are there Superpowers capabilities we don't expose?\n   - **Redundancy**: Are we duplicating Superpowers content in rules?\n\n4. Verify the brainstorming exit override (per superpowers-integration.md):\n   - Does Superpowers v5 still say to invoke writing-plans?\n   - Is our override still necessary?\n\n5. Document findings in `docs/audit/superpowers-decisions.md` (new file)",
-        "testStrategy": "Invoke each Superpowers skill via Skill tool, verify behavior matches what's documented in our rules. Test the brainstorming → PRD workflow to confirm override is correct.",
-        "priority": "medium",
-        "dependencies": [
-          "7"
-        ],
+        "description": "Comprehensive audit of ALL Superpowers v5.0.2 components (14 skills, 1 hook, 3 commands, 1 agent, supporting files) against template infrastructure. Apply Adopt/Adapt/Keep/New/Skip analysis to each component and document findings.",
         "status": "pending",
-        "subtasks": [],
-        "complexity": 5,
-        "recommendedSubtasks": 3,
-        "expansionPrompt": "Break down: 1) Read all 14 Superpowers skills from installed plugin cache and document their current state, 2) Compare Superpowers skill content against template rules (superpowers-integration.md, workflow-enforcement.md, authority-hierarchy.md), 3) Verify brainstorming exit override is still necessary and document findings in superpowers-decisions.md"
+        "dependencies": [
+          7
+        ],
+        "priority": "medium",
+        "details": "**Superpowers v5.0.2 Full Inventory:**\n\n```\nComponent Type     | Count | Items\n-------------------|-------|----------------------------------------------\nSkills             | 14    | brainstorming, dispatching-parallel-agents,\n                   |       | executing-plans, finishing-a-development-branch,\n                   |       | receiving-code-review, requesting-code-review,\n                   |       | subagent-driven-development, systematic-debugging,\n                   |       | test-driven-development, using-git-worktrees,\n                   |       | using-superpowers, verification-before-completion,\n                   |       | writing-plans, writing-skills\nHooks              | 1     | session-start (via hooks.json)\nCommands           | 3     | All deprecated per marketplace\nAgents             | 1     | code-reviewer.md\nSupporting Files   | ~10   | lib/, docs/, tests/, config files\n```\n\n**Installed path:** `~/.claude/plugins/cache/superpowers-marketplace/superpowers/5.0.2/`\n\n**Workflow (5 phases):**\n\n### Phase 1: Skills Audit (14 skills)\n\nFor each Superpowers skill:\n1. Read SKILL.md from installed plugin cache\n2. Compare against superpowers-integration.md rule (`.claude/rules/superpowers-integration.md`)\n3. Check alignment with workflow-enforcement.md and authority-hierarchy.md\n4. Answer: \"How does our template integrate with or override this skill? Is the override still correct?\"\n\n**Key questions per skill:**\n- Does superpowers-integration.md correctly describe this skill's behavior?\n- Do we have redundant content in our rules duplicating Superpowers skill instructions?\n- Are there capabilities in the skill we don't expose or document?\n- Is the \"When to Use\" guidance accurate for our Task Master workflow?\n\n**Critical verification:** The brainstorming exit override (superpowers-integration.md lines 28-47). Does Superpowers v5 still say to invoke writing-plans as terminal state?\n\n### Phase 2: Hook Comparison\n\n**Superpowers hook:** session-start (via hooks.json)\n**Our hook:** session-init.sh (`.claude/hooks/session-init.sh`)\n\nCompare:\n- What does Superpowers session-start do? (lines 75-102 of session-init.sh detect Superpowers but may not integrate with it)\n- Does it conflict with or complement our session-init.sh?\n- Should we adopt Superpowers hook, keep ours, or integrate them?\n\n### Phase 3: Agent Comparison\n\n**Superpowers agent:** code-reviewer.md\n**Our agent:** code-reviewer.md (`.claude/agents/code-reviewer.md` - 28 lines)\n\nCompare:\n- Does Superpowers code-reviewer provide capabilities ours lacks?\n- Is ours better (template-adapted, confidence filtering)?\n- Overlap assessment: could they conflict if both loaded?\n\n### Phase 4: Commands and Supporting Files\n\n**Commands (3, all deprecated):** Verify they're truly deprecated, document what they were.\n\n**Supporting files to evaluate:**\n- `lib/` - Any utilities we could adopt?\n- `docs/` - Any documentation worth referencing?\n- `tests/` - Any test patterns we could learn from?\n- Config files - hooks.json structure, skill metadata\n\n### Phase 5: Document Findings\n\nCreate `docs/audit/superpowers-decisions.md` following established format:\n\n```markdown\n# Superpowers Audit Decisions\n\n## Summary\n| Component Type | Count | Adopt | Adapt | Keep | Skip |\n|----------------|-------|-------|-------|------|------|\n| Skills         | 14    |       |       |      |      |\n| Hooks          | 1     |       |       |      |      |\n| Agents         | 1     |       |       |      |      |\n| Commands       | 3     |       |       |      |      |\n| Supporting     | ~10   |       |       |      |      |\n\n## Skills Analysis (14 skills)\n[Per-skill verdict with reasoning]\n\n## Hook Analysis\n[session-start vs session-init.sh comparison]\n\n## Agent Analysis  \n[code-reviewer comparison]\n\n## Override Verification\n[Confirm brainstorming exit override is still necessary]\n\n## Action Items\n[Prioritized list of changes needed]\n```",
+        "testStrategy": "1. Read each Superpowers SKILL.md and verify content matches what superpowers-integration.md claims. 2. Invoke superpowers:brainstorming skill and verify it still attempts to invoke writing-plans (confirming override necessity). 3. Compare Superpowers code-reviewer agent output against our code-reviewer agent on the same code. 4. Verify no hook conflicts by checking session-init.sh detection logic against actual Superpowers hooks.json structure.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Read and catalog all 14 Superpowers v5.0.2 skills",
+            "description": "Extract and document the current state of all 14 Superpowers skills from the installed plugin cache, capturing key behaviors and integration points.",
+            "dependencies": [],
+            "details": "For each skill in `~/.claude/plugins/cache/superpowers-marketplace/superpowers/5.0.2/skills/*/SKILL.md`:\n\n1. Read the full SKILL.md content\n2. Extract: name, description, trigger conditions, terminal state, key workflow steps\n3. Note any references to other skills (skill chaining)\n4. Flag any instructions that conflict with template rules\n\nCreate working notes with skill summaries. Pay special attention to:\n- brainstorming: What is its actual terminal state instruction?\n- writing-plans: When does it say to be used?\n- test-driven-development: Any enforcement mechanisms?\n- using-superpowers: Master routing logic",
+            "status": "pending",
+            "testStrategy": "Verify all 14 skills are read and summarized. Confirm brainstorming skill's terminal state matches or contradicts superpowers-integration.md claims."
+          },
+          {
+            "id": 2,
+            "title": "Compare each skill against superpowers-integration.md rule",
+            "description": "Systematically compare the actual Superpowers skill content against what our superpowers-integration.md rule claims about each skill.",
+            "dependencies": [
+              1
+            ],
+            "details": "Using the skill catalog from subtask 1, compare against `.claude/rules/superpowers-integration.md`:\n\n**For each of the 8 skills documented in superpowers-integration.md:**\n- brainstorming (lines 28-47 override)\n- writing-plans (lines 61-70)\n- executing-plans (line 90)\n- test-driven-development (line 91)\n- systematic-debugging (line 92)\n- requesting-code-review (line 93)\n- finishing-a-development-branch (line 94)\n- verification-before-completion (line 95)\n\nVerify:\n1. Does our description match actual skill behavior?\n2. Is our override (if any) still necessary?\n3. Are there capabilities we don't document?\n\n**For the 6 skills NOT documented:**\n- dispatching-parallel-agents\n- receiving-code-review\n- subagent-driven-development\n- using-git-worktrees\n- using-superpowers\n- writing-skills\n\nAssess: Should these be added to superpowers-integration.md?",
+            "status": "pending",
+            "testStrategy": "Create a comparison table showing: Skill Name | Our Claim | Actual Behavior | Discrepancy (if any)"
+          },
+          {
+            "id": 3,
+            "title": "Analyze Superpowers hook vs template session-init.sh",
+            "description": "Compare Superpowers session-start hook against our session-init.sh to identify conflicts, overlaps, or integration opportunities.",
+            "dependencies": [
+              1
+            ],
+            "details": "**Read Superpowers hooks.json** from plugin cache to understand session-start hook.\n\n**Compare against session-init.sh** (`.claude/hooks/session-init.sh`, 525 lines):\n\nOur session-init.sh already detects Superpowers (lines 75-102) but may not integrate with it:\n```bash\n# Check for Superpowers plugin\nif [ -f \"$PROJECT_DIR/.superpowers-installed\" ] || \\\n   [ -d \"$HOME/.claude/plugins/superpowers\" ] || ...\n```\n\n**Questions to answer:**\n1. What does Superpowers session-start hook actually do?\n2. Does it conflict with our phase detection (lines 164-187)?\n3. Does it conflict with our project state assessment?\n4. Should we adopt Superpowers hook, keep ours, or merge functionality?\n\n**Verdict options:**\n- Keep: Our hook is more comprehensive (project state, Task Master integration)\n- Adopt: Superpowers hook provides critical functionality we lack\n- Adapt: Merge the best of both",
+            "status": "pending",
+            "testStrategy": "Document what each hook does. Verify no runtime conflicts by checking if both would execute on session start."
+          },
+          {
+            "id": 4,
+            "title": "Compare Superpowers code-reviewer agent vs template agent",
+            "description": "Evaluate whether Superpowers code-reviewer agent overlaps with or improves on our code-reviewer.md agent.",
+            "dependencies": [],
+            "details": "**Our agent:** `.claude/agents/code-reviewer.md` (28 lines)\n- Severity tiers: CRITICAL, HIGH, MEDIUM, LOW\n- >80% confidence filtering\n- Python-specific patterns (mutable defaults, bare except, type hints)\n- Read-only tools: Read, Grep, Glob\n\n**Superpowers agent:** Read `agents/code-reviewer.md` from plugin cache\n\n**Comparison criteria:**\n1. Review methodology: severity tiers vs something else?\n2. Language support: Python-only vs polyglot?\n3. Confidence filtering: >80% vs different threshold?\n4. Tool access: same or different?\n5. Output format: compatible or different?\n\n**Verdict options:**\n- Keep: Our template-adapted agent is better\n- Adopt: Superpowers agent is more comprehensive\n- Adapt: Merge features (e.g., add Superpowers methodology to our agent)",
+            "status": "pending",
+            "testStrategy": "Run both agents on the same code sample and compare output quality, coverage, and format."
+          },
+          {
+            "id": 5,
+            "title": "Evaluate supporting files (lib, docs, tests)",
+            "description": "Review Superpowers supporting files for reusable utilities, documentation patterns, or test strategies worth adopting.",
+            "dependencies": [],
+            "details": "**Files to evaluate from Superpowers plugin:**\n\n1. **lib/** - Utilities\n   - Any shared functions we could use?\n   - Compare against our `.claude/hooks/lib/` (hook-flags.js, run-with-flags.js, etc.)\n\n2. **docs/** - Documentation\n   - Any patterns worth referencing?\n   - Cross-reference for skill documentation?\n\n3. **tests/** - Test patterns\n   - How does Superpowers test its skills?\n   - Could we adopt similar testing for our skills?\n\n4. **Config files**\n   - hooks.json structure\n   - Skill metadata format\n   - Any config patterns we should adopt?\n\n**For each file/directory:**\n- Document what it contains\n- Assess utility for our template\n- Assign verdict: Adopt/Learn From/Skip",
+            "status": "pending",
+            "testStrategy": "List all supporting files found, document their purpose, and justify Adopt/Skip verdict for each."
+          },
+          {
+            "id": 6,
+            "title": "Document findings in superpowers-decisions.md",
+            "description": "Create comprehensive audit document in docs/audit/superpowers-decisions.md following the established template format with all verdicts and action items.",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "details": "Create `docs/audit/superpowers-decisions.md` using the format from `docs/audit/DECISION_TEMPLATE.md` and style from `docs/audit/skills-decisions.md`.\n\n**Required sections:**\n\n1. **Inventory** - Full component count with verification\n2. **Summary table** - Verdict counts by component type\n3. **Skills Analysis** - Per-skill verdict with:\n   - Current integration status (documented in superpowers-integration.md?)\n   - Actual behavior vs our claims\n   - Verdict: Keep Current / Update Integration / No Change Needed\n4. **Hook Analysis** - session-start vs session-init.sh verdict\n5. **Agent Analysis** - code-reviewer comparison verdict\n6. **Override Verification** - Confirm brainstorming exit override status\n7. **Supporting Files** - lib/docs/tests assessment\n8. **Action Items** - Prioritized list:\n   - Priority 1: Fix any incorrect overrides\n   - Priority 2: Update superpowers-integration.md for undocumented skills\n   - Priority 3: Adopt/merge any useful components\n\n**Link to related docs:**\n- Reference skills-decisions.md for methodology\n- Reference hooks-decisions.md for hook audit patterns",
+            "status": "pending",
+            "testStrategy": "Verify document follows template format. Confirm all 14 skills have verdicts. Verify action items are specific and actionable."
+          }
+        ]
       },
       {
-        "id": "10",
+        "id": 10,
         "title": "Execute Adopt Verdicts (Hooks)",
         "description": "Implement all Adopt/Adapt verdicts from the hook audit. Copy ECC implementations, apply necessary adaptations, update upstream-manifest.json.",
         "details": "For each hook with Adopt/Adapt verdict from Phase 1:\n\n**Adoption workflow:**\n1. Fetch latest ECC version:\n   ```bash\n   gh api repos/affaan-m/everything-claude-code/contents/scripts/hooks/<name>.js \\\n     -H 'Accept: application/vnd.github.raw' > .claude/hooks/<name>.js\n   ```\n\n2. Apply standard adaptations:\n   - `CLAUDE_PLUGIN_ROOT` → `CLAUDE_PROJECT_DIR`\n   - `ECC_*` env vars → `TEMPLATE_*` env vars\n   - Update import paths for `.claude/hooks/lib/` location\n   - Add run-with-flags wrapper if not present\n\n3. For Node.js hooks replacing bash:\n   - Keep `.sh` wrapper that calls Node.js\n   - Or convert settings.json to call .js directly\n   - Ensure backward compatibility with existing profiles\n\n4. Update `.claude/upstream-manifest.json`:\n   ```json\n   {\n     \".claude/hooks/<name>.js\": {\n       \"source\": \"affaan-m/everything-claude-code\",\n       \"sourcePath\": \"scripts/hooks/<name>.js\",\n       \"adaptedFromSha\": \"<sha>\",\n       \"adaptedDate\": \"<ISO date>\",\n       \"adaptations\": [\"list of changes\"],\n       \"verdict\": \"Adopt|Adapt\"\n     }\n   }\n   ```\n\n5. Update `docs/audit/AUDIT_SUMMARY.md` with completed adoptions\n\n**Priority hooks to process first:**\n- Hooks marked Adopt with minimal adaptation\n- Hooks that fix known bugs in our implementations",
@@ -3592,7 +3721,7 @@
         "expansionPrompt": "Break down: 1) Prioritize hooks by adoption complexity (minimal adaptation first), 2) Adapt Node.js hooks (update env vars, import paths, add run-with-flags wrapper), 3) Integrate with existing bash hooks (sh wrapper vs direct .js calls), 4) Update upstream-manifest.json and verify hook profile system works with adopted hooks"
       },
       {
-        "id": "11",
+        "id": 11,
         "title": "Execute Adopt Verdicts (Skills, Commands, Agents)",
         "description": "Implement all Adopt/Adapt verdicts from skills, commands, and agents audits. Update SKILL.md files, command .md files, and agent definitions.",
         "details": "**For each skill with Adopt verdict:**\n1. Fetch ECC SKILL.md:\n   ```bash\n   gh api repos/affaan-m/everything-claude-code/contents/skills/<name>/SKILL.md \\\n     -H 'Accept: application/vnd.github.raw' > .claude/skills/<name>/SKILL.md\n   ```\n\n2. Apply adaptations:\n   - Update any ECC-specific references\n   - Adjust paths if needed\n   - Preserve any unique content from our version (if Adapt)\n\n3. Update upstream-manifest.json\n\n**For each command with Adopt verdict:**\n1. Fetch ECC command:\n   ```bash\n   gh api repos/affaan-m/everything-claude-code/contents/commands/<name>.md \\\n     -H 'Accept: application/vnd.github.raw' > .claude/commands/<name>.md\n   ```\n\n2. Apply adaptations:\n   - Task Master integration (ensure CLI over MCP preference)\n   - Update any ECC-specific tool references\n\n**For each agent with Adopt verdict:**\n1. Fetch ECC agent:\n   ```bash\n   gh api repos/affaan-m/everything-claude-code/contents/agents/<name>.md \\\n     -H 'Accept: application/vnd.github.raw' > .claude/agents/<name>.md\n   ```\n\n2. Apply adaptations:\n   - Model selection (align with our haiku/sonnet/opus assignments)\n   - Tool access (ensure matches our security model)\n\n**Batch processing approach:**\nGroup by verdict type and process in bulk to minimize context switches.\n\n**Track in upstream-manifest.json:**\nAdd entries for each adopted/adapted component.",
@@ -3610,7 +3739,7 @@
         "expansionPrompt": "Break down: 1) Batch-process skill adoptions (fetch, adapt paths/references, update manifest), 2) Batch-process command adoptions (fetch, ensure Task Master CLI preference, update manifest), 3) Batch-process agent adoptions (fetch, align model selection, verify tool access, update manifest)"
       },
       {
-        "id": "12",
+        "id": 12,
         "title": "Execute Adopt Verdicts (Rules, Scripts)",
         "description": "Implement all Adopt/Adapt verdicts from rules and scripts audits. Update rule files and add any new utility scripts.",
         "details": "**For rules with Adopt verdict:**\n1. If adopting ECC common rules:\n   ```bash\n   gh api repos/affaan-m/everything-claude-code/contents/rules/common/<name>.md \\\n     -H 'Accept: application/vnd.github.raw' > .claude/rules/<name>.md\n   ```\n\n2. If adopting language-specific rules:\n   - Decide: Keep consolidated or split into 5 files?\n   - If splitting: create subdirectories per ECC structure\n   - Update .mdrules globs in settings if file structure changes\n\n3. Ensure no conflicts with existing rules (authority-hierarchy.md)\n\n**For scripts with Adopt verdict:**\n1. Fetch and adapt:\n   ```bash\n   gh api repos/affaan-m/everything-claude-code/contents/scripts/<name>.js \\\n     -H 'Accept: application/vnd.github.raw' > scripts/<name>.js\n   ```\n\n2. CI validators (if adopted):\n   - Add to scripts/ci/ directory\n   - Create GitHub Actions workflow to run on PRs\n   - Configure for our file structure\n\n3. Schemas (if adopted):\n   - Add to appropriate location\n   - Document schema usage\n\n**For v2.5.0-related adoptions:**\n- resolve-formatter.js → Use for Task 4 (formatter auto-detection)\n- project-detect.js → Use for Task 3 (language detection)\n- harness-audit.js → Use for Task 11 (deterministic scoring)\n\n**Update tracking:**\n- upstream-manifest.json for all adoptions\n- docs/audit/AUDIT_SUMMARY.md with completed items",
@@ -3627,7 +3756,7 @@
         "expansionPrompt": "Break down: 1) Adopt ECC common rules if any verdicts require it (check for conflicts with authority-hierarchy), 2) Adopt/integrate scripts (CI validators with GitHub Actions, schemas if adopted), 3) Update manifest and verify auto-loading works with any structural changes to rules"
       },
       {
-        "id": "13",
+        "id": 13,
         "title": "Build Complete Upstream Manifest",
         "description": "Populate upstream-manifest.json with all adopted files from the audit execution phases. Add commit SHAs, adaptation notes, and enable future sync detection.",
         "details": "Current manifest has 4 entries (hook lib/ files). After execution phases, expand to include all adoptions.\n\n**Final manifest structure:**\n```json\n{\n  \"_comment\": \"...\",\n  \"_schema\": {\n    \"source\": \"GitHub repo\",\n    \"sourcePath\": \"Path in source repo\",\n    \"adaptedFromSha\": \"Commit SHA\",\n    \"adaptedDate\": \"ISO date\",\n    \"adaptations\": [\"List of changes\"],\n    \"verdict\": \"Adopt | Adapt\"\n  },\n  \"_stats\": {\n    \"lastAudit\": \"2026-03-19\",\n    \"totalAdopted\": 0,\n    \"totalAdapted\": 0,\n    \"byCategory\": {\n      \"hooks\": {\"adopted\": 0, \"adapted\": 0},\n      \"skills\": {\"adopted\": 0, \"adapted\": 0},\n      \"commands\": {\"adopted\": 0, \"adapted\": 0},\n      \"agents\": {\"adopted\": 0, \"adapted\": 0},\n      \"rules\": {\"adopted\": 0, \"adapted\": 0},\n      \"scripts\": {\"adopted\": 0, \"adapted\": 0}\n    }\n  },\n  \"files\": {\n    // All adopted/adapted files\n  }\n}\n```\n\n**Workflow:**\n1. Iterate through all decision documents\n2. For each Adopt/Adapt verdict:\n   - Get current ECC commit SHA: `gh api repos/affaan-m/everything-claude-code/commits/HEAD --jq '.sha'`\n   - Add entry to manifest\n\n3. Calculate statistics for `_stats` section\n\n4. Validate JSON:\n   ```bash\n   node -e \"JSON.parse(require('fs').readFileSync('.claude/upstream-manifest.json'))\" && echo 'Valid JSON'\n   ```",
@@ -3645,7 +3774,7 @@
         "expansionPrompt": "Consolidation task: iterate through all decision documents, extract Adopt/Adapt verdicts, get current ECC commit SHAs via gh api, populate files section, calculate statistics for _stats section, validate JSON. Depends on execution phases completing first."
       },
       {
-        "id": "14",
+        "id": 14,
         "title": "Enhance check-upstream.sh for Manifest-Based Sync",
         "description": "Update check-upstream.sh to use upstream-manifest.json for component-level diff detection, not just repository-level commit counts.",
         "details": "Current check-upstream.sh checks 5 upstreams at repo level. Enhance to do component-level diffing using the manifest.\n\n**New features:**\n1. **Manifest-based diff mode:**\n   ```bash\n   ./scripts/check-upstream.sh --manifest\n   ```\n   - Read `.claude/upstream-manifest.json`\n   - For each file in manifest:\n     - Fetch current upstream version\n     - Compare SHA to `adaptedFromSha`\n     - If different, flag for review\n\n2. **Per-file diff output:**\n   ```\n   Checking 47 adopted files against upstream...\n   \n   .claude/hooks/lib/hook-flags.js\n     Source: affaan-m/everything-claude-code/scripts/lib/hook-flags.js\n     Adapted from: abc1234 (2026-03-19)\n     Current upstream: def5678\n     Status: ⚠ UPDATED - review changes\n   \n   .claude/hooks/lib/run-with-flags.js\n     Status: ✓ UP TO DATE\n   ```\n\n3. **Diff preview:**\n   ```bash\n   ./scripts/check-upstream.sh --manifest --diff <file>\n   ```\n   - Show actual diff between our adapted version and current upstream\n\n**Implementation:**\n```bash\n# Read manifest\nMANIFEST='.claude/upstream-manifest.json'\nFILES=$(jq -r '.files | keys[]' \"$MANIFEST\")\n\nfor file in $FILES; do\n  SOURCE=$(jq -r \".files[\\\"$file\\\"].source\" \"$MANIFEST\")\n  SOURCE_PATH=$(jq -r \".files[\\\"$file\\\"].sourcePath\" \"$MANIFEST\")\n  ADAPTED_SHA=$(jq -r \".files[\\\"$file\\\"].adaptedFromSha\" \"$MANIFEST\")\n  \n  # Fetch current upstream file and compare\n  CURRENT_SHA=$(gh api \"repos/$SOURCE/contents/$SOURCE_PATH\" --jq '.sha' 2>/dev/null)\n  \n  if [[ \"$CURRENT_SHA\" != \"$ADAPTED_SHA\" ]]; then\n    echo \"⚠ $file: upstream changed\"\n  else\n    echo \"✓ $file: up to date\"\n  fi\ndone\n```\n\n4. Update script documentation header",
@@ -3661,7 +3790,7 @@
         "expansionPrompt": "Break down: 1) Add --manifest flag to read upstream-manifest.json and iterate files section, 2) Implement per-file SHA comparison (fetch current upstream SHA, compare to adaptedFromSha, flag if different), 3) Add --diff flag to show actual changes between adapted version and current upstream"
       },
       {
-        "id": "15",
+        "id": 15,
         "title": "Create /check-upstream Command",
         "description": "Create a Claude Code command to invoke check-upstream.sh with sensible defaults and formatted output.",
         "details": "**Create `.claude/commands/check-upstream.md`:**\n\n```markdown\n---\nname: check-upstream\ndescription: Check for updates in upstream repositories (ECC, Superpowers, Task Master)\n---\n\n# /check-upstream\n\nChecks template components against upstream sources for available updates.\n\n## Usage\n\n- `/check-upstream` - Quick summary of upstream changes\n- `/check-upstream --verbose` - Show recent commit messages\n- `/check-upstream --manifest` - Check adopted files individually\n- `/check-upstream --since YYYY-MM-DD` - Check changes since specific date\n\n## Instructions\n\n1. Run the check-upstream script:\n   ```bash\n   ./scripts/check-upstream.sh $ARGS\n   ```\n\n2. Interpret results:\n   - \"All upstreams up to date\" - No action needed\n   - \"X upstream(s) have changes\" - Review for adoption\n\n3. For components with changes:\n   - Fetch the changed file: `gh api repos/<repo>/contents/<path> -H 'Accept: application/vnd.github.raw'`\n   - Compare with our version\n   - Apply verdict framework: Adopt/Adapt/Keep/Skip\n\n4. After reviewing, update the --since date:\n   ```bash\n   ./scripts/check-upstream.sh --since $(date +%Y-%m-%d)\n   ```\n```",
@@ -3677,7 +3806,7 @@
         "expansionPrompt": "Simple command creation: write .claude/commands/check-upstream.md following existing command format (commit.md seen as example ~108 lines). Document usage, flags, workflow. Test invocation via slash command."
       },
       {
-        "id": "16",
+        "id": 16,
         "title": "Write Final Audit Summary Document",
         "description": "Consolidate all audit findings into docs/audit/AUDIT_SUMMARY.md with overall patterns, recommendations, and lessons learned.",
         "details": "**Expand AUDIT_SUMMARY.md to include:**\n\n1. **Executive Summary:**\n   - Total components audited\n   - Verdicts by category (Adopt/Adapt/Keep/New/Skip counts)\n   - Key findings\n\n2. **Decision Statistics Table:**\n   ```markdown\n   | Category | Adopt | Adapt | Keep | New | Skip | Total |\n   |----------|-------|-------|------|-----|------|-------|\n   | Hooks    | X     | X     | X    | X   | X    | X     |\n   | Skills   | X     | X     | X    | X   | X    | X     |\n   ...\n   ```\n\n3. **Key Patterns Discovered:**\n   - \"ECC consistently has better X because...\"\n   - \"Our Y is genuinely better because...\"\n   - \"We have unique Z that ECC doesn't\"\n\n4. **Recommendations:**\n   - Ongoing sync workflow\n   - Monthly check-upstream cadence\n   - Criteria for future adoptions\n\n5. **v2.5.0 Impact:**\n   - Which tasks are resolved by adoptions?\n   - Which tasks are simplified?\n   - Which tasks remain unchanged?\n\n6. **Links to Decision Documents:**\n   - hooks-decisions.md\n   - skills-decisions.md\n   - commands-decisions.md\n   - agents-decisions.md\n   - rules-decisions.md\n   - scripts-decisions.md\n   - infra-decisions.md\n   - superpowers-decisions.md\n\n7. **Lessons Learned:**\n   - What worked well in the audit process?\n   - What would we do differently next time?\n   - Process improvements for future audits",
@@ -3695,7 +3824,7 @@
         "expansionPrompt": "Documentation consolidation: expand AUDIT_SUMMARY.md (exists, 46 lines seen) with executive summary, decision statistics table, key patterns, recommendations, v2.5.0 impact, links to all decision documents, lessons learned. Aggregates findings from all audit phases."
       },
       {
-        "id": "17",
+        "id": 17,
         "title": "Reassess v2.5.0 Task List Against Audit Findings",
         "description": "Review all v2.5.0 tasks and determine which are resolved, simplified, or unchanged by audit adoptions. Update Task Master accordingly.",
         "details": "**v2.5.0 tasks to reassess (36):**\n\nReferenced adoptions that may resolve tasks:\n- Task 3 (Language detection) ← project-detect.js\n- Task 4 (Formatter auto-detect) ← resolve-formatter.js\n- Task 5 (Quality gate) ← quality-gate.js\n- Task 6 (Cost tracking) ← cost-tracker.js\n- Task 11 (Harness audit) ← harness-audit.js\n- Task 15 (Model routing) ← model-route.md command\n\n**Workflow:**\n1. Load v2.5.0 task list:\n   ```bash\n   task-master tags use v250-ecc-superpowers\n   task-master list --all\n   ```\n\n2. For each task:\n   - Check if audit resolved it via adoption\n   - Check if audit simplified it (\"adapt from ECC\" vs \"build from scratch\")\n   - Note any unchanged tasks\n\n3. Update task statuses:\n   ```bash\n   # For resolved tasks\n   task-master set-status <id> done\n   \n   # For simplified tasks\n   task-master update <id> --details \"Adopt from ECC: <source path>\"\n   ```\n\n4. Re-run complexity analysis:\n   ```bash\n   task-master analyze-complexity\n   ```\n\n5. Document findings in AUDIT_SUMMARY.md under \"v2.5.0 Impact\" section\n\n**Expected outcomes:**\n- Some tasks marked done (fully resolved by adoption)\n- Some tasks updated with \"Adopt\" approach\n- Remaining tasks proceed as originally planned\n- New tasks if audit revealed gaps",
@@ -3711,7 +3840,7 @@
         "expansionPrompt": "Break down: 1) Map audit adoptions to v2.5.0 tasks (project-detect.js → Task 3, resolve-formatter.js → Task 4, harness-audit.js → Task 11, etc.), 2) Update Task Master statuses for resolved/simplified tasks, 3) Re-run complexity analysis and document impact in AUDIT_SUMMARY.md"
       },
       {
-        "id": "18",
+        "id": 18,
         "title": "Create Audit Maintenance Workflow Documentation",
         "description": "Document the ongoing workflow for maintaining upstream sync: monthly check cadence, adoption criteria, manifest updates.",
         "details": "**Add to docs/audit/MAINTENANCE.md:**\n\n```markdown\n# Upstream Sync Maintenance\n\n## Monthly Workflow\n\n1. **Run upstream check:**\n   ```bash\n   ./scripts/check-upstream.sh --verbose\n   ```\n\n2. **For each upstream with changes:**\n   - Review commit messages for relevant updates\n   - Fetch changed files of interest\n   - Apply verdict framework\n\n3. **After adoption:**\n   - Update upstream-manifest.json with new SHA\n   - Run tests to verify adoption works\n   - Commit with `chore: sync upstream <component>`\n\n4. **Update check date:**\n   ```bash\n   # Update DEFAULT_SINCE in check-upstream.sh\n   sed -i 's/DEFAULT_SINCE=.*/DEFAULT_SINCE=\"'$(date +%Y-%m-%d)'\"/' scripts/check-upstream.sh\n   ```\n\n## Adoption Criteria\n\n**Adopt when:**\n- ECC version has features we want\n- ECC version fixes bugs we have\n- ECC version is better maintained\n- No philosophical conflict with our approach\n\n**Keep when:**\n- Our version integrates better with Task Master\n- Our version has Superpowers-specific behavior\n- Our version has unique features ECC lacks\n- Adoption would require significant rework\n\n## Local Patches to Re-apply\n\nAfter updating Superpowers plugin:\n- brainstorming/SKILL.md: EnterPlanMode prohibition\n\n## Manifest Schema Updates\n\nIf adding new fields to upstream-manifest.json:\n1. Update _schema section\n2. Update check-upstream.sh to read new fields\n3. Document in this file\n```\n\nAlso add reminder to CLAUDE.md under \"Development Workflow\" section.",
@@ -3730,12 +3859,14 @@
     ],
     "metadata": {
       "version": "1.0.0",
-      "lastModified": "2026-03-19T06:02:49.655Z",
+      "lastModified": "2026-03-19T06:15:47.037Z",
       "taskCount": 18,
-      "completedCount": 3,
+      "completedCount": 4,
       "tags": [
         "component-audit"
-      ]
+      ],
+      "created": "2026-03-19T06:25:01.462Z",
+      "description": "Tasks for component-audit context"
     }
   }
 }
