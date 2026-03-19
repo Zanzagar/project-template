@@ -115,6 +115,14 @@ graph TB
 | `.claude/hooks/post-edit-format.sh` | Delegate to quality-gate.js when available | Modify |
 | `.claude/hooks/console-log-audit.sh` | Delegate to quality-gate.js when available | Modify |
 | `.claude/hooks/typescript-check.sh` | Delegate to quality-gate.js when available | Modify |
+| `.claude/hooks/dev-server-blocker.sh` | Rewrite: block → auto-tmux transform for dev servers | Modify |
+| `.claude/hooks/session-end.sh` | Add transcript reading, idempotent markers, richer data | Modify |
+| `.claude/hooks/observe.sh` | Add secret scrubbing, SIGUSR1 throttling, auto-purge, PID validation | Modify |
+| `.claude/hooks/typescript-check.sh` | Add multi-path matching, explicit timeout | Modify |
+| `.claude/hooks/console-log-audit.sh` | Add exclusion patterns for test/config/scripts files | Modify |
+| `.claude/hooks/doc-file-blocker.sh` | Allow MEMORY.md, *.plan.md, .claude/plans/ | Modify |
+| `.claude/hooks/pr-url-extract.sh` | Add gh pr review suggestion with parsed PR number | Modify |
+| `.claude/hooks/suggest-compact.sh` | Atomic file ops, counter clamping | Modify |
 | `.claude/settings.json` | Register new hooks, add profile metadata to existing hooks | Modify |
 | `.claude/commands/harness-audit.md` | Deterministic template health scoring | Create |
 | `.claude/commands/model-route.md` | Model tier recommendation command | Create |
@@ -154,6 +162,16 @@ graph TB
 - **Agentic engineering skill**: Depends on [nothing — standalone skill]. Eval-first loops, cost discipline.
 - **Autonomous loops skill**: Depends on [nothing — standalone skill]. Sequential pipeline, de-sloppify patterns.
 - **Eval metrics skill**: Depends on [nothing — standalone skill]. pass@k / pass^k frameworks.
+
+### Existing Hook Improvements Layer (Phase 2 — independent, parallelizable)
+- **Auto-tmux dev servers**: Depends on [nothing]. Rewrite dev-server-blocker from block to transform.
+- **Session-end transcript reading**: Depends on [nothing]. Richer session data capture.
+- **Observer improvements** (secret scrubbing, throttling, auto-purge, PID validation): Depends on [nothing]. Four sub-improvements to observe.sh.
+- **TypeScript multi-path matching**: Depends on [nothing]. Correctness fix for typescript-check.sh.
+- **Console-log audit exclusions**: Depends on [nothing]. Skip test/config files.
+- **Doc-file-blocker paths**: Depends on [nothing]. Allow MEMORY.md, *.plan.md.
+- **PR URL review suggestion**: Depends on [nothing]. Add gh pr review hint.
+- **Suggest-compact atomic counter**: Depends on [nothing]. Atomic file ops.
 
 ### Integration Layer (Phase 3)
 - **Session-init.sh update**: Depends on [Project auto-detection, Hook profile system]. Display detected stack and active profile.
@@ -284,6 +302,30 @@ Deny lists, guardrails, AgentShield CI.
 - 12.6: Update `docs/SECURITY.md` with agentic security section (OWASP Agentic Top 10 mapping)
 - 12.7: Add PR audit checklist: check for broadened allowedTools, modified hooks, external links in skills, new MCP servers
 
+### 13. Existing Hook Improvements (from ECC deep comparison)
+Targeted improvements to existing hooks based on feature-by-feature comparison with ECC v1.8.0. Each addresses a specific gap where ECC's implementation is demonstrably better.
+
+- 13.1: **Auto-tmux for dev servers** — Rewrite `dev-server-blocker.sh` to TRANSFORM dev server commands into named tmux sessions instead of blocking them. Detect npm/pnpm/yarn/bun/flask/uvicorn/cargo-watch dev commands, create a project-name-based tmux session, kill existing sessions with the same name, report how to view logs. Keep our broader server detection list (flask, uvicorn, hugo, jekyll, cargo watch) that ECC lacks. Depends on [nothing].
+- 13.2: **Session-end transcript reading** — Update `session-end.sh` to read the session transcript from `transcript_path` in the Stop hook stdin JSON. Parse JSONL to extract user messages, tools used (with counts), and files modified. Use idempotent SUMMARY_START/SUMMARY_END markers to prevent duplicate content on repeated Stop events. Add "Notes for Next Session" and "Context to Load" placeholder sections. Depends on [nothing].
+- 13.3: **Observer secret scrubbing** — Update `observe.sh` to scrub API keys, tokens, passwords, and authorization headers from observation data BEFORE persisting to `observations.jsonl`. Use regex patterns: `/[A-Za-z0-9_-]{20,}/ for generic tokens, /Bearer\s+\S+/ for auth headers, /password['":\s]*\S+/i for passwords`. Depends on [nothing].
+- 13.4: **Observer SIGUSR1 throttling** — Update `observe.sh` to only signal the observer daemon every N observations (default 20) instead of every observation. Prevents rapid-fire signaling from creating runaway parallel analysis processes. Depends on [nothing].
+- 13.5: **Observer auto-purge** — Update `observe.sh` to delete observation archive files older than 30 days. Run purge check once per session (guard with a timestamp file). Depends on [nothing].
+- 13.6: **Observer stale PID validation** — Update `observe.sh` to validate PID is a positive integer >1 before sending SIGUSR1. Remove stale PID files when the PID doesn't correspond to a running process. Depends on [nothing].
+- 13.7: **TypeScript multi-path matching** — Update `typescript-check.sh` to match tsc errors using relative path, absolute path, AND original file path. Prevents false positives from basename collisions (e.g., `src/utils.ts` vs `tests/utils.ts`). Add explicit 30-second timeout. Depends on [nothing].
+- 13.8: **Console-log audit exclusion patterns** — Update `console-log-audit.sh` to skip test files (`*.test.*`, `*.spec.*`, `__tests__/`, `__mocks__/`), config files, and `scripts/` directories where debug statements are intentional. Depends on [nothing].
+- 13.9: **Doc-file-blocker allowed paths** — Update `doc-file-blocker.sh` to allow `MEMORY.md`, `*.plan.md`, and `.claude/plans/` as legitimate documentation paths. Keep blocking behavior (exit 2). Depends on [nothing].
+- 13.10: **PR URL gh-review suggestion** — Update `pr-url-extract.sh` to parse repo name and PR number from detected URLs and suggest `gh pr review <number>` command. Depends on [nothing].
+- 13.11: **Suggest-compact atomic counter** — Update `suggest-compact.sh` to use atomic file operations (flock or lockfile) for the tool-call counter. Add counter value clamping (max 1,000,000) to prevent corrupted files from causing issues. Depends on [nothing].
+
+### 14. Quality Gate Sub-Requirements (from ECC deep comparison)
+Additional requirements for the quality gate hook based on ECC's superior JS/TS handling.
+
+- 14.1: For JS/TS projects, detect Biome vs Prettier by checking for `biome.json`/`biome.jsonc` (Biome) vs `.prettierrc`/`.prettierrc.json`/`prettier.config.js` (Prettier). Biome takes precedence if both exist.
+- 14.2: Prefer local `node_modules/.bin` binaries over global `npx` commands for formatter execution — saves 200-500ms per invocation.
+- 14.3: Cache project root, formatter type, and binary resolution per session (invalidate on `package.json` or formatter config change).
+- 14.4: When Biome is detected for JS/TS, use `biome check --write` which combines format + lint in a single pass. Skip separate lint step.
+- 14.5: For TypeScript checking within the quality gate, use multi-path matching (relative + absolute + original path) to filter tsc errors to the edited file. This prevents false positives from basename collisions.
+
 ## Success Criteria
 
 - Hook profile system works: `TEMPLATE_HOOK_PROFILE=minimal` disables non-essential hooks, `strict` enables all
@@ -294,6 +336,12 @@ Deny lists, guardrails, AgentShield CI.
 - All 3 new skills load correctly via Skill tool and provide actionable guidance
 - Security hardening rule loads at session start and deny list patterns are documented
 - All existing hooks continue to function unchanged when `TEMPLATE_HOOK_PROFILE=standard`
+- Dev server commands auto-launch in named tmux sessions instead of being blocked
+- Session-end captures user messages and tools used from transcript (not just git history)
+- Observer does not persist API keys, tokens, or passwords in observations.jsonl
+- Observer signals daemon at most once per 20 observations (not per-observation)
+- TypeScript check correctly filters errors when multiple files share the same basename
+- Console-log audit does not warn about debug statements in test files
 - No regression in session startup time (< 2s total for all SessionStart hooks)
 
 ## Out of Scope
