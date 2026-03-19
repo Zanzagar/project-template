@@ -131,6 +131,9 @@ graph TB
 | `.claude/skills/agentic-engineering/SKILL.md` | Eval-first loops, model routing, cost discipline | Create |
 | `.claude/skills/autonomous-loops/SKILL.md` | Sequential pipeline, de-sloppify, continuous PR patterns | Create |
 | `.claude/skills/eval-metrics/SKILL.md` | pass@k and pass^k frameworks | Create |
+| `.claude/skills/ai-regression-testing/SKILL.md` | AI blind spot patterns, regression testing strategy | Create |
+| `.claude/rules/reasoning-patterns.md` | Add research quality rules, Adopt/Extend/Compose/Build matrix | Modify |
+| `.claude/hooks/protect-sensitive-files.sh` | Add linter/formatter config tamper guard | Modify |
 | `scripts/harness-audit.js` | Deterministic scoring engine (7 categories) | Create |
 | `scripts/lib/hook-flags.js` | Hook enable/disable logic by profile and env var | Create |
 | `scripts/lib/project-detect.js` | Language/framework detection from marker files | Create |
@@ -162,6 +165,9 @@ graph TB
 - **Agentic engineering skill**: Depends on [nothing — standalone skill]. Eval-first loops, cost discipline.
 - **Autonomous loops skill**: Depends on [nothing — standalone skill]. Sequential pipeline, de-sloppify patterns.
 - **Eval metrics skill**: Depends on [nothing — standalone skill]. pass@k / pass^k frameworks.
+- **AI regression testing skill**: Depends on [nothing — standalone skill]. AI blind spot patterns, test-where-bugs-were-found strategy.
+- **Research quality rules update**: Depends on [nothing — rule update]. Source attribution discipline, Adopt/Extend/Compose/Build matrix.
+- **Config tamper guard**: Depends on [nothing — hook update]. Block linter config edits during development.
 
 ### Existing Hook Improvements Layer (Phase 2 — independent, parallelizable)
 - **Auto-tmux dev servers**: Depends on [nothing]. Rewrite dev-server-blocker from block to transform.
@@ -326,6 +332,36 @@ Additional requirements for the quality gate hook based on ECC's superior JS/TS 
 - 14.4: When Biome is detected for JS/TS, use `biome check --write` which combines format + lint in a single pass. Skip separate lint step.
 - 14.5: For TypeScript checking within the quality gate, use multi-path matching (relative + absolute + original path) to filter tsc errors to the edited file. This prevents false positives from basename collisions.
 
+### 15. AI Regression Testing Patterns
+Address AI-specific blind spots where the same model writes and reviews code.
+
+- 15.1: Create `.claude/skills/ai-regression-testing/SKILL.md` documenting the 4 concrete AI regression patterns: (1) sandbox/production path mismatch — #1 AI regression, Claude assumes dev paths work in prod; (2) SELECT clause omission — when adding columns to a model, AI forgets to update SELECT queries that enumerate columns; (3) error state leakage — AI generates happy-path code that exposes internal error details to users; (4) optimistic update without rollback — AI implements optimistic state changes without compensating rollback on failure
+- 15.2: Document the "test where bugs were found" strategy — target known AI failure modes rather than aiming for blanket 100% coverage
+- 15.3: Include guidance on blind-spot mitigation: use different models for write vs review when possible, use Superpowers' two-stage review (spec compliance catches scope issues, but add explicit AI regression checklist to code quality review)
+- 15.4: Cross-reference with existing TDD skill and Superpowers test-driven-development
+
+### 16. Blueprint Cold-Start Step Briefs
+Formalize multi-session planning with self-contained execution steps.
+
+- 16.1: Update `/save-session` command (Requirement 7) to generate cold-start step briefs — each remaining step must include: objective, file paths, context needed, verification command, exit criteria, and model tier recommendation
+- 16.2: Each step should be independently executable by a fresh session with zero prior context — no references to "what we discussed earlier"
+- 16.3: Include dependency ordering between steps (which steps can be parallelized, which must be sequential)
+- 16.4: Add adversarial review concept: before finalizing a multi-step plan, suggest dispatching an Opus subagent to review for anti-patterns (missing dependencies, over-scoped steps, unclear exit criteria)
+
+### 17. Research Quality Rules
+Enforce source attribution discipline in research workflows.
+
+- 17.1: Update `reasoning-patterns.md` Research section with: "Every factual claim needs a source citation", "If only one source says it, flag as unverified", "Separate fact from inference explicitly", "Cross-reference across multiple sources for critical claims"
+- 17.2: Update `/research` command to include quality rules in its output template
+- 17.3: Add the Adopt/Extend/Compose/Build decision matrix to research workflow: before implementing custom solutions, evaluate whether existing packages/tools/MCP servers already solve the problem
+
+### 18. Config Tamper Guard
+Prevent Claude from modifying linter/formatter configs to make code pass.
+
+- 18.1: Update `protect-sensitive-files.sh` to block edits to linter and formatter configuration files during active development: `.ruff.toml`, `ruff.toml`, `.eslintrc*`, `eslint.config.*`, `.prettierrc*`, `prettier.config.*`, `biome.json*`, `tsconfig.json`, `pyproject.toml` (the `[tool.ruff]` section specifically), `.flake8`
+- 18.2: Allow explicit override: if user says "I need to modify the linter config", provide instructions to temporarily disable the guard
+- 18.3: The guard should warn (exit 0 with stderr message) not block (exit 2) for tsconfig.json and pyproject.toml since these are legitimately modified during development. Hard-block only dedicated linter config files (.ruff.toml, .eslintrc*, biome.json*).
+
 ## Success Criteria
 
 - Hook profile system works: `TEMPLATE_HOOK_PROFILE=minimal` disables non-essential hooks, `strict` enables all
@@ -342,22 +378,33 @@ Additional requirements for the quality gate hook based on ECC's superior JS/TS 
 - Observer signals daemon at most once per 20 observations (not per-observation)
 - TypeScript check correctly filters errors when multiple files share the same basename
 - Console-log audit does not warn about debug statements in test files
+- AI regression testing skill documents all 4 patterns with concrete test examples
+- `/save-session` generates cold-start step briefs that a fresh session can execute without prior context
+- Research outputs include source citations for every factual claim
+- `protect-sensitive-files.sh` blocks edits to `.ruff.toml` and `.eslintrc*` during active development
 - No regression in session startup time (< 2s total for all SessionStart hooks)
 
 ## Out of Scope
 
-- NanoClaw REPL (ECC-specific infrastructure)
-- DevFleet multi-agent orchestration (our /orchestrate + SDD covers this)
-- Domain-specific skills (logistics, investor materials, visa translation, etc.)
-- SQLite state store (deferred — file-based approach works)
-- Full Node.js rewrite of existing bash hooks (only new hooks use Node.js)
-- InsAIts AI security monitor (deferred — adds pip dependency, evaluate separately)
-- Prompt optimizer skill (deferred — niche use case)
-- Blueprint multi-session planning (deferred — our handoff docs handle this)
-- PM2 orchestration (enterprise pattern, not needed yet)
-- Selective install manifests (we don't have ECC's scale problem)
-- i18n / translations
-- chief-of-staff agent (multi-channel comms — not a dev template concern)
+### Confirmed not applicable (deep-dived and rejected with evidence)
+- **NanoClaw REPL** — A `spawnSync('claude', ['-p'])` wrapper. "Branching" is a file copy. "Search" is substring scan. Downgrade from Claude Code's native session.
+- **DevFleet** — ECC component is just API docs for an external MCP server. The actual orchestration (worktree-isolated parallel agents) lives in a separate project.
+- **Prompt Optimizer** — Routes vague prompts to ECC's 50+ commands. Our proactive-steering.md already does this for our smaller ecosystem. Would need complete rewrite of routing tables.
+- **InsAIts Security** — Value depends on unproven third-party `insa-its` pip package. 200-500ms per-tool-call overhead. Behavioral anomaly detection is novel but unvalidated.
+- **Documentation Lookup skill** — Duplicates our tiered lookup in reasoning-patterns.md with less nuance (no WebFetch/llms.txt tiers).
+- **Continuous Agent Loop** — 40-line routing index. Only the failure modes section has value (captured in autonomous-loops skill).
+- **Domain-specific skills** — logistics, investor materials, visa translation, energy procurement, etc. Industry-specific, not general-purpose.
+- **chief-of-staff agent** — Multi-channel comms triage. Not a development template concern.
+
+### Deferred (valuable but lower priority than Wave 1-3)
+- **Language-specific agents** (Kotlin, Rust, Java, C++) — Contain genuine deep expertise. Worth porting when users need those languages. Also suggests our go-reviewer and python-reviewer should be deepened.
+- **SQLite state store** — More robust than file-based. Defer until we hit state corruption issues.
+- **Selective install manifests** — Not needed at our scale. Revisit if we grow past 50+ skills.
+- **Full Node.js rewrite of existing bash hooks** — Only new hooks use Node.js. Migrate existing hooks opportunistically.
+- **PM2 orchestration** — Enterprise long-running agent pattern. Not needed yet.
+- **Search-first Adopt/Extend/Compose/Build matrix** — Partially captured in Research Quality Rules (Req 17.3). Full skill deferred.
+- **Plankton model-tiered violation routing** — Haiku for style, Sonnet for logic, Opus for types. Clever but adds significant complexity. Monitor the Plankton project.
+- **i18n / translations** — Community concern, not template concern.
 
 ## Security Considerations
 
