@@ -354,3 +354,53 @@ PreToolUse hook intercepting `git commit` commands. Five checks: branch protecti
 - `scripts/lib/utils.js` (for console-log-audit, suggest-compact Node.js versions)
 - `scripts/lib/resolve-formatter.js` (for post-edit-format)
 - `scripts/lib/shell-split.js` or equivalent (for dev-server-blocker)
+
+---
+
+## Hook Libraries Audit (Task 3)
+
+**Our lib/**: 4 files (all adopted from ECC in f9963ad)
+**ECC lib/**: 23 items (files + directories)
+
+### Libraries to Adopt
+
+| ECC File | Purpose | Why Adopt | Dependencies |
+|----------|---------|-----------|-------------|
+| utils.js | Cross-platform utilities, stdin JSON reader, git helpers | Foundation for ALL Node.js hook adoptions. Provides readStdinJson, log, readFile, getGitModifiedFiles, runCommand (with allowlist + metachar blocking). ~400 lines, well-secured. | None |
+| resolve-formatter.js | Biome/Prettier auto-detection with 3-level caching | Prerequisite for post-edit-format adaptation. Also resolves v2.5.0 Task 4 (formatter auto-detection). Local node_modules/.bin preference saves 200-500ms/call. | package-manager.js |
+| package-manager.js | npm/pnpm/yarn/bun detection | Dependency of resolve-formatter.js. Detects package manager from lockfiles and config. | None |
+| project-detect.js | 12-language, 24-framework detection | Resolves v2.5.0 Task 3 (language detection for hook routing). Reads package.json, requirements.txt, pyproject.toml, go.mod, Cargo.toml, composer.json, mix.exs. Extensible rule-based. | None |
+| shell-split.js | Shell command parser (quoted args, compound commands) | Dependency of dev-server-blocker adaptation. Correctly handles sudo/env prefixes, &&/; chains, quoted arguments. | None |
+
+**Adaptations needed for adopted libs:**
+- utils.js: Add project-local `.claude/` option for getSessionsDir() (ECC defaults to global `~/.claude/sessions/`)
+- All: No ECC-specific env vars found — clean adoption
+
+### Libraries to Skip
+
+| ECC File/Dir | Purpose | Why Skip |
+|-------------|---------|----------|
+| install/ + install-*.js (4 files) | Plugin installation infrastructure | We use manage-plugins.sh (bash). Different architecture, not compatible. |
+| session-adapters/ | Session storage backends | Our sessions are simple markdown files in `.claude/sessions/`. No need for adapter abstraction. |
+| session-aliases.js + session-manager.js | Named session management | Different architecture — we use file-based session summaries. Revisit if session-end.js adoption needs it. |
+| skill-evolution/ | Skill promotion/evolution | Our continuous learning uses observer daemon + pattern-extraction.sh. Fundamentally different architecture. |
+| skill-improvement/ | Skill refinement | Same as above — different learning pipeline. |
+| state-store/ | Generic key-value persistence | We use Task Master + files for state. No need for another persistence layer. |
+| orchestration-session.js | Multi-agent orchestration | We handle this via /orchestrate command + agent definitions. Different approach. |
+| tmux-worktree-orchestrator.js | tmux + git worktree management | Specialized. Evaluate later if auto-tmux-dev.js adoption needs it. |
+
+### Library Audit Summary
+
+| Verdict | Count | Items |
+|---------|-------|-------|
+| Already adopted | 4 | hook-flags.js, run-with-flags.js, run-with-flags-shell.sh, check-hook-enabled.js |
+| Adopt | 5 | utils.js, resolve-formatter.js, package-manager.js, project-detect.js, shell-split.js |
+| Skip | 8 | install/*, session-*, skill-*, state-store/, orchestration-session, tmux-worktree-orchestrator |
+
+### Impact on v2.5.0 Tasks
+
+| Library | v2.5.0 Task | Impact |
+|---------|------------|--------|
+| project-detect.js | Task 3 (language detection) | **Resolves** — adopt instead of building from scratch |
+| resolve-formatter.js | Task 4 (formatter auto-detection) | **Resolves** — adopt instead of building from scratch |
+| utils.js | Task 5 (quality gate) | **Simplifies** — foundation for Node.js quality-gate hook |

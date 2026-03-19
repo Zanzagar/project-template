@@ -3432,7 +3432,7 @@
         "dependencies": [
           "2"
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -3440,9 +3440,10 @@
             "description": "Fetch and analyze ECC's scripts/lib/utils.js to assess cross-platform utilities (file operations, platform detection, color output). Compare against inline utility code scattered across our hooks to determine if consolidation provides net benefit.",
             "dependencies": [],
             "details": "**Fetch ECC utils.js:**\n```bash\ngh api repos/affaan-m/everything-claude-code/contents/scripts/lib/utils.js -H 'Accept: application/vnd.github.raw'\n```\n\n**Assessment criteria:**\n1. Inventory functions: file operations, platform detection (Windows/Mac/Linux), color/ANSI output helpers\n2. Grep our hooks for inline implementations of similar utilities\n3. Count duplication: How many hooks have inline platform detection? Color output?\n4. Evaluate dependency cost: Does adopting utils.js create tight coupling?\n5. Cross-platform correctness: Does it handle WSL, Git Bash on Windows?\n\n**Verdict decision tree:**\n- If utils.js consolidates 3+ inline implementations → ADOPT\n- If utils.js adds complexity without reducing duplication → SKIP\n- If partial adoption makes sense → document which functions to cherry-pick\n\n**Output:** Add verdict to docs/audit/hooks-decisions.md under 'Hook Libraries' section with rationale.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "For adoption: Create test script `node -e \"const utils = require('./.claude/hooks/lib/utils.js'); console.log(utils.detectPlatform ? utils.detectPlatform() : 'no platform detect')\"`. Verify exported functions work on current platform. For skip: Document test that confirms our inline code works equivalently.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2026-03-19T06:02:46.969Z"
           },
           {
             "id": 2,
@@ -3452,9 +3453,10 @@
               1
             ],
             "details": "**Fetch both libraries:**\n```bash\ngh api repos/affaan-m/everything-claude-code/contents/scripts/lib/resolve-formatter.js -H 'Accept: application/vnd.github.raw'\ngh api repos/affaan-m/everything-claude-code/contents/scripts/lib/project-detect.js -H 'Accept: application/vnd.github.raw'\n```\n\n**resolve-formatter.js assessment (links to v2.5.0 Task 4):**\n1. How does it detect formatters? (package.json, config files, binary presence?)\n2. Supported formatters: prettier, eslint, ruff, black, gofmt, rustfmt?\n3. Fallback behavior when no formatter found?\n4. Integration complexity with our post-edit-format.sh hook?\n\n**project-detect.js assessment (links to v2.5.0 Task 3):**\n1. Detection logic: What signals does it use? (file extensions, package.json, go.mod, Cargo.toml?)\n2. Supported languages/frameworks?\n3. How does it handle polyglot repos?\n4. Compare against our session-init.sh project detection\n\n**For each library, document:**\n- ADOPT: Integration path to v2.5.0 task, modifications needed\n- SKIP: What we'd build instead and why\n- PARTIAL: Which logic to extract vs. reimplement",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "For resolve-formatter.js: Test against template root (should detect ruff for Python). For project-detect.js: Test against template root (should detect Python project). Run: `node -e \"const detect = require('./project-detect.js'); console.log(detect.detectProject('.'))\"` after copying to test location.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2026-03-19T06:02:48.335Z"
           },
           {
             "id": 3,
@@ -3465,14 +3467,16 @@
               2
             ],
             "details": "**Libraries to evaluate and skip:**\n\n1. **install-*.js files** (plugin installation)\n   - Fetch: `gh api repos/affaan-m/everything-claude-code/contents/scripts/lib --jq '.[].name' | grep install`\n   - Document: 'SKIP - We use manage-plugins.sh which handles plugin installation via shell scripts. ECC's JS-based approach would duplicate functionality.'\n\n2. **session-*.js files** (session management)\n   - Compare against our session hooks: session-init.sh, session-end.sh, session-summary.sh\n   - Document: If equivalent → 'SKIP - Our shell-based session hooks provide same functionality'\n   - Document: If superior features → note for future consideration\n\n3. **skill-*.js files** (skill management)\n   - Document: 'SKIP - Template uses Superpowers plugin for skills, not custom skill infrastructure. Different architectural approach.'\n\n4. **state-store/ directory** (state persistence)\n   - Assess: What state does it persist? Session state? Task state?\n   - Document: 'SKIP - We use Task Master for task state, .claude/sessions/ for session state. Separate state-store adds complexity without clear benefit.'\n\n**Output:** Append all skip decisions with rationale to docs/audit/hooks-decisions.md under 'Skipped Libraries' subsection.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Review docs/audit/hooks-decisions.md after completion. Verify each skipped library has: (1) clear rationale, (2) reference to our equivalent solution, (3) note if worth revisiting in future. No functional testing needed for skip decisions.",
-            "parentId": "undefined"
+            "parentId": "undefined",
+            "updatedAt": "2026-03-19T06:02:49.655Z"
           }
         ],
         "complexity": 5,
         "recommendedSubtasks": 3,
-        "expansionPrompt": "Break down: 1) Evaluate ECC utils.js for cross-platform utilities vs our inline code, 2) Evaluate resolve-formatter.js and project-detect.js for v2.5.0 integration potential, 3) Document skip decisions for install-*.js, session-*.js, skill-*.js, state-store/ with rationale"
+        "expansionPrompt": "Break down: 1) Evaluate ECC utils.js for cross-platform utilities vs our inline code, 2) Evaluate resolve-formatter.js and project-detect.js for v2.5.0 integration potential, 3) Document skip decisions for install-*.js, session-*.js, skill-*.js, state-store/ with rationale",
+        "updatedAt": "2026-03-19T06:02:49.655Z"
       },
       {
         "id": "4",
@@ -3726,9 +3730,9 @@
     ],
     "metadata": {
       "version": "1.0.0",
-      "lastModified": "2026-03-19T05:58:51.213Z",
+      "lastModified": "2026-03-19T06:02:49.655Z",
       "taskCount": 18,
-      "completedCount": 2,
+      "completedCount": 3,
       "tags": [
         "component-audit"
       ]
