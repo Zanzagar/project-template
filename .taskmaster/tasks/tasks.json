@@ -3639,11 +3639,47 @@
         "dependencies": [
           "1"
         ],
-        "status": "pending",
-        "subtasks": [],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create agent inventory comparing 14 template agents vs 25 ECC agents",
+            "description": "Build a comprehensive inventory mapping our 14 agents against ECC's 25 agents. Identify overlapping agents, unique template agents (observer), and ECC-only agents to evaluate.",
+            "dependencies": [],
+            "details": "1. Fetch ECC agent list via `gh api repos/affaan-m/everything-claude-code/contents/agents --jq '.[].name' | sort`\n2. Read all 14 template agents from `.claude/agents/`\n3. Create comparison matrix with columns: agent name, exists in template, exists in ECC, model used (haiku/sonnet/opus), tool access level, primary use case\n4. Identify ~12 overlapping agents for detailed comparison\n5. Flag template-unique agent (observer.md - runs differently than ECC daemon)\n6. Flag ECC-unique agents: chief-of-staff.md, docs-lookup.md, harness-optimizer.md, loop-operator.md, and language-specific agents (java-*, kotlin-*, cpp-*, rust-*)\n7. Document inventory in `docs/audit/agents-inventory.md`",
+            "status": "pending",
+            "testStrategy": "Verify inventory lists all 14 template agents and all 25 ECC agents. Confirm overlap count matches expectation (~12). Validate each agent file exists at documented path.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "Audit reviewer and resolver agents with detailed diff analysis",
+            "description": "Deep-dive comparison of reviewer agents (code-reviewer, security-reviewer, database-reviewer, python-reviewer, go-reviewer) and resolver agents (build-resolver, go-build-resolver, refactor-cleaner) against ECC equivalents.",
+            "dependencies": [
+              1
+            ],
+            "details": "For each overlapping reviewer/resolver agent:\n1. Fetch ECC version: `gh api repos/affaan-m/everything-claude-code/contents/agents/<name>.md -H 'Accept: application/vnd.github.raw' > /tmp/ecc-<name>.md`\n2. Run diff: `diff -u .claude/agents/<name>.md /tmp/ecc-<name>.md`\n3. Assess each agent on:\n   - **Model selection**: Is haiku/sonnet/opus choice appropriate for agent complexity?\n   - **Tool access**: What tools are granted? Are there security concerns with Bash access?\n   - **Prompt quality**: System prompt clarity, instruction specificity, edge case handling\n   - **Output format**: Structured output requirements, consistency with template patterns\n4. Assign verdict per agent: Keep (ours better), Adopt (ECC better), Adapt (merge best of both)\n5. Document findings with specific diff highlights and rationale in `docs/audit/agents-decisions.md`",
+            "status": "pending",
+            "testStrategy": "Spawn each audited agent via Task tool with test input. Verify agent completes successfully. Confirm model selection and tool access matches definition. Test output format consistency.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 3,
+            "title": "Evaluate ECC-unique agents for potential adoption",
+            "description": "Assess ECC agents not present in template: chief-of-staff (orchestration), docs-lookup (documentation retrieval), harness-optimizer (eval optimization), loop-operator (autopilot loops), and language-specific agents (java-*, kotlin-*, cpp-*, rust-*).",
+            "dependencies": [
+              1
+            ],
+            "details": "1. Fetch and analyze each ECC-unique agent:\n   - chief-of-staff.md: Evaluate orchestration capabilities, compare to our planner.md and workflow rules\n   - docs-lookup.md: Compare to our Context7 MCP integration and reasoning-patterns.md tier system\n   - harness-optimizer.md: Assess eval optimization features, relevance to our eval-harness skill\n   - loop-operator.md: Evaluate autopilot loop patterns, safety mechanisms, relevance to our workflow\n2. For language-specific agents (java-reviewer, kotlin-*, cpp-reviewer, rust-*):\n   - Assess if they fill gaps in our language coverage (we have python-reviewer, go-reviewer)\n   - Evaluate model/tool choices for each\n3. For each agent, determine: Adopt (valuable addition), Skip (not aligned with template philosophy), or Defer (consider for future)\n4. Document observer.md differences: our approach vs ECC daemon pattern\n5. Add all decisions with rationale to `docs/audit/agents-decisions.md`",
+            "status": "pending",
+            "testStrategy": "For agents marked Adopt: create local copy, spawn via Task tool with representative input, verify successful completion. Confirm no conflicts with existing template agents or workflows.",
+            "parentId": "undefined"
+          }
+        ],
         "complexity": 5,
         "recommendedSubtasks": 3,
-        "expansionPrompt": "Break down: 1) Create inventory comparing our 14 agents against ECC's 25, 2) Audit reviewer agents (code-reviewer, security-reviewer, database-reviewer, python-reviewer, go-reviewer) and resolver agents (build-resolver, go-build-resolver, refactor-cleaner), 3) Evaluate ECC-unique agents (chief-of-staff, docs-lookup, harness-optimizer, loop-operator, language-specific agents)"
+        "expansionPrompt": "Break down: 1) Create inventory comparing our 14 agents against ECC's 25, 2) Audit reviewer agents (code-reviewer, security-reviewer, database-reviewer, python-reviewer, go-reviewer) and resolver agents (build-resolver, go-build-resolver, refactor-cleaner), 3) Evaluate ECC-unique agents (chief-of-staff, docs-lookup, harness-optimizer, loop-operator, language-specific agents)",
+        "updatedAt": "2026-03-19T07:15:04.340Z"
       },
       {
         "id": "7",
@@ -3655,11 +3691,60 @@
         "dependencies": [
           "1"
         ],
-        "status": "pending",
-        "subtasks": [],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Compare core rules against ECC common/ directory",
+            "description": "Map our 10 core rules (authority-hierarchy, claude-behavior, context-management, git-workflow, proactive-steering, reasoning-patterns, superpowers-integration, taskmaster-usage, workflow-enforcement, workflow-guide) against ECC's 9 common/ rules (agents, coding-style, development-workflow, git-workflow, hooks, patterns, performance, security, testing). Fetch ECC common rules via gh api, identify overlaps and gaps.",
+            "dependencies": [],
+            "details": "1. Fetch ECC common rules structure:\n   ```bash\n   gh api repos/affaan-m/everything-claude-code/contents/rules/common --jq '.[].name'\n   ```\n2. For each ECC common rule, fetch content and compare against our equivalents:\n   - git-workflow (direct comparison)\n   - development-workflow vs our workflow-guide + workflow-enforcement\n   - coding-style vs our claude-behavior\n   - agents, hooks, patterns, performance, security, testing (evaluate for adoption)\n3. Document comparison in a structured format with verdicts: Keep Ours | Adopt Theirs | Merge | New (no equivalent)",
+            "status": "pending",
+            "testStrategy": "Verify fetched ECC rules parse correctly. Confirm comparison covers all 9 ECC common rules and all 10 of our core rules. Validate verdicts are justified with specific reasoning.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 2,
+            "title": "Evaluate ECC per-language rule structure vs consolidated approach",
+            "description": "Analyze ECC's 8 languages x 5 files structure (coding-style, hooks, patterns, security, testing per language) versus our consolidated approach (1 coding-standards.md per language directory). Assess tradeoffs of splitting for targeted loading vs maintenance overhead.",
+            "dependencies": [
+              1
+            ],
+            "details": "1. Fetch ECC language rule structure for sample languages:\n   ```bash\n   gh api repos/affaan-m/everything-claude-code/contents/rules/python --jq '.[].name'\n   gh api repos/affaan-m/everything-claude-code/contents/rules/typescript --jq '.[].name'\n   ```\n2. Compare content depth:\n   - Our python/coding-standards.md vs ECC's 5 Python files combined\n   - Our typescript/coding-standards.md vs ECC's 5 TypeScript files combined\n3. Assess benefits of splitting:\n   - More targeted glob loading (only security rules when editing auth code?)\n   - Smaller individual file sizes\n   - Maintenance overhead (5x files to maintain)\n4. Check ECC languages we lack: C++, Kotlin, Rust (we have partial Java)\n5. Document structural recommendation with clear rationale",
+            "status": "pending",
+            "testStrategy": "Verify comparison includes at least 2 languages from each side. Confirm recommendation addresses both token efficiency and maintainability concerns.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 3,
+            "title": "Decide on rule structure architecture",
+            "description": "Based on core and language comparisons, make a clear architectural decision: adopt ECC's 5-file split structure, keep our consolidated approach, or propose a hybrid. Document the decision with rationale addressing context loading, maintenance burden, and template philosophy.",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "1. Synthesize findings from subtasks 1-2\n2. Evaluate against template principles:\n   - Token efficiency (smaller, targeted files = less context waste)\n   - Maintenance burden (fewer files = easier to maintain)\n   - User experience (consistent structure across languages)\n3. Consider Claude Code's rule loading mechanics:\n   - How does glob pattern affect what's loaded?\n   - Can we achieve targeted loading with our structure?\n4. Decision options:\n   - KEEP: Our consolidated coding-standards.md per language\n   - ADOPT: ECC's 5-file split (coding-style, hooks, patterns, security, testing)\n   - HYBRID: Keep consolidated but add security.md separately\n5. Document decision and rationale in docs/audit/rules-decisions.md",
+            "status": "pending",
+            "testStrategy": "Verify decision addresses all tradeoffs identified in subtasks 1-2. Confirm rationale is documented with specific evidence from comparisons.",
+            "parentId": "undefined"
+          },
+          {
+            "id": 4,
+            "title": "Document unique template rules with no ECC equivalent",
+            "description": "Catalog our 6 unique rules that have no ECC equivalent: authority-hierarchy, superpowers-integration, taskmaster-usage, workflow-enforcement, proactive-steering, context-management. Document their purpose, value, and why they represent template-specific innovations.",
+            "dependencies": [
+              1
+            ],
+            "details": "1. For each unique rule, document:\n   - Purpose: What problem does it solve?\n   - Value: Why is this important for the template?\n   - ECC gap: Why doesn't ECC have this?\n   \n2. Unique rules to document:\n   - authority-hierarchy: Precedence ordering (Rules > Superpowers > Instincts > Defaults)\n   - superpowers-integration: Brainstorming exit override, PRD pipeline integration\n   - taskmaster-usage: CLI vs MCP decision matrix, AI ops must use CLI\n   - workflow-enforcement: Normative workflows by task type, session management\n   - proactive-steering: Auto-invoke patterns, phase detection, steering behaviors\n   - context-management: Thinking modes, token optimization, compaction strategy\n   \n3. Mark these as 'New (Ours)' in the audit document\n4. Consider if any should be proposed upstream to ECC",
+            "status": "pending",
+            "testStrategy": "Verify all 6 unique rules are documented with clear purpose and value statements. Confirm ECC search confirms no equivalent exists for each.",
+            "parentId": "undefined"
+          }
+        ],
         "complexity": 6,
         "recommendedSubtasks": 4,
-        "expansionPrompt": "Break down: 1) Compare our 10 core rules against ECC's common/ directory (9 files), 2) Evaluate ECC's per-language rule structure (8 languages x 5 files) vs our consolidated approach (5 language dirs with 1 file each), 3) Assess whether to adopt ECC's split structure or keep consolidated, 4) Document our unique rules (authority-hierarchy, superpowers-integration, taskmaster-usage, workflow-enforcement, proactive-steering, context-management)"
+        "expansionPrompt": "Break down: 1) Compare our 10 core rules against ECC's common/ directory (9 files), 2) Evaluate ECC's per-language rule structure (8 languages x 5 files) vs our consolidated approach (5 language dirs with 1 file each), 3) Assess whether to adopt ECC's split structure or keep consolidated, 4) Document our unique rules (authority-hierarchy, superpowers-integration, taskmaster-usage, workflow-enforcement, proactive-steering, context-management)",
+        "updatedAt": "2026-03-19T07:24:32.972Z"
       },
       {
         "id": "8",
@@ -3920,9 +4005,9 @@
     ],
     "metadata": {
       "version": "1.0.0",
-      "lastModified": "2026-03-19T06:59:25.820Z",
+      "lastModified": "2026-03-19T07:24:32.973Z",
       "taskCount": 18,
-      "completedCount": 5,
+      "completedCount": 7,
       "tags": [
         "component-audit"
       ]
