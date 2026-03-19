@@ -205,8 +205,9 @@ fi
 # Scenario logic
 # Priority: upgrade (if has tracking) > proto > adopting > new > existing
 
-# First: Check for upgrade (has template tracking but outdated/incomplete)
-if [ "$HAS_TEMPLATE_TRACKING" = true ] && { [ "$NEEDS_UPGRADE" = true ] || [ "$HAS_MISSING_COMPONENTS" = true ]; }; then
+# First: Check for upgrade (has template tracking AND actual version mismatch)
+# Missing components alone do NOT trigger upgrade — they get an advisory in the existing scenario
+if [ "$HAS_TEMPLATE_TRACKING" = true ] && [ "$NEEDS_UPGRADE" = true ]; then
     SCENARIO="upgrade"
 # Second: No state file - determine if new, adopting, or proto
 elif [ "$HAS_STATE_FILE" = false ]; then
@@ -409,6 +410,13 @@ case $SCENARIO in
             TASKS=$(grep -A5 "## Task Progress" "$LAST_SESSION" 2>/dev/null | tail -n +2 | head -3 | sed 's/^/   /')
             [ -n "$MODIFIED" ] && echo "$MODIFIED"
             [ -n "$TASKS" ] && echo "$TASKS"
+            echo ""
+        fi
+
+        # Advisory for missing optional components (not an upgrade trigger)
+        if [ "$HAS_MISSING_COMPONENTS" = true ]; then
+            echo "ℹ️  Optional components not installed: ${MISSING_COMPONENTS[*]}"
+            echo "   Run: ./scripts/sync-template.sh sync --all (to add them)"
             echo ""
         fi
 
