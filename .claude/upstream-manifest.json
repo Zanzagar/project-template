@@ -1,0 +1,58 @@
+{
+  "_comment": "Tracks provenance of files adopted from upstream repos (ECC, Superpowers). Used by scripts/check-upstream.sh to detect upstream changes.",
+  "_schema": {
+    "source": "GitHub repo (owner/name)",
+    "sourcePath": "Path in source repo",
+    "adaptedFromSha": "Commit SHA we adapted from",
+    "adaptedDate": "ISO date of adaptation",
+    "adaptations": "List of changes made during adaptation",
+    "verdict": "Adopt | Adapt (from audit)"
+  },
+  "files": {
+    ".claude/hooks/lib/hook-flags.js": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/lib/hook-flags.js",
+      "adaptedFromSha": "HEAD",
+      "adaptedDate": "2026-03-19",
+      "adaptations": [
+        "ECC_HOOK_PROFILE → TEMPLATE_HOOK_PROFILE",
+        "ECC_DISABLED_HOOKS → TEMPLATE_DISABLED_HOOKS"
+      ],
+      "verdict": "Adopt"
+    },
+    ".claude/hooks/lib/run-with-flags.js": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/hooks/run-with-flags.js",
+      "adaptedFromSha": "HEAD",
+      "adaptedDate": "2026-03-19",
+      "adaptations": [
+        "CLAUDE_PLUGIN_ROOT → CLAUDE_PROJECT_DIR",
+        "Path resolution adjusted for .claude/hooks/lib/ depth"
+      ],
+      "verdict": "Adopt"
+    },
+    ".claude/hooks/lib/run-with-flags-shell.sh": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/hooks/run-with-flags-shell.sh",
+      "adaptedFromSha": "HEAD",
+      "adaptedDate": "2026-03-19",
+      "adaptations": [
+        "set -euo pipefail → set +e (bash resilience)",
+        "Added extra arg passthrough for observe.sh pre/post",
+        "CLAUDE_PLUGIN_ROOT → CLAUDE_PROJECT_DIR",
+        "Supports both absolute and relative script paths"
+      ],
+      "verdict": "Adapt"
+    },
+    ".claude/hooks/lib/check-hook-enabled.js": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/hooks/check-hook-enabled.js",
+      "adaptedFromSha": "HEAD",
+      "adaptedDate": "2026-03-19",
+      "adaptations": [
+        "Import path adjusted for local lib/ layout"
+      ],
+      "verdict": "Adopt"
+    }
+  }
+}
