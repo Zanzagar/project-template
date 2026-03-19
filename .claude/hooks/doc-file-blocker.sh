@@ -48,6 +48,8 @@ ALLOWED_DIRS=(
     "/.claude/"
     "/.taskmaster/"
     "/.prd/"
+    "/.github/"
+    "/.template/"
 )
 
 for dir in "${ALLOWED_DIRS[@]}"; do

@@ -33,6 +33,7 @@ This template includes 18 ready-to-use hooks in `.claude/hooks/`:
 - Scans for hardcoded secrets
 - **Advisory warning** when no Task Master task is in-progress
 - All checks individually skippable: `SKIP_BRANCH_CHECK=1`, `SKIP_COMMIT_FORMAT=1`, `SKIP_LINT=1`, `SKIP_TESTS=1`, `SKIP_TASK_CHECK=1`
+- **Optional tools:** `ruff` (linting) and `pytest` (tests) are checked via `command -v` — if not installed, those checks are silently skipped. Install via `pip install ruff pytest` or in a project venv. Exit code 5 (no tests collected) is treated as OK for new projects.
 
 ### post-edit-format.sh
 **Event:** PostToolUse (matcher: "Edit|Write")
