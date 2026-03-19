@@ -68,6 +68,20 @@ Documentation changes do **not** require TDD (prose is not testable).
 | Medium (new section, API docs) | Direct edit. Commit with `docs:` prefix. Task optional. |
 | Major (documentation system, full rewrite) | Create task. Commit with `docs:` prefix. |
 
+### Infrastructure & Configuration
+
+Infrastructure tasks (Docker, CI/CD, env config, deployment scripts) do **not** fit the standard RED-GREEN-REFACTOR TDD cycle. Use validation testing instead.
+
+| Change | Workflow |
+|--------|----------|
+| Docker Compose / Dockerfile | Validation test: `docker compose config` succeeds, `docker compose up` starts without errors. Commit with `chore:` prefix. |
+| CI/CD pipeline (GitHub Actions, etc.) | Validate YAML syntax. Test with dry-run if available. Commit with `ci:` prefix. |
+| Environment config (.env.example, config files) | Validate config loads correctly (e.g., python script that imports config). Commit with `chore:` prefix. |
+| Shell scripts (hooks, init scripts) | Test with `bash -n` (syntax check) + manual invocation. Commit with appropriate prefix. |
+| Deployment scripts | Smoke test: verify deployment target is reachable, script runs without errors in dry-run mode. |
+
+**The principle:** TDD requires testable behavior. Infrastructure tasks produce *configurations*, not *behavior*. Validate that configs are syntactically correct and load successfully — don't force-fit unit tests around YAML files or Dockerfiles.
+
 ### Dependency Updates
 
 | Change | Workflow |
