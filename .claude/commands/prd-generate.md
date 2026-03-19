@@ -212,6 +212,15 @@ Compile all research into a structured PRD. Write it to `.taskmaster/docs/prd_<s
 |---------|---------|-------|
 | [Name]  | [Why]   | [Gotchas, alternatives] |
 
+### Technical Constraints (validated via /research)
+| Constraint | Source | Impact |
+|------------|--------|--------|
+| [API rate limit, e.g., 30 req/hour] | [Official docs URL] | [How this affects architecture] |
+| [Known bug/limitation] | [Issue tracker URL] | [Workaround or blocker status] |
+| [Integration method preference] | [Community/docs] | [Why one method over another] |
+
+*This section captures validated technical assumptions. Fill in during the VALIDATE phase (between brainstorming and PRD writing). See `.claude/rules/superpowers-integration.md` for pipeline details.*
+
 ## Dependency Graph
 
 ### Foundation Layer (no dependencies)

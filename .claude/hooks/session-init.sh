@@ -20,7 +20,7 @@ TEMPLATE_SOURCE_FILE="$PROJECT_DIR/.template/source"
 SYNC_SCRIPT="$PROJECT_DIR/scripts/sync-template.sh"
 
 # Current template version (update when releasing new versions)
-CURRENT_TEMPLATE_VERSION="2.3.1"
+CURRENT_TEMPLATE_VERSION="2.4.0"
 
 # Only run for projects using this template
 # Check for registry OR template tracking OR resembling structure
@@ -205,8 +205,9 @@ fi
 # Scenario logic
 # Priority: upgrade (if has tracking) > proto > adopting > new > existing
 
-# First: Check for upgrade (has template tracking but outdated/incomplete)
-if [ "$HAS_TEMPLATE_TRACKING" = true ] && { [ "$NEEDS_UPGRADE" = true ] || [ "$HAS_MISSING_COMPONENTS" = true ]; }; then
+# First: Check for upgrade (has template tracking AND actual version mismatch)
+# Missing components alone do NOT trigger upgrade — they get an advisory in the existing scenario
+if [ "$HAS_TEMPLATE_TRACKING" = true ] && [ "$NEEDS_UPGRADE" = true ]; then
     SCENARIO="upgrade"
 # Second: No state file - determine if new, adopting, or proto
 elif [ "$HAS_STATE_FILE" = false ]; then
@@ -226,6 +227,32 @@ echo "┌───────────────────────�
 echo "│  Project Status                                             │"
 echo "└─────────────────────────────────────────────────────────────┘"
 echo ""
+
+# Always show version and phase when available
+VERSION_DISPLAY=""
+if [ -n "$INSTALLED_VERSION" ]; then
+    VERSION_DISPLAY="v$INSTALLED_VERSION"
+elif [ -f "$TEMPLATE_VERSION_FILE" ]; then
+    VERSION_DISPLAY="v$(cat "$TEMPLATE_VERSION_FILE" 2>/dev/null | tr -d '[:space:]')"
+fi
+
+PHASE_EMOJI=""
+case $PROJECT_PHASE in
+    ideation)  PHASE_EMOJI="💭" ;;
+    planning)  PHASE_EMOJI="📝" ;;
+    building)  PHASE_EMOJI="🔨" ;;
+    review)    PHASE_EMOJI="🔍" ;;
+    shipping)  PHASE_EMOJI="🚀" ;;
+    *)         PHASE_EMOJI="📦" ;;
+esac
+
+if [ -n "$VERSION_DISPLAY" ] || [ -n "$PROJECT_PHASE" ]; then
+    INFO_LINE=""
+    [ -n "$VERSION_DISPLAY" ] && INFO_LINE="Template: $VERSION_DISPLAY"
+    [ -n "$PROJECT_PHASE" ] && INFO_LINE="$INFO_LINE  $PHASE_EMOJI Phase: $PROJECT_PHASE"
+    echo "$INFO_LINE"
+    echo ""
+fi
 
 # Critical issues first
 CRITICAL_ISSUES=()
@@ -409,6 +436,13 @@ case $SCENARIO in
             TASKS=$(grep -A5 "## Task Progress" "$LAST_SESSION" 2>/dev/null | tail -n +2 | head -3 | sed 's/^/   /')
             [ -n "$MODIFIED" ] && echo "$MODIFIED"
             [ -n "$TASKS" ] && echo "$TASKS"
+            echo ""
+        fi
+
+        # Advisory for missing optional components (not an upgrade trigger)
+        if [ "$HAS_MISSING_COMPONENTS" = true ]; then
+            echo "ℹ️  Optional components not installed: ${MISSING_COMPONENTS[*]}"
+            echo "   Run: ./scripts/sync-template.sh sync --all (to add them)"
             echo ""
         fi
 

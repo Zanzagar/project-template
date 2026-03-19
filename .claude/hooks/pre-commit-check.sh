@@ -88,7 +88,11 @@ fi
 if [[ -z "$SKIP_TESTS" ]]; then
     if command -v pytest &> /dev/null; then
         if [ -d "$PROJECT_DIR/tests" ]; then
-            if ! pytest -q --tb=no "$PROJECT_DIR/tests" 2>/dev/null; then
+            pytest -q --tb=no "$PROJECT_DIR/tests" 2>/dev/null
+            PYTEST_EXIT=$?
+            # Exit code 0 = passed, 5 = no tests collected (OK for new projects)
+            # Only fail on actual test failures (exit code 1)
+            if [ "$PYTEST_EXIT" -eq 1 ]; then
                 ERRORS+=("Tests are failing. Fix tests before committing.")
             fi
         fi

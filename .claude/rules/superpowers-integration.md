@@ -14,13 +14,14 @@ Every non-trivial task follows this pipeline:
 
 ```
 1. IDEATE    → superpowers:brainstorming (explore, clarify, propose approaches)
-2. SPECIFY   → /prd-generate or manual PRD (create .taskmaster/docs/prd_*.txt)
-3. DECOMPOSE → task-master parse-prd --input=<file> --num-tasks=0
-4. ANALYZE   → task-master analyze-complexity (research task difficulty)
-5. EXPAND    → task-master expand (guided by complexity analysis)
-6. IMPLEMENT → superpowers:test-driven-development (RED-GREEN-REFACTOR per task)
-7. REVIEW    → superpowers:requesting-code-review
-8. SHIP      → superpowers:finishing-a-development-branch
+2. VALIDATE  → /research (validate technical assumptions — APIs, libraries, constraints)
+3. SPECIFY   → /prd-generate or manual PRD (create .taskmaster/docs/prd_*.txt)
+4. DECOMPOSE → task-master parse-prd --input=<file> --num-tasks=0
+5. ANALYZE   → task-master analyze-complexity (research task difficulty)
+6. EXPAND    → task-master expand (guided by complexity analysis)
+7. IMPLEMENT → superpowers:test-driven-development (RED-GREEN-REFACTOR per task)
+8. REVIEW    → superpowers:requesting-code-review
+9. SHIP      → superpowers:finishing-a-development-branch
 ```
 
 ## Critical Override: Brainstorming Exit
@@ -31,13 +32,14 @@ Every non-trivial task follows this pipeline:
 
 1. **Save the design doc** as the brainstorming skill instructs (`docs/plans/YYYY-MM-DD-<topic>-design.md`)
 2. **Do NOT invoke `writing-plans`.** Instead:
-3. **Create a PRD** from the brainstorming output using `/prd-generate` or manually write it to `.taskmaster/docs/prd_<slug>.txt`
-4. **Parse the PRD** into Task Master: `task-master parse-prd --input=<file> --num-tasks=0`
-5. **Analyze complexity**: `task-master analyze-complexity`
-6. **Expand tasks** guided by the complexity report: `task-master expand --id=<id>` for tasks flagged as complex
-7. **Then implement** using Superpowers TDD per task
+3. **Validate technical assumptions** using `/research` — check API docs, library health, rate limits, known bugs, and integration patterns for any technologies referenced in the design doc. This prevents mid-implementation discovery of broken assumptions.
+4. **Create a PRD** from the brainstorming output + validation findings using `/prd-generate` or manually write it to `.taskmaster/docs/prd_<slug>.txt`. Include a **Technical Constraints** section with validated API limits, library versions, known issues.
+5. **Parse the PRD** into Task Master: `task-master parse-prd --input=<file> --num-tasks=0`
+6. **Analyze complexity**: `task-master analyze-complexity`
+7. **Expand tasks** guided by the complexity report: `task-master expand --id=<id>` for tasks flagged as complex
+8. **Then implement** using Superpowers TDD per task
 
-**Why:** The brainstorming design doc captures the *what* and *why*. The PRD structures it for Task Master consumption. Task Master provides dependency tracking, status management, and subtask decomposition that `writing-plans` does not.
+**Why:** The brainstorming design doc captures the *what* and *why*. Technical validation catches broken assumptions before they're baked into the PRD. The PRD structures both for Task Master consumption. Dogfood testing showed that skipping validation caused mid-implementation discovery of API bugs, rate limits, and preferred integration methods — all of which should have been known before writing the PRD.
 
 ## When writing-plans IS Appropriate
 
@@ -83,8 +85,8 @@ User requests work →
 ├─ Single well-defined task? → TDD directly (maybe writing-plans for steps)
 ├─ New feature or multi-task work?
 │   ├─ Requirements unclear? → brainstorming FIRST
-│   └─ Requirements clear? → PRD directly
-│   └─ After brainstorming OR clear requirements:
-│       → PRD → parse-prd → analyze-complexity → expand → TDD per task
+│   └─ Requirements clear? → technical validation → PRD directly
+│   └─ After brainstorming:
+│       → /research (validate tech assumptions) → PRD → parse-prd → analyze-complexity → expand → TDD per task
 └─ Research/exploration? → No planning skills needed, just explore
 ```

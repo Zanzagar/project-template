@@ -464,6 +464,31 @@ for tm_dir in "tasks" "reports" "docs"; do
     fi
 done
 
+# Create skeleton tasks.json if it doesn't exist
+# Without this, `task-master tags add` fails because the file doesn't exist yet.
+# The chicken-and-egg: you want a tag before parse-prd, but tags need tasks.json.
+TASKS_FILE="$PROJECT_DIR/.taskmaster/tasks/tasks.json"
+if [ ! -f "$TASKS_FILE" ]; then
+    if [ "$DRY_RUN" = true ]; then
+        log_dry "Would create skeleton .taskmaster/tasks/tasks.json"
+    else
+        cat > "$TASKS_FILE" << 'SKELETON'
+{
+  "data": {
+    "master": {
+      "tasks": [],
+      "metadata": {
+        "createdAt": "",
+        "updatedAt": ""
+      }
+    }
+  }
+}
+SKELETON
+        log_create ".taskmaster/tasks/tasks.json (skeleton for tag operations)"
+    fi
+fi
+
 # Copy template's Task Master config with project name substitution
 # Both `task-master init` (CLI) and MCP `initialize_project` create configs with
 # wrong defaults (wrong provider, wrong models, wrong maxTokens). This ensures the
