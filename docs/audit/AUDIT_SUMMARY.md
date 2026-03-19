@@ -20,12 +20,21 @@
 
 | Phase | Status | Decisions Made | Session |
 |-------|--------|---------------|---------|
-| 1: Hooks | Partial (lib/ done) | 4 Adopt | 2026-03-19 |
+| 1: Hooks | **Complete** | 2 Adopt, 6 Adapt, 4 Keep, 5 New, 3 Skip | 2026-03-19 |
 | 2: Skills + Commands | Not started | — | — |
 | 3: Agents + Rules | Not started | — | — |
 | 4: Scripts + Infra | Not started | — | — |
 | 5: Execution | Not started | — | — |
 | 6: Reassessment | Not started | — | — |
+
+### Phase 1 Key Findings
+- **Transcript reading** (ECC's session-end.js) is architecturally superior to our git-only approach — adopt
+- **Auto-tmux** (ECC's auto-tmux-dev.js) is strictly better than block-and-ask — adopt pattern
+- **Two-hook strategies** (per-edit + session-sweep) catch more issues than single hooks — adopt for console-log, format
+- **Our unique hooks** (protect-sensitive-files, project-index, pattern-extraction, observe, pre-commit-check) fill genuine ECC gaps
+- **Our polyglot coverage** (Python, Go, Java, Ruby, Rust, Shell) exceeds ECC's JS/TS focus — preserve in all adaptations
+- **ECC stubs**: build-analysis and git-push-reminder are empty/placeholder — skip
+- **Bug found**: doc-file-blocker.sh missing MEMORY.md in allowed files
 
 ## Completed Adoptions
 

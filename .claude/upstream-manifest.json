@@ -6,7 +6,9 @@
     "adaptedFromSha": "Commit SHA we adapted from",
     "adaptedDate": "ISO date of adaptation",
     "adaptations": "List of changes made during adaptation",
-    "verdict": "Adopt | Adapt (from audit)"
+    "verdict": "Adopt | Adapt (from audit)",
+    "lastSyncCheck": "2026-03-19",
+    "categories": {}
   },
   "files": {
     ".claude/hooks/lib/hook-flags.js": {
