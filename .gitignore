@@ -85,6 +85,9 @@ node_modules/
 # Generated project index (created by project-index.sh hook)
 .claude/project-index.json
 
+# Superpowers brainstorming visual companion artifacts (session-specific)
+.superpowers/
+
 # Orchestration pipeline outputs (transient, per-run)
 .claude/orchestrate/
 

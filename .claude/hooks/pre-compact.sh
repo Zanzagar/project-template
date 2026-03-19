@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # pre-compact.sh - Save working state before context compaction
 # Hook type: Manual (run before /compact when context feels heavy)
 #

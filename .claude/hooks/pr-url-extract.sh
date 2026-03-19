@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # pr-url-extract.sh - Extract PR URL from git push output
 # Hook type: PostToolUse (matcher: "Bash")
 # Triggers when: After Bash command completes

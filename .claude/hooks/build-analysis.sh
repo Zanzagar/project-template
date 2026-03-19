@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # build-analysis.sh - Analyze build command output for proactive feedback
 # Hook type: PostToolUse (matcher: "Bash")
 # Triggers after: Claude runs a Bash command

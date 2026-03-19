@@ -1,5 +1,6 @@
-<!-- template-version: 2.0.0 -->
+<!-- template-version: 2.5.0 -->
 <!-- template-file: .claude/rules/superpowers-integration.md -->
+<!-- superpowers-compat: v5.0.0+ -->
 # Superpowers + Task Master Integration
 
 This rule defines how Superpowers plugin skills integrate with the template's Task Master workflow. It OVERRIDES Superpowers skill routing where the two systems conflict.
@@ -30,7 +31,7 @@ Every non-trivial task follows this pipeline:
 
 **This rule overrides that.** After brainstorming completes:
 
-1. **Save the design doc** as the brainstorming skill instructs (`docs/plans/YYYY-MM-DD-<topic>-design.md`)
+1. **Save the design doc** as the brainstorming skill instructs (`docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`)
 2. **Do NOT invoke `writing-plans`.** Instead:
 3. **Validate technical assumptions** using `/research` — check API docs, library health, rate limits, known bugs, and integration patterns for any technologies referenced in the design doc. This prevents mid-implementation discovery of broken assumptions.
 4. **Create a PRD** from the brainstorming output + validation findings using `/prd-generate` or manually write it to `.taskmaster/docs/prd_<slug>.txt`. Include a **Technical Constraints** section with validated API limits, library versions, known issues.
@@ -40,6 +41,22 @@ Every non-trivial task follows this pipeline:
 8. **Then implement** using Superpowers TDD per task
 
 **Why:** The brainstorming design doc captures the *what* and *why*. Technical validation catches broken assumptions before they're baked into the PRD. The PRD structures both for Task Master consumption. Dogfood testing showed that skipping validation caused mid-implementation discovery of API bugs, rate limits, and preferred integration methods — all of which should have been known before writing the PRD.
+
+**Important (Superpowers v5 alignment):**
+- The brainstorming skill's **spec review loop** (step 7) fires BEFORE the override kicks in. Do NOT skip it — let the subagent reviewer validate the design doc for completeness before technical validation begins. The spec review checks document quality; our `/research` step checks technical feasibility. They are complementary.
+- The brainstorming skill's **scope assessment** detects multi-subsystem requests early and flags them for decomposition. This complements Task Master's complexity analysis, which catches oversized tasks later.
+
+## Document Locations
+
+Three distinct artifact locations exist in this template:
+
+| Artifact | Path | Purpose |
+|----------|------|---------|
+| Design docs (specs) | `docs/superpowers/specs/` | Brainstorming output — the *what* and *why* |
+| Micro-plans | `docs/superpowers/plans/` | writing-plans output — optional per-task step breakdown |
+| PRDs | `.taskmaster/docs/prd_*.txt` | Task Master input — structured for parse-prd consumption |
+
+Design docs and PRDs are related but distinct: the design doc captures the validated design from brainstorming; the PRD restructures it with dependency graphs and technical constraints for Task Master's task decomposition.
 
 ## When writing-plans IS Appropriate
 

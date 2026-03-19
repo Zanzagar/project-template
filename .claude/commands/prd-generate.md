@@ -136,7 +136,31 @@ For each significant decision, document:
 - **Alternatives considered**: What else was evaluated
 - **Rationale**: Why this choice (backed by Phase 2 research)
 
-### 3.5 Dependency Graph
+### 3.5 File Structure
+
+Before defining the dependency graph, map out which files will be created or modified and what each one is responsible for. This is where decomposition decisions get locked in.
+
+Rules:
+- Design units with clear boundaries and well-defined interfaces. Each file should have one clear responsibility.
+- Prefer smaller, focused files over large ones that do too much — agents reason better about code they can hold in context at once, and edits are more reliable when files are focused.
+- Files that change together should live together. Split by responsibility, not by technical layer.
+- In existing codebases, follow established patterns. If the codebase uses large files, don't unilaterally restructure — but note files that have grown unwieldy.
+
+Example:
+```
+### File Structure
+
+| File | Responsibility | New/Modify |
+|------|---------------|------------|
+| `src/config.py` | Environment and API key loading | Create |
+| `src/sheets/client.py` | Google Sheets API wrapper | Create |
+| `src/api/routes.py` | REST endpoint handlers | Modify |
+| `tests/test_sheets.py` | Sheets client unit tests | Create |
+```
+
+This structure informs both the dependency graph and eventual task decomposition — each task should produce self-contained changes that map to these files.
+
+### 3.6 Dependency Graph
 
 This is the **most valuable section for `task-master parse-prd`**. Explicit dependency chains produce dramatically better task ordering than prose where dependencies must be inferred.
 
@@ -220,6 +244,12 @@ Compile all research into a structured PRD. Write it to `.taskmaster/docs/prd_<s
 | [Integration method preference] | [Community/docs] | [Why one method over another] |
 
 *This section captures validated technical assumptions. Fill in during the VALIDATE phase (between brainstorming and PRD writing). See `.claude/rules/superpowers-integration.md` for pipeline details.*
+
+## File Structure
+
+| File | Responsibility | New/Modify |
+|------|---------------|------------|
+| [path] | [what this file does] | [Create/Modify] |
 
 ## Dependency Graph
 

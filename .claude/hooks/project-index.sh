@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # project-index.sh - Generate minified codebase structure index
 # Hook type: SessionStart, PostToolUse (on file changes)
 # Triggers when: Session begins or files are modified

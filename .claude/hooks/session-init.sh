@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # session-init.sh - Comprehensive project initialization and health check
 # Hook type: SessionStart
 # Triggers when: A new Claude Code session begins

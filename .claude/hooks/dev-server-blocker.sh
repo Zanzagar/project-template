@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # dev-server-blocker.sh - Prevent dev servers from capturing the terminal
 # Hook type: PreToolUse (matcher: "Bash")
 # Triggers when: Claude attempts to run a Bash command

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # protect-sensitive-files.sh - Block edits to sensitive files
 # Hook type: PreToolUse (matcher: "Edit|Write")
 # Triggers when: Claude attempts to edit or write files

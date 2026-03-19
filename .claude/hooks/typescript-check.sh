@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # typescript-check.sh - Run type checking after editing TypeScript files
 # Hook type: PostToolUse (matcher: "Edit")
 # Triggers after: Claude edits a file

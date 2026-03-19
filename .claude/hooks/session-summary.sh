@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # session-summary.sh - Generate session summary on stop
 # Hook type: Stop
 # Triggers when: Claude finishes responding (main agent)

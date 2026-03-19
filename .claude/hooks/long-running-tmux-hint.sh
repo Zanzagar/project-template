@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # long-running-tmux-hint.sh - Advisory tmux reminder for long commands
 # Hook type: PreToolUse (matcher: "Bash")
 # Triggers when: Claude attempts to run a Bash command

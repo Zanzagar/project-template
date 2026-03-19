@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # doc-file-blocker.sh - Prevent creation of unnecessary documentation files
 # Hook type: PreToolUse (matcher: "Write")
 # Triggers when: Claude attempts to create a new file

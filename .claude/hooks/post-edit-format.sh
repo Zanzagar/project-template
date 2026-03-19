@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # post-edit-format.sh - Auto-format files after editing
 # Hook type: PostToolUse (matcher: "Edit|Write")
 # Triggers when: Claude edits or writes files
