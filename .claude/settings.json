@@ -5,11 +5,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/session-init.sh"
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags-shell.sh session-init $CLAUDE_PROJECT_DIR/.claude/hooks/session-init.sh minimal,standard,strict"
           },
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/project-index.sh"
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags-shell.sh project-index $CLAUDE_PROJECT_DIR/.claude/hooks/project-index.sh minimal,standard,strict"
           }
         ]
       }
@@ -20,7 +20,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/observe.sh pre"
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags-shell.sh observe $CLAUDE_PROJECT_DIR/.claude/hooks/observe.sh standard,strict pre"
           }
         ]
       },
@@ -29,16 +29,16 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/pre-commit-check.sh",
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags-shell.sh pre-commit-check $CLAUDE_PROJECT_DIR/.claude/hooks/pre-commit-check.sh minimal,standard,strict",
             "timeout": 120
           },
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/dev-server-blocker.sh"
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags-shell.sh dev-server-blocker $CLAUDE_PROJECT_DIR/.claude/hooks/dev-server-blocker.sh strict"
           },
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/long-running-tmux-hint.sh"
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags-shell.sh long-running-tmux-hint $CLAUDE_PROJECT_DIR/.claude/hooks/long-running-tmux-hint.sh strict"
           }
         ]
       },
@@ -47,11 +47,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/protect-sensitive-files.sh"
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags-shell.sh protect-sensitive-files $CLAUDE_PROJECT_DIR/.claude/hooks/protect-sensitive-files.sh minimal,standard,strict"
           },
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/doc-file-blocker.sh"
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags-shell.sh doc-file-blocker $CLAUDE_PROJECT_DIR/.claude/hooks/doc-file-blocker.sh strict"
           }
         ]
       },
@@ -60,7 +60,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/protect-sensitive-files.sh"
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags-shell.sh protect-sensitive-files $CLAUDE_PROJECT_DIR/.claude/hooks/protect-sensitive-files.sh minimal,standard,strict"
           }
         ]
       }
@@ -71,7 +71,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/observe.sh post"
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags-shell.sh observe $CLAUDE_PROJECT_DIR/.claude/hooks/observe.sh standard,strict post"
           }
         ]
       },
@@ -80,15 +80,15 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/post-edit-format.sh"
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags-shell.sh post-edit-format $CLAUDE_PROJECT_DIR/.claude/hooks/post-edit-format.sh standard,strict"
           },
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/console-log-audit.sh"
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags-shell.sh console-log-audit $CLAUDE_PROJECT_DIR/.claude/hooks/console-log-audit.sh standard,strict"
           },
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/typescript-check.sh"
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags-shell.sh typescript-check $CLAUDE_PROJECT_DIR/.claude/hooks/typescript-check.sh strict"
           }
         ]
       },
@@ -97,7 +97,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/post-edit-format.sh"
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags-shell.sh post-edit-format $CLAUDE_PROJECT_DIR/.claude/hooks/post-edit-format.sh standard,strict"
           }
         ]
       },
@@ -106,11 +106,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/build-analysis.sh"
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags-shell.sh build-analysis $CLAUDE_PROJECT_DIR/.claude/hooks/build-analysis.sh standard,strict"
           },
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/pr-url-extract.sh"
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags-shell.sh pr-url-extract $CLAUDE_PROJECT_DIR/.claude/hooks/pr-url-extract.sh standard,strict"
           }
         ]
       }
@@ -120,11 +120,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/pre-compact.sh"
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags-shell.sh pre-compact $CLAUDE_PROJECT_DIR/.claude/hooks/pre-compact.sh minimal,standard,strict"
           },
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/suggest-compact.sh"
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags-shell.sh suggest-compact $CLAUDE_PROJECT_DIR/.claude/hooks/suggest-compact.sh standard,strict"
           }
         ]
       }
@@ -134,15 +134,15 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/session-end.sh"
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags-shell.sh session-end $CLAUDE_PROJECT_DIR/.claude/hooks/session-end.sh minimal,standard,strict"
           },
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/session-summary.sh"
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags-shell.sh session-summary $CLAUDE_PROJECT_DIR/.claude/hooks/session-summary.sh standard,strict"
           },
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/pattern-extraction.sh"
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags-shell.sh pattern-extraction $CLAUDE_PROJECT_DIR/.claude/hooks/pattern-extraction.sh minimal,standard,strict"
           }
         ]
       }

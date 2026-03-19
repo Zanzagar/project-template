@@ -4,8 +4,8 @@ const { describe, it, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 
-// Path to the module under test
-const MODULE_PATH = path.resolve(__dirname, '../../.claude/hooks/lib/hook-profiles.js');
+// Path to the module under test (adapted from ECC's hook-flags.js)
+const MODULE_PATH = path.resolve(__dirname, '../../.claude/hooks/lib/hook-flags.js');
 
 // Helper: fresh-require the module (clears cache so env var changes take effect)
 function loadModule() {
@@ -26,301 +26,330 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  if (savedEnv.TEMPLATE_HOOK_PROFILE !== undefined) {
-    process.env.TEMPLATE_HOOK_PROFILE = savedEnv.TEMPLATE_HOOK_PROFILE;
-  } else {
-    delete process.env.TEMPLATE_HOOK_PROFILE;
-  }
-  if (savedEnv.TEMPLATE_DISABLED_HOOKS !== undefined) {
-    process.env.TEMPLATE_DISABLED_HOOKS = savedEnv.TEMPLATE_DISABLED_HOOKS;
-  } else {
-    delete process.env.TEMPLATE_DISABLED_HOOKS;
+  for (const [key, val] of Object.entries(savedEnv)) {
+    if (val !== undefined) process.env[key] = val;
+    else delete process.env[key];
   }
 });
 
-// ─── Profile Definitions ───────────────────────────────────────
+// ─── Core exports ──────────────────────────────────────────────
 
-describe('Profile definitions', () => {
-  it('exports PROFILES object with minimal, standard, and strict keys', () => {
-    const { PROFILES } = loadModule();
-    assert.ok(PROFILES, 'PROFILES should be exported');
-    assert.ok(Array.isArray(PROFILES.minimal), 'minimal should be an array');
-    assert.ok(Array.isArray(PROFILES.standard), 'standard should be an array');
-    assert.ok(Array.isArray(PROFILES.strict), 'strict should be an array');
+describe('Module exports', () => {
+  it('exports all expected functions and constants', () => {
+    const mod = loadModule();
+    assert.ok(mod.VALID_PROFILES instanceof Set);
+    assert.equal(typeof mod.normalizeId, 'function');
+    assert.equal(typeof mod.getHookProfile, 'function');
+    assert.equal(typeof mod.getDisabledHookIds, 'function');
+    assert.equal(typeof mod.parseProfiles, 'function');
+    assert.equal(typeof mod.isHookEnabled, 'function');
   });
 
-  it('minimal profile contains exactly the 7 lifecycle + safety hooks', () => {
-    const { PROFILES } = loadModule();
-    const expected = [
-      'session-init',
-      'project-index',
-      'pre-commit-check',
-      'protect-sensitive-files',
-      'pre-compact',
-      'session-end',
-      'pattern-extraction',
-    ];
-    for (const hookId of expected) {
-      assert.ok(
-        PROFILES.minimal.includes(hookId),
-        `minimal should include '${hookId}'`
-      );
-    }
-    assert.equal(PROFILES.minimal.length, expected.length,
-      'minimal should have exactly 7 hooks');
+  it('VALID_PROFILES contains minimal, standard, strict', () => {
+    const { VALID_PROFILES } = loadModule();
+    assert.ok(VALID_PROFILES.has('minimal'));
+    assert.ok(VALID_PROFILES.has('standard'));
+    assert.ok(VALID_PROFILES.has('strict'));
+    assert.equal(VALID_PROFILES.size, 3);
+  });
+});
+
+// ─── normalizeId() ─────────────────────────────────────────────
+
+describe('normalizeId()', () => {
+  it('trims and lowercases', () => {
+    const { normalizeId } = loadModule();
+    assert.equal(normalizeId('  Session-Init  '), 'session-init');
   });
 
-  it('standard profile includes all of minimal plus quality hooks', () => {
-    const { PROFILES } = loadModule();
-    // standard must be a superset of minimal
-    for (const hookId of PROFILES.minimal) {
-      assert.ok(
-        PROFILES.standard.includes(hookId),
-        `standard should include minimal hook '${hookId}'`
-      );
-    }
-    // standard adds these specific hooks
-    const standardAdditions = [
-      'post-edit-format',
-      'console-log-audit',
-      'suggest-compact',
-      'build-analysis',
-      'pr-url-extract',
-      'observe',
-      'session-summary',
-    ];
-    for (const hookId of standardAdditions) {
-      assert.ok(
-        PROFILES.standard.includes(hookId),
-        `standard should include '${hookId}'`
-      );
-    }
+  it('handles null/undefined gracefully', () => {
+    const { normalizeId } = loadModule();
+    assert.equal(normalizeId(null), '');
+    assert.equal(normalizeId(undefined), '');
+    assert.equal(normalizeId(''), '');
+  });
+});
+
+// ─── getHookProfile() ──────────────────────────────────────────
+
+describe('getHookProfile()', () => {
+  it('returns "standard" when no env var is set', () => {
+    const { getHookProfile } = loadModule();
+    assert.equal(getHookProfile(), 'standard');
   });
 
-  it('strict profile includes all of standard plus enforcement hooks', () => {
-    const { PROFILES } = loadModule();
-    // strict must be a superset of standard
-    for (const hookId of PROFILES.standard) {
-      assert.ok(
-        PROFILES.strict.includes(hookId),
-        `strict should include standard hook '${hookId}'`
-      );
-    }
-    // strict adds these specific hooks
-    const strictAdditions = [
-      'file-size-guard',
-      'quality-gate',
-      'cost-tracker',
-      'typescript-check',
-      'doc-file-blocker',
-      'dev-server-blocker',
-      'long-running-tmux-hint',
-    ];
-    for (const hookId of strictAdditions) {
-      assert.ok(
-        PROFILES.strict.includes(hookId),
-        `strict should include '${hookId}'`
-      );
-    }
+  it('returns the env var value when valid', () => {
+    process.env.TEMPLATE_HOOK_PROFILE = 'minimal';
+    const { getHookProfile } = loadModule();
+    assert.equal(getHookProfile(), 'minimal');
   });
 
-  it('profiles are strictly hierarchical: minimal < standard < strict', () => {
-    const { PROFILES } = loadModule();
-    assert.ok(PROFILES.minimal.length < PROFILES.standard.length,
-      'standard should have more hooks than minimal');
-    assert.ok(PROFILES.standard.length < PROFILES.strict.length,
-      'strict should have more hooks than standard');
+  it('returns "standard" for unknown profile names', () => {
+    process.env.TEMPLATE_HOOK_PROFILE = 'turbo';
+    const { getHookProfile } = loadModule();
+    assert.equal(getHookProfile(), 'standard');
+  });
+
+  it('normalizes case and whitespace', () => {
+    process.env.TEMPLATE_HOOK_PROFILE = '  STRICT  ';
+    const { getHookProfile } = loadModule();
+    assert.equal(getHookProfile(), 'strict');
+  });
+});
+
+// ─── getDisabledHookIds() ──────────────────────────────────────
+
+describe('getDisabledHookIds()', () => {
+  it('returns empty set when no env var is set', () => {
+    const { getDisabledHookIds } = loadModule();
+    const result = getDisabledHookIds();
+    assert.ok(result instanceof Set);
+    assert.equal(result.size, 0);
+  });
+
+  it('parses comma-separated hook IDs', () => {
+    process.env.TEMPLATE_DISABLED_HOOKS = 'observe,session-init';
+    const { getDisabledHookIds } = loadModule();
+    const result = getDisabledHookIds();
+    assert.ok(result.has('observe'));
+    assert.ok(result.has('session-init'));
+    assert.equal(result.size, 2);
+  });
+
+  it('trims whitespace and normalizes case', () => {
+    process.env.TEMPLATE_DISABLED_HOOKS = ' Observe , SESSION-INIT ';
+    const { getDisabledHookIds } = loadModule();
+    const result = getDisabledHookIds();
+    assert.ok(result.has('observe'));
+    assert.ok(result.has('session-init'));
+  });
+
+  it('handles empty string', () => {
+    process.env.TEMPLATE_DISABLED_HOOKS = '';
+    const { getDisabledHookIds } = loadModule();
+    assert.equal(getDisabledHookIds().size, 0);
+  });
+});
+
+// ─── parseProfiles() ───────────────────────────────────────────
+
+describe('parseProfiles()', () => {
+  it('parses CSV string into profile array', () => {
+    const { parseProfiles } = loadModule();
+    assert.deepEqual(parseProfiles('minimal,standard'), ['minimal', 'standard']);
+  });
+
+  it('parses array input', () => {
+    const { parseProfiles } = loadModule();
+    assert.deepEqual(parseProfiles(['minimal', 'strict']), ['minimal', 'strict']);
+  });
+
+  it('falls back to default when null/undefined', () => {
+    const { parseProfiles } = loadModule();
+    assert.deepEqual(parseProfiles(null), ['standard', 'strict']);
+    assert.deepEqual(parseProfiles(undefined), ['standard', 'strict']);
+  });
+
+  it('falls back to default for invalid profile names', () => {
+    const { parseProfiles } = loadModule();
+    assert.deepEqual(parseProfiles('turbo,mega'), ['standard', 'strict']);
+  });
+
+  it('filters out invalid profiles from mixed input', () => {
+    const { parseProfiles } = loadModule();
+    assert.deepEqual(parseProfiles('minimal,turbo,strict'), ['minimal', 'strict']);
+  });
+
+  it('accepts custom fallback', () => {
+    const { parseProfiles } = loadModule();
+    assert.deepEqual(parseProfiles(null, ['minimal']), ['minimal']);
   });
 });
 
 // ─── isHookEnabled() ───────────────────────────────────────────
 
 describe('isHookEnabled()', () => {
-  it('is exported as a function', () => {
-    const { isHookEnabled } = loadModule();
-    assert.equal(typeof isHookEnabled, 'function');
-  });
+  // ─── Per-hook profile declaration (ECC architecture) ───
 
-  // ─── Default profile (standard) ───
-
-  describe('with default profile (no env var set)', () => {
-    it('returns true for hooks in the standard profile', () => {
+  describe('with default profile (standard)', () => {
+    it('returns true when hook declares standard in its profiles', () => {
       const { isHookEnabled } = loadModule();
-      assert.equal(isHookEnabled('session-init'), true);
-      assert.equal(isHookEnabled('post-edit-format'), true);
-      assert.equal(isHookEnabled('observe'), true);
+      assert.equal(isHookEnabled('my-hook', { profiles: 'standard,strict' }), true);
+      assert.equal(isHookEnabled('my-hook', { profiles: 'minimal,standard,strict' }), true);
     });
 
-    it('returns false for hooks only in strict profile', () => {
+    it('returns false when hook only declares strict', () => {
       const { isHookEnabled } = loadModule();
-      assert.equal(isHookEnabled('file-size-guard'), false);
-      assert.equal(isHookEnabled('quality-gate'), false);
-      assert.equal(isHookEnabled('cost-tracker'), false);
+      assert.equal(isHookEnabled('my-hook', { profiles: 'strict' }), false);
     });
 
-    it('returns false for unknown hook IDs', () => {
+    it('returns false when hook only declares minimal', () => {
       const { isHookEnabled } = loadModule();
-      assert.equal(isHookEnabled('nonexistent-hook'), false);
-      assert.equal(isHookEnabled(''), false);
+      assert.equal(isHookEnabled('my-hook', { profiles: 'minimal' }), false);
     });
   });
-
-  // ─── Explicit profile via env var ───
 
   describe('with TEMPLATE_HOOK_PROFILE=minimal', () => {
-    it('returns true for minimal hooks only', () => {
+    it('returns true for hooks declaring minimal', () => {
       process.env.TEMPLATE_HOOK_PROFILE = 'minimal';
       const { isHookEnabled } = loadModule();
-      assert.equal(isHookEnabled('session-init'), true);
-      assert.equal(isHookEnabled('pre-commit-check'), true);
-      assert.equal(isHookEnabled('protect-sensitive-files'), true);
+      assert.equal(isHookEnabled('my-hook', { profiles: 'minimal,standard,strict' }), true);
     });
 
-    it('returns false for standard-only hooks', () => {
+    it('returns false for hooks declaring only standard,strict', () => {
       process.env.TEMPLATE_HOOK_PROFILE = 'minimal';
       const { isHookEnabled } = loadModule();
-      assert.equal(isHookEnabled('post-edit-format'), false);
-      assert.equal(isHookEnabled('console-log-audit'), false);
-      assert.equal(isHookEnabled('observe'), false);
+      assert.equal(isHookEnabled('my-hook', { profiles: 'standard,strict' }), false);
     });
   });
 
   describe('with TEMPLATE_HOOK_PROFILE=strict', () => {
-    it('returns true for all hooks including strict-only', () => {
+    it('returns true for hooks declaring strict', () => {
       process.env.TEMPLATE_HOOK_PROFILE = 'strict';
       const { isHookEnabled } = loadModule();
-      assert.equal(isHookEnabled('session-init'), true);
-      assert.equal(isHookEnabled('post-edit-format'), true);
-      assert.equal(isHookEnabled('file-size-guard'), true);
-      assert.equal(isHookEnabled('quality-gate'), true);
-      assert.equal(isHookEnabled('typescript-check'), true);
+      assert.equal(isHookEnabled('my-hook', { profiles: 'strict' }), true);
+      assert.equal(isHookEnabled('my-hook', { profiles: 'standard,strict' }), true);
+    });
+
+    it('returns false for hooks declaring only minimal', () => {
+      process.env.TEMPLATE_HOOK_PROFILE = 'strict';
+      const { isHookEnabled } = loadModule();
+      assert.equal(isHookEnabled('my-hook', { profiles: 'minimal' }), false);
     });
   });
 
-  describe('with unknown profile name', () => {
-    it('falls back to standard profile', () => {
-      process.env.TEMPLATE_HOOK_PROFILE = 'nonexistent';
+  // ─── Fallback behavior ───
+
+  describe('fallback when no profiles declared', () => {
+    it('defaults to standard,strict when profiles option is omitted', () => {
       const { isHookEnabled } = loadModule();
-      // Should behave like standard
-      assert.equal(isHookEnabled('session-init'), true);
-      assert.equal(isHookEnabled('post-edit-format'), true);
-      assert.equal(isHookEnabled('file-size-guard'), false);
+      // Default profile is standard, default allowed is [standard, strict]
+      assert.equal(isHookEnabled('my-hook'), true);
+    });
+
+    it('returns false with minimal profile when no profiles declared', () => {
+      process.env.TEMPLATE_HOOK_PROFILE = 'minimal';
+      const { isHookEnabled } = loadModule();
+      // Default allowed is [standard, strict], minimal not in that set
+      assert.equal(isHookEnabled('my-hook'), false);
     });
   });
 
   // ─── TEMPLATE_DISABLED_HOOKS override ───
 
   describe('with TEMPLATE_DISABLED_HOOKS', () => {
-    it('disables a single hook that would otherwise be enabled', () => {
-      process.env.TEMPLATE_DISABLED_HOOKS = 'observe';
+    it('disables a hook regardless of profile match', () => {
+      process.env.TEMPLATE_DISABLED_HOOKS = 'my-hook';
       const { isHookEnabled } = loadModule();
-      assert.equal(isHookEnabled('observe'), false);
-      // Other standard hooks still enabled
-      assert.equal(isHookEnabled('session-init'), true);
-      assert.equal(isHookEnabled('post-edit-format'), true);
+      assert.equal(isHookEnabled('my-hook', { profiles: 'minimal,standard,strict' }), false);
     });
 
-    it('disables multiple comma-separated hooks', () => {
-      process.env.TEMPLATE_DISABLED_HOOKS = 'observe,console-log-audit,build-analysis';
+    it('disables multiple hooks', () => {
+      process.env.TEMPLATE_DISABLED_HOOKS = 'hook-a,hook-b';
       const { isHookEnabled } = loadModule();
-      assert.equal(isHookEnabled('observe'), false);
-      assert.equal(isHookEnabled('console-log-audit'), false);
-      assert.equal(isHookEnabled('build-analysis'), false);
-      // Other hooks unaffected
-      assert.equal(isHookEnabled('session-init'), true);
+      assert.equal(isHookEnabled('hook-a', { profiles: 'standard,strict' }), false);
+      assert.equal(isHookEnabled('hook-b', { profiles: 'standard,strict' }), false);
+      assert.equal(isHookEnabled('hook-c', { profiles: 'standard,strict' }), true);
+    });
+
+    it('overrides even strict profile', () => {
+      process.env.TEMPLATE_HOOK_PROFILE = 'strict';
+      process.env.TEMPLATE_DISABLED_HOOKS = 'my-hook';
+      const { isHookEnabled } = loadModule();
+      assert.equal(isHookEnabled('my-hook', { profiles: 'strict' }), false);
     });
 
     it('handles whitespace in comma-separated list', () => {
-      process.env.TEMPLATE_DISABLED_HOOKS = ' observe , console-log-audit ';
+      process.env.TEMPLATE_DISABLED_HOOKS = ' hook-a , hook-b ';
       const { isHookEnabled } = loadModule();
-      assert.equal(isHookEnabled('observe'), false);
-      assert.equal(isHookEnabled('console-log-audit'), false);
+      assert.equal(isHookEnabled('hook-a', { profiles: 'standard,strict' }), false);
+      assert.equal(isHookEnabled('hook-b', { profiles: 'standard,strict' }), false);
+    });
+  });
+
+  // ─── Edge cases ───
+
+  describe('edge cases', () => {
+    it('returns true for empty hookId', () => {
+      const { isHookEnabled } = loadModule();
+      assert.equal(isHookEnabled(''), true);
+      assert.equal(isHookEnabled(null), true);
     });
 
-    it('handles empty string gracefully', () => {
-      process.env.TEMPLATE_DISABLED_HOOKS = '';
+    it('normalizes hookId case', () => {
+      process.env.TEMPLATE_DISABLED_HOOKS = 'my-hook';
       const { isHookEnabled } = loadModule();
-      // Nothing disabled, should work normally
-      assert.equal(isHookEnabled('session-init'), true);
-      assert.equal(isHookEnabled('observe'), true);
+      assert.equal(isHookEnabled('MY-HOOK', { profiles: 'standard,strict' }), false);
     });
+  });
+});
 
-    it('disabled hooks override even strict profile', () => {
+// ─── Template-specific profile mapping ─────────────────────────
+// These tests verify the actual profile assignments for our template's hooks,
+// as they would appear in settings.json run-with-flags arguments.
+
+describe('Template hook profile assignments', () => {
+  const LIFECYCLE_HOOKS = [
+    'session-init', 'project-index', 'pre-commit-check',
+    'protect-sensitive-files', 'pre-compact', 'session-end',
+    'pattern-extraction',
+  ];
+  const QUALITY_HOOKS = [
+    'post-edit-format', 'console-log-audit', 'suggest-compact',
+    'build-analysis', 'pr-url-extract', 'observe', 'session-summary',
+  ];
+  const ENFORCEMENT_HOOKS = [
+    'typescript-check', 'doc-file-blocker', 'dev-server-blocker',
+    'long-running-tmux-hint',
+  ];
+
+  it('lifecycle hooks run at all profiles', () => {
+    const { isHookEnabled } = loadModule();
+    for (const profile of ['minimal', 'standard', 'strict']) {
+      process.env.TEMPLATE_HOOK_PROFILE = profile;
+      for (const hookId of LIFECYCLE_HOOKS) {
+        assert.equal(
+          isHookEnabled(hookId, { profiles: 'minimal,standard,strict' }),
+          true,
+          `${hookId} should be enabled at ${profile}`
+        );
+      }
+    }
+  });
+
+  it('quality hooks run at standard and strict only', () => {
+    const { isHookEnabled } = loadModule();
+    for (const hookId of QUALITY_HOOKS) {
+      process.env.TEMPLATE_HOOK_PROFILE = 'minimal';
+      assert.equal(
+        isHookEnabled(hookId, { profiles: 'standard,strict' }),
+        false,
+        `${hookId} should be disabled at minimal`
+      );
+      process.env.TEMPLATE_HOOK_PROFILE = 'standard';
+      assert.equal(
+        isHookEnabled(hookId, { profiles: 'standard,strict' }),
+        true,
+        `${hookId} should be enabled at standard`
+      );
+    }
+  });
+
+  it('enforcement hooks run at strict only', () => {
+    const { isHookEnabled } = loadModule();
+    for (const hookId of ENFORCEMENT_HOOKS) {
+      process.env.TEMPLATE_HOOK_PROFILE = 'standard';
+      assert.equal(
+        isHookEnabled(hookId, { profiles: 'strict' }),
+        false,
+        `${hookId} should be disabled at standard`
+      );
       process.env.TEMPLATE_HOOK_PROFILE = 'strict';
-      process.env.TEMPLATE_DISABLED_HOOKS = 'quality-gate,file-size-guard';
-      const { isHookEnabled } = loadModule();
-      assert.equal(isHookEnabled('quality-gate'), false);
-      assert.equal(isHookEnabled('file-size-guard'), false);
-      // Other strict hooks still enabled
-      assert.equal(isHookEnabled('cost-tracker'), true);
-      assert.equal(isHookEnabled('typescript-check'), true);
-    });
-  });
-
-  // ─── options.profiles override ───
-
-  describe('with profiles option override', () => {
-    it('uses custom profiles when passed as option', () => {
-      const { isHookEnabled } = loadModule();
-      const customProfiles = {
-        minimal: ['hook-a'],
-        standard: ['hook-a', 'hook-b'],
-        strict: ['hook-a', 'hook-b', 'hook-c'],
-      };
-      // Default profile is standard
-      assert.equal(isHookEnabled('hook-b', { profiles: customProfiles }), true);
-      assert.equal(isHookEnabled('hook-c', { profiles: customProfiles }), false);
-    });
-  });
-});
-
-// ─── getProfile() ──────────────────────────────────────────────
-
-describe('getProfile()', () => {
-  it('is exported as a function', () => {
-    const { getProfile } = loadModule();
-    assert.equal(typeof getProfile, 'function');
-  });
-
-  it('returns "standard" when no env var is set', () => {
-    const { getProfile } = loadModule();
-    assert.equal(getProfile(), 'standard');
-  });
-
-  it('returns the env var value when set', () => {
-    process.env.TEMPLATE_HOOK_PROFILE = 'minimal';
-    const { getProfile } = loadModule();
-    assert.equal(getProfile(), 'minimal');
-  });
-
-  it('returns "standard" for unknown profile names', () => {
-    process.env.TEMPLATE_HOOK_PROFILE = 'turbo';
-    const { getProfile } = loadModule();
-    assert.equal(getProfile(), 'standard');
-  });
-});
-
-// ─── getEnabledHooks() ────────────────────────────────────────
-
-describe('getEnabledHooks()', () => {
-  it('is exported as a function', () => {
-    const { getEnabledHooks } = loadModule();
-    assert.equal(typeof getEnabledHooks, 'function');
-  });
-
-  it('returns the list of enabled hooks for current profile', () => {
-    process.env.TEMPLATE_HOOK_PROFILE = 'minimal';
-    const { getEnabledHooks } = loadModule();
-    const hooks = getEnabledHooks();
-    assert.ok(Array.isArray(hooks));
-    assert.ok(hooks.includes('session-init'));
-    assert.ok(!hooks.includes('observe'));
-  });
-
-  it('excludes disabled hooks from the list', () => {
-    process.env.TEMPLATE_DISABLED_HOOKS = 'session-init';
-    const { getEnabledHooks } = loadModule();
-    const hooks = getEnabledHooks();
-    assert.ok(!hooks.includes('session-init'));
+      assert.equal(
+        isHookEnabled(hookId, { profiles: 'strict' }),
+        true,
+        `${hookId} should be enabled at strict`
+      );
+    }
   });
 });
