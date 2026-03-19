@@ -2,7 +2,7 @@
 
 **Author:** Corey Hoydic
 **Date:** February 13, 2026
-**Version:** 2.3.0
+**Version:** 2.4.0
 **Repository:** github.com/Zanzagar/project-template
 
 ---
@@ -16,8 +16,8 @@ The template was developed through systematic analysis and integration of best p
 **By the numbers:**
 - 14 specialized AI agents
 - 40 skills (domain-specific knowledge modules)
-- 51 slash commands
-- 14 behavior rules (9 core + 5 language-specific)
+- 48 slash commands
+- 16 behavior rules (10 core + 6 language-specific)
 - 18 automation hooks (enhanced with workflow guardrails)
 - 5 project-type presets for one-command scaffolding
 - Multi-model collaboration (Claude + Gemini + GPT)
@@ -55,7 +55,7 @@ Here's what they don't realize happened:
 | **Memory** | Every session starts from zero. The AI forgets your architecture, conventions, and past decisions. | Persistent session summaries, work logs, instinct system, and CLAUDE.md carry context across sessions indefinitely. |
 | **Discipline** | The AI writes whatever you ask for, including insecure code, untested features, and broken commits. | TDD enforcement (Superpowers deletes untested code), security gates, conventional commit rules, and verification pipelines make bad practices harder than good ones. |
 | **Resources** | 50K+ tokens consumed by unused tools at startup. Quality degrades silently mid-session with no recovery. | Token-conscious design (35K startup, 165K working). Strategic compaction, tiered documentation lookups, and on-demand skill loading maximize working context. |
-| **Context** | Generic "textbook" code that doesn't fit the project's patterns, framework idioms, or architectural decisions. | 13 behavior rules, 39 domain skills, and language-specific coding standards teach the AI your project's conventions. |
+| **Context** | Generic "textbook" code that doesn't fit the project's patterns, framework idioms, or architectural decisions. | 16 behavior rules, 40 domain skills, and language-specific coding standards teach the AI your project's conventions. |
 | **Specialization** | One general-purpose model handles security review, architecture planning, test generation, and documentation with equal (shallow) depth. | 14 purpose-built agents with appropriate model tiers, tool access, and domain training produce categorically deeper results in each specialty. |
 
 ### What a well-configured template provides
@@ -81,9 +81,9 @@ The difference is analogous to the difference between giving someone a text edit
 project-template/
 ├── .claude/
 │   ├── agents/          # 14 specialized sub-agents
-│   ├── commands/        # 50 slash commands (user-invocable)
-│   ├── skills/          # 39 domain knowledge modules (on-demand)
-│   ├── rules/           # 13 behavior rules (auto-loaded)
+│   ├── commands/        # 48 slash commands (user-invocable)
+│   ├── skills/          # 40 domain knowledge modules (on-demand)
+│   ├── rules/           # 16 behavior rules (auto-loaded)
 │   ├── hooks/           # 18 automation hooks
 │   ├── presets/         # Project-type preset definitions (JSON)
 │   ├── instincts/       # Continuous learning patterns (JSON)
@@ -153,7 +153,7 @@ This section shows **what fires when** across all 190 components during a projec
 ### Session Lifecycle (automatic hooks)
 
 **Session Start:**
-- `session-init.sh` — Detects project phase (ideation/planning/building/review/shipping), shows status, loads last session summary (<24h), auto-starts observer daemon
+- `session-init.sh` — Displays template version and project phase (ideation/planning/building/review/shipping), shows status, loads last session summary (<24h), auto-starts observer daemon. v2.4.0: no longer shows false "update available" when versions match; missing optional components shown as advisory instead of upgrade trigger.
 - `project-index.sh` — Scans source files for signatures, writes `.claude/project-index.json`
 
 **Every Tool Use:**
@@ -212,7 +212,7 @@ For each task, the TDD cycle runs:
 |------|--------|-----------|------|
 | Get task | `task-master next` / `set-status in-progress` | MCP | |
 | **RED** | Write failing tests | `superpowers:test-driven-development`, `/tdd`, `/generate-tests` | Skill + Commands |
-| **GREEN** | Make tests pass | Language rules + domain skills (39 available) load on demand | Rules + Skills |
+| **GREEN** | Make tests pass | Language rules + domain skills (40 available) load on demand | Rules + Skills |
 | **REFACTOR** | Clean up | `/optimize` if needed | Command |
 | Verify | Run pipeline | `/verify` (test + lint + types + security) | Command |
 | Commit | Conventional commit | `/commit` → `pre-commit-check.sh` fires | Command + Hook |
@@ -306,15 +306,17 @@ Hooks capture **observable state** (what git and task-master report). Handoff do
 
 | Type | Count | Loading | Token Cost |
 |------|-------|---------|-----------|
-| Rules (core) | 9 | Always | ~5k |
-| Rules (language) | 5 | On file edit | 0 at startup |
+| Rules (core) | 10 | Always | ~6k |
+| Rules (language) | 6 | On file edit | 0 at startup |
 | Agents | 14 | On invocation | 0 at startup |
 | Skills | 40 | On relevance | 0 at startup |
-| Commands | 51 | On `/command` | 0 at startup |
+| Commands | 48 | On `/command` | 0 at startup |
 | Hooks | 18 | On event trigger | 0 (shell scripts) |
-| MCP tools | ~42 | Always | ~25k |
+| MCP tools | 6 (recommended) | Always | ~3k |
 | Superpowers | 13 skills | Always | ~3-5k |
-| **Total** | **~193 components** | | **~35k startup** |
+| **Total** | **~155 components** | | **~12k startup** |
+
+*MCP tool count: 6 recommended tools via `TASK_MASTER_TOOLS` env var (v2.4.0). AI operations use CLI, not MCP. See `.claude/rules/taskmaster-usage.md` and `docs/MCP_SETUP.md` for details.*
 
 ---
 
@@ -343,7 +345,7 @@ Rather than using one general-purpose model for everything, the template deploys
 
 **Why this matters:** A security review by a dedicated security agent with OWASP training produces categorically better results than asking a general-purpose model "does this code have security issues?" The specialization is in the system prompt, tool access, and model selection — not just the question asked.
 
-### 2. Slash Commands (50)
+### 2. Slash Commands (48)
 
 Commands are user-invocable workflows triggered by typing `/command-name`. They range from simple shortcuts to complex multi-step pipelines:
 
@@ -389,11 +391,11 @@ Skills are **on-demand reference material** that Claude loads only when relevant
 
 **Infrastructure:** api-design, deployment-patterns, docker-patterns
 
-### 4. Behavior Rules (13)
+### 4. Behavior Rules (16)
 
 Rules are **auto-loaded constraints** that define how Claude behaves. They're the "constitution" of the template:
 
-**Core Rules (always loaded, ~5K tokens):**
+**Core Rules (always loaded, ~6K tokens):**
 - **claude-behavior.md** — Commit frequency, conventional commits, proactive git behavior
 - **git-workflow.md** — Branch naming, recovery commands, team collaboration rules
 - **reasoning-patterns.md** — Clarification before assumption, brainstorming before building, five whys debugging
@@ -401,11 +403,14 @@ Rules are **auto-loaded constraints** that define how Claude behaves. They're th
 - **context-management.md** — Thinking modes, compaction strategy, session persistence
 - **proactive-steering.md** — Project co-pilot behaviors, scope management, milestone tracking
 - **authority-hierarchy.md** — Rules > Superpowers > Instincts > Defaults (4-tier precedence)
-- **superpowers-integration.md** — Overrides Superpowers brainstorming→writing-plans routing to use PRD→Task Master pipeline instead
-- **workflow-enforcement.md** — Explicit decision thresholds for 6 workflow types, branch completion sequence, session/tag management
+- **superpowers-integration.md** — Overrides Superpowers brainstorming→writing-plans routing; adds VALIDATE step between brainstorming and PRD
+- **workflow-enforcement.md** — Explicit decision thresholds for 6 workflow types, branch completion sequence, TDD exceptions for infrastructure tasks
+- **taskmaster-usage.md** — CLI vs MCP decision matrix for Task Master operations, token-conscious viewing patterns, required flags/timeouts *(new in v2.4.0)*
 
 **Language Rules (loaded only when editing matching files):**
-- Python, TypeScript, Go, Java, Frontend (React/Vue/Svelte)
+- Python, TypeScript, Go, Java, Frontend (React/Vue/Svelte — 2 rules: component standards + workflow)
+
+The **frontend workflow rule** (v2.4.0) guides Magic MCP (21st.dev) tool selection, frontend-design skill invocation, recommended stacks (React+Vite+Tailwind+shadcn for internal tools; Next.js for public apps), and component testing with Vitest + React Testing Library.
 
 ### 5. Continuous Learning System
 
@@ -553,14 +558,19 @@ Every non-trivial feature follows this complete sequence, defined in `workflow-e
 
 ```
 IDEATE     → superpowers:brainstorming (explore, clarify, propose)
-SPECIFY    → /prd-generate or manual PRD
+VALIDATE   → /research (validate APIs, libraries, rate limits, known bugs)
+SPECIFY    → /prd-generate or manual PRD (includes Technical Constraints section)
 DECOMPOSE  → task-master parse-prd → analyze-complexity → expand
 IMPLEMENT  → superpowers:test-driven-development (RED-GREEN-REFACTOR per task)
 REVIEW     → /code-review, /security-audit
 SHIP       → push → /pr (squash merge) → verify CI → sync main → cleanup → tag
 ```
 
+The **VALIDATE** step (new in v2.4.0) catches broken technical assumptions before they're baked into the PRD. Dogfood testing showed that skipping this step caused mid-implementation discovery of API bugs, rate limits, and integration method preferences — all of which should have been known before writing the PRD.
+
 The **branch completion** step (SHIP) is explicitly prescribed — squash merge is the default for feature/bugfix/hotfix branches, merge commit for release branches. Claude does not present merge strategy as a choice.
+
+**TDD exceptions:** Infrastructure and configuration tasks (Docker, CI/CD, env config, shell scripts) use **validation testing** instead of standard RED-GREEN-REFACTOR. TDD requires testable behavior; infrastructure tasks produce configurations. Validate syntax and loading instead of writing unit tests for YAML files. See `workflow-enforcement.md` for the full task-type exception table.
 
 ### Workflow Decision Thresholds
 
@@ -892,7 +902,7 @@ Real-world overlay testing on three projects (analog_image_generator, rideshare-
 | `sync-template.sh` enhancements | `adopt` mode now copies all `.claude/` subdirectories, not just curated file lists. |
 | `docs/TEMPLATE_OVERLAY_FRICTION.md` | Friction log documenting all 3 overlay tests, findings, and fix status. |
 
-**Key architectural insight:** The correct workflow for the template is: brainstorm → PRD → parse-prd → analyze-complexity → expand → TDD per task. The Superpowers plugin's brainstorming skill previously bypassed this by routing directly to its own `writing-plans` skill. The `superpowers-integration.md` rule corrects this at the authority hierarchy level.
+**Key architectural insight:** The correct workflow for the template is: brainstorm → **validate** (technical research) → PRD → parse-prd → analyze-complexity → expand → TDD per task. The Superpowers plugin's brainstorming skill previously bypassed this by routing directly to its own `writing-plans` skill. The `superpowers-integration.md` rule corrects this at the authority hierarchy level. The validation step (v2.4.0) ensures technical assumptions are verified before the PRD is written.
 
 See `docs/TEMPLATE_OVERLAY_FRICTION.md` for the complete overlay testing results and friction pattern tracker.
 
@@ -1025,4 +1035,4 @@ Any student using this template starts their project with the workflow enforceme
 ---
 
 *Built with Claude Code (Anthropic) | Informed by Everything Claude Code (45K+ stars)*
-*Template version 2.3.0 | 14 agents, 40 skills, 51 commands, 14 rules, 18 hooks | 5 project-type presets*
+*Template version 2.4.0 | 14 agents, 40 skills, 48 commands, 16 rules, 18 hooks | 5 project-type presets*
