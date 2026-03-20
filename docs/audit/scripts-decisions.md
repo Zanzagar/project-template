@@ -170,7 +170,7 @@ Skips references on lines containing `creates:` or `would create:` (generator co
 
 ### validate-no-personal-paths.js (63 lines) — ADAPT
 
-**ECC implementation**: Recursively scans `skills/`, `commands/`, `agents/`, `docs/`, `README.md` for hardcoded personal paths (`/Users/affoon`, `C:\Users\affoon`). Skips `node_modules/` and `.git/`. Checks `.md`, `.json`, `.js`, `.ts`, `.sh`, `.toml`, `.yml`, `.yaml` file types.
+**ECC implementation**: Recursively scans `skills/`, `commands/`, `agents/`, `docs/`, `README.md` for hardcoded personal paths (`/Users/<ecc-author>`, `C:\Users\<ecc-author>`). Skips `node_modules/` and `.git/`. Checks `.md`, `.json`, `.js`, `.ts`, `.sh`, `.toml`, `.yml`, `.yaml` file types.
 
 **Our equivalent**: None. Personal paths in our template would be caught by code review but not by automated tooling.
 
@@ -178,10 +178,10 @@ Skips references on lines containing `creates:` or `would create:` (generator co
 - Architecture: ECC — automated hygiene check; concept is universally valuable
 - Features: ECC — multi-directory scanning, multiple file types, Unix + Windows path patterns
 - Error handling: ECC — per-file error with path context
-- The blocked username is hardcoded to ECC's author (`affoon`)
+- The blocked username is hardcoded to ECC's author
 
 **Verdict**: **Adapt**
-**Reasoning**: The concept is valuable — catching hardcoded personal paths before they ship to users. The adaptation needs: (1) parameterize blocked username (detect from `git config user.name` or environment), (2) update target directories to `.claude/` prefix, (3) add common template-specific patterns (e.g., `/home/cjh5690` shouldn't appear in shipped files).
+**Reasoning**: The concept is valuable — catching hardcoded personal paths before they ship to users. The adaptation needs: (1) parameterize blocked username (detect from `git config user.name` or environment), (2) update target directories to `.claude/` prefix, (3) add common template-specific patterns (e.g., `/home/<username>` shouldn't appear in shipped files).
 **Action**: Fork, add username auto-detection, update directory targets. Low priority — run occasionally rather than on every CI.
 
 ---
