@@ -108,15 +108,41 @@ The template grew by +6 skills, +6 commands, +6 CI scripts while significantly e
 
 ### v2.5.0 Impact
 
-The audit directly addresses or simplifies several v2.5.0 tasks:
+The audit resolved 14 of 36 v2.5.0 tasks (~39%) and simplified 8 more. Remaining: 14 unchanged tasks.
 
-| v2.5.0 Task | Impact |
-|-------------|--------|
-| Task 3 (Language detection) | `project-detect.js` adopted — 12-language detection ready |
-| Task 4 (Formatter auto-detection) | `resolve-formatter.js` adopted — formatter caching ready |
-| Task 7 (Hook profiles) | `hook-flags.js` + `run-with-flags.js` adopted — profile system ready |
-| Task 11 (Health scoring) | `harness-audit.js` deferred but analyzed — architecture documented |
-| Task 8 (CI pipeline) | 6 CI validators adopted — foundation for GitHub Actions workflow |
+**Resolved (marked done — adoption fulfills the task):**
+
+| Task | What was adopted |
+|------|-----------------|
+| 2: Bash Hook Profile Wrapper | `run-with-flags-shell.sh` adopted |
+| 3: Project Auto-Detection Library | `project-detect.js` adopted (12-language) |
+| 4: Formatter Resolution Library | `resolve-formatter.js` adopted (with caching) |
+| 9: Profile Checks in Bash Hooks | All hooks now use run-with-flags wrappers |
+| 14: Save Session Command | `save-session.md` adopted from ECC |
+| 15: Resume Session Command | `resume-session.md` adopted from ECC |
+| 19: AI Regression Testing Skill | `ai-regression-testing` skill adopted |
+| 22: Dev-server Auto-Tmux | `auto-tmux-dev.js` + `dev-server-blocker.js` adopted |
+| 23: Session-end Transcript Reading | `session-end.js` adopted from ECC |
+| 27: TypeScript Multi-Path Matching | `typescript-check.js` adopted with path filtering |
+| 28: Console-log Exclusion Patterns | `console-log-audit.js` + `check-console-log.js` adopted |
+| 30: PR URL Review Suggestion | `pr-url-extract.sh` adapted with gh pr create trigger |
+| 31: Suggest-compact Atomic Counter | `suggest-compact.js` adopted with atomic counter |
+| 32: Session-init Project Detection | `session-init.sh` adapted with language detection |
+
+**Simplified (adoption provides foundation, less work needed):**
+
+| Task | How simplified |
+|------|---------------|
+| 5: Quality Gate Hook | `quality-gate.md` command adopted; hook wiring remains |
+| 8: Update settings.json | Settings already updated during hook adoption |
+| 10: Security Hardening Rule | Security guardrails added to `claude-behavior.md` |
+| 11: Harness Audit Scoring | `harness-audit.js` architecture analyzed and documented |
+| 20: Research Quality Rules | Research Before Implementation added to `workflow-enforcement.md` |
+| 33: Legacy Hook Quality Gate | Hooks now use run-with-flags; delegation pattern ready |
+| 34: SECURITY.md Agentic Security | Partial — security response protocol in rules |
+| 35: CLAUDE.md Hook Profile Docs | Partial — profile system documented in hooks |
+
+**Unchanged (14 tasks):** 6, 7, 12, 13, 16, 17, 18, 21, 24, 25, 26, 29, 36
 
 ## Decision Documents
 
