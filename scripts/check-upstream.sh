@@ -5,6 +5,7 @@
 # changes worth reviewing. Run monthly or when planning updates.
 #
 # Usage: ./scripts/check-upstream.sh [--since YYYY-MM-DD] [--verbose]
+#        ./scripts/check-upstream.sh --manifest [--diff]
 #
 # Upstreams tracked:
 #   1. obra/superpowers           - Workflow enforcement plugin (14 skills)
@@ -28,20 +29,35 @@ NC='\033[0m'
 DEFAULT_SINCE="2026-02-22"  # Template v2.2.1 release date
 SINCE="${DEFAULT_SINCE}"
 VERBOSE=false
+MANIFEST_MODE=false
+SHOW_DIFF=false
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+MANIFEST_FILE="$PROJECT_ROOT/.claude/upstream-manifest.json"
 
 # Parse args
 while [[ $# -gt 0 ]]; do
     case $1 in
         --since) SINCE="$2"; shift 2 ;;
         --verbose) VERBOSE=true; shift ;;
+        --manifest) MANIFEST_MODE=true; shift ;;
+        --diff) SHOW_DIFF=true; shift ;;
         --help|-h)
             echo "Usage: $0 [--since YYYY-MM-DD] [--verbose]"
+            echo "       $0 --manifest [--diff]"
             echo ""
             echo "Check upstream repos for changes since a date (default: ${DEFAULT_SINCE})"
+            echo ""
+            echo "Modes:"
+            echo "  (default)       Repo-level commit counts for all 5 upstreams"
+            echo "  --manifest      File-level diff detection using upstream-manifest.json"
             echo ""
             echo "Options:"
             echo "  --since DATE    Check changes after this date (ISO 8601)"
             echo "  --verbose       Show commit messages, not just counts"
+            echo "  --manifest      Use manifest for per-file upstream change detection"
+            echo "  --diff          With --manifest: show actual diffs for changed files"
             echo "  --help          Show this help"
             exit 0
             ;;
@@ -59,6 +75,147 @@ if ! gh auth status &>/dev/null 2>&1; then
     echo -e "${RED}Error: gh not authenticated. Run: gh auth login${NC}"
     exit 1
 fi
+
+# ─────────────────────────────────────────────────────────────
+# Manifest Mode: per-file upstream change detection
+# ─────────────────────────────────────────────────────────────
+if [[ "$MANIFEST_MODE" == "true" ]]; then
+    if ! command -v jq &>/dev/null; then
+        echo -e "${RED}Error: jq required for manifest mode. Install: sudo apt install jq${NC}"
+        exit 1
+    fi
+
+    if [[ ! -f "$MANIFEST_FILE" ]]; then
+        echo -e "${RED}Error: Manifest not found at $MANIFEST_FILE${NC}"
+        echo -e "Run the audit to generate the manifest first."
+        exit 1
+    fi
+
+    TOTAL_FILES=$(jq '.files | length' "$MANIFEST_FILE")
+    TOTAL_ADOPTED=$(jq '[.files[] | select(.verdict == "Adopt")] | length' "$MANIFEST_FILE")
+    TOTAL_ADAPTED=$(jq '[.files[] | select(.verdict == "Adapt")] | length' "$MANIFEST_FILE")
+    ECC_SHA=$(jq -r '._stats.eccHeadAtAdoption' "$MANIFEST_FILE")
+
+    echo -e "${BOLD}╔══════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BOLD}║  Manifest-Based Upstream Sync Check                 ║${NC}"
+    echo -e "${BOLD}╚══════════════════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "  Manifest: ${CYAN}${TOTAL_FILES}${NC} tracked files (${TOTAL_ADOPTED} adopted, ${TOTAL_ADAPTED} adapted)"
+    echo -e "  Adapted from ECC SHA: ${CYAN}${ECC_SHA}${NC}"
+    echo ""
+
+    # Group files by source repo
+    SOURCES=$(jq -r '[.files[].source] | unique[]' "$MANIFEST_FILE")
+
+    changed_count=0
+    uptodate_count=0
+    error_count=0
+
+    for source in $SOURCES; do
+        echo -e "${CYAN}━━━ Checking ${source} ━━━${NC}"
+
+        # Get adapted SHA for this source (use first file's SHA as baseline)
+        ADAPTED_SHA=$(jq -r "[.files[] | select(.source == \"${source}\")] | .[0].adaptedFromSha" "$MANIFEST_FILE")
+
+        # Get current HEAD SHA
+        CURRENT_HEAD=$(gh api "repos/${source}/commits/HEAD" --jq '.sha' 2>/dev/null | head -c 7)
+        if [[ -z "$CURRENT_HEAD" ]]; then
+            echo -e "  ${RED}Could not reach repo${NC}"
+            error_count=$((error_count + 1))
+            echo ""
+            continue
+        fi
+
+        echo -e "  Adapted from: ${ADAPTED_SHA}  Current HEAD: ${CURRENT_HEAD}"
+
+        if [[ "$ADAPTED_SHA" == "$CURRENT_HEAD" ]] || [[ "${ADAPTED_SHA:0:7}" == "${CURRENT_HEAD:0:7}" ]]; then
+            SOURCE_COUNT=$(jq "[.files[] | select(.source == \"${source}\")] | length" "$MANIFEST_FILE")
+            echo -e "  ${GREEN}All ${SOURCE_COUNT} files up to date (no upstream commits since adoption)${NC}"
+            uptodate_count=$((uptodate_count + SOURCE_COUNT))
+            echo ""
+            continue
+        fi
+
+        # Get files changed between our SHA and current HEAD
+        CHANGED_FILES=$(gh api "repos/${source}/compare/${ADAPTED_SHA}...HEAD" \
+            --jq '.files[].filename' 2>/dev/null || echo "ERROR")
+
+        if [[ "$CHANGED_FILES" == "ERROR" ]]; then
+            echo -e "  ${RED}Could not compare commits${NC}"
+            error_count=$((error_count + 1))
+            echo ""
+            continue
+        fi
+
+        # Cross-reference with manifest
+        SOURCE_FILES=$(jq -r ".files | to_entries[] | select(.value.source == \"${source}\") | \"\(.key)|\(.value.sourcePath)|\(.value.verdict)\"" "$MANIFEST_FILE")
+
+        source_changed=0
+        source_uptodate=0
+
+        while IFS='|' read -r local_path source_path verdict; do
+            [[ -z "$local_path" ]] && continue
+
+            if echo "$CHANGED_FILES" | grep -qF "$source_path"; then
+                echo -e "  ${YELLOW}⚠ CHANGED${NC}  ${local_path}"
+                echo -e "            Source: ${source_path} (${verdict})"
+                source_changed=$((source_changed + 1))
+
+                if [[ "$SHOW_DIFF" == "true" ]]; then
+                    echo -e "            ${BLUE}--- Upstream diff ---${NC}"
+                    # Fetch old and new versions, show diff
+                    OLD_CONTENT=$(gh api "repos/${source}/contents/${source_path}?ref=${ADAPTED_SHA}" \
+                        -H 'Accept: application/vnd.github.raw' 2>/dev/null || echo "")
+                    NEW_CONTENT=$(gh api "repos/${source}/contents/${source_path}" \
+                        -H 'Accept: application/vnd.github.raw' 2>/dev/null || echo "")
+                    if [[ -n "$OLD_CONTENT" ]] && [[ -n "$NEW_CONTENT" ]]; then
+                        diff <(echo "$OLD_CONTENT") <(echo "$NEW_CONTENT") | head -30 | sed 's/^/            /'
+                        echo -e "            ${BLUE}--- (truncated to 30 lines) ---${NC}"
+                    fi
+                    echo ""
+                fi
+            else
+                source_uptodate=$((source_uptodate + 1))
+            fi
+        done <<< "$SOURCE_FILES"
+
+        changed_count=$((changed_count + source_changed))
+        uptodate_count=$((uptodate_count + source_uptodate))
+
+        if [[ "$source_changed" -eq 0 ]]; then
+            echo -e "  ${GREEN}All ${source_uptodate} files up to date${NC}"
+        else
+            echo -e "  ${YELLOW}${source_changed} changed${NC}, ${GREEN}${source_uptodate} up to date${NC}"
+        fi
+        echo ""
+    done
+
+    # Summary
+    echo -e "${BOLD}╔══════════════════════════════════════════════════════╗${NC}"
+    if [[ "$changed_count" -eq 0 ]]; then
+        echo -e "${BOLD}║  ${GREEN}All ${uptodate_count} tracked files up to date${NC}${BOLD}                 ║${NC}"
+    else
+        printf "${BOLD}║  ${YELLOW}%d file(s) changed upstream${NC}${BOLD}, ${GREEN}%d up to date${NC}${BOLD}         ║${NC}\n" "$changed_count" "$uptodate_count"
+    fi
+    if [[ "$error_count" -gt 0 ]]; then
+        echo -e "${BOLD}║  ${RED}${error_count} source(s) unreachable${NC}${BOLD}                            ║${NC}"
+    fi
+    echo -e "${BOLD}╚══════════════════════════════════════════════════════╝${NC}"
+    echo ""
+
+    if [[ "$changed_count" -gt 0 ]]; then
+        echo -e "Next steps:"
+        echo -e "  1. Review changed files with: ${CYAN}$0 --manifest --diff${NC}"
+        echo -e "  2. Update local files and bump adaptedFromSha in manifest"
+        echo -e "  3. Run CI validators: ${CYAN}node scripts/ci/validate-*.js${NC}"
+    fi
+
+    exit 0
+fi
+
+# ─────────────────────────────────────────────────────────────
+# Repo-Level Mode (default): commit counts for all 5 upstreams
+# ─────────────────────────────────────────────────────────────
 
 echo -e "${BOLD}╔══════════════════════════════════════════════════════╗${NC}"
 echo -e "${BOLD}║  Upstream Sync Check — since ${SINCE}            ║${NC}"
