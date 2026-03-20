@@ -449,6 +449,31 @@ if [ -f "$SETTINGS_SRC" ]; then
     fi
 fi
 
+# Copy scripts/ directory (harness-audit, observer, instinct CLI, multi-model, etc.)
+# These live at the project root, not under .claude/, so TARGET_DIRS misses them.
+# Several commands depend on scripts: /harness-audit, /multi-plan, /plugins, /mcps.
+SCRIPTS_SRC="$TEMPLATE_PATH/scripts"
+SCRIPTS_DST="$PROJECT_DIR/scripts"
+if [ -d "$SCRIPTS_SRC" ]; then
+    if [ ! -d "$SCRIPTS_DST" ] || [ "$FORCE" = true ]; then
+        if [ "$DRY_RUN" = true ]; then
+            local count
+            count=$(find "$SCRIPTS_SRC" -type f | wc -l)
+            log_dry "Would copy scripts/ ($count files)"
+        else
+            [ -d "$SCRIPTS_DST" ] && rm -rf "$SCRIPTS_DST"
+            cp -r "$SCRIPTS_SRC" "$SCRIPTS_DST"
+            chmod +x "$SCRIPTS_DST"/*.sh 2>/dev/null || true
+            chmod +x "$SCRIPTS_DST"/*.py 2>/dev/null || true
+            local count
+            count=$(find "$SCRIPTS_DST" -type f | wc -l)
+            log_create "scripts/ ($count files copied)"
+        fi
+    else
+        log_skip "scripts/ (directory exists — use --force to replace)"
+    fi
+fi
+
 # Ensure Task Master directory structure and config exist
 # Creates .taskmaster/ with subdirectories that the CLI expects.
 # Also copies the template's config.json with tuned settings (claude-code provider,
@@ -559,6 +584,7 @@ if [ "$CREATED" -gt 0 ] && [ "$DRY_RUN" = false ]; then
     echo "What was set up:"
     echo "  • Slash commands, skills, agents, hooks, rules, contexts"
     [ -f "$PROJECT_DIR/.claude/settings.json" ] && echo "  • .claude/settings.json (hook definitions)"
+    [ -d "$PROJECT_DIR/scripts" ] && echo "  • scripts/ (harness-audit, observer, multi-model, CLI tools)"
     [ -f "$PROJECT_DIR/.taskmaster/config.json" ] && echo "  • .taskmaster/config.json (claude-code provider, tuned settings)"
     [ -d "$PROJECT_DIR/.template" ] && echo "  • .template/ tracking (version management)"
     echo ""

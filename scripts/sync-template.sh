@@ -20,6 +20,7 @@
 #   --skills          Sync .claude/skills/ files
 #   --plugins         Sync plugin system files
 #   --hooks           Sync .claude/hooks/ files
+#   --scripts         Sync scripts/ (harness-audit, observer, CLI tools)
 #   --mcps            Sync MCP management files
 #   --all             Sync all template files
 #   --force           Overwrite without prompting
@@ -40,6 +41,7 @@ SYNC_SKILLS=false
 SYNC_PLUGINS=false
 SYNC_HOOKS=false
 SYNC_MCPS=false
+SYNC_SCRIPTS=false
 MINIMAL=false
 FORCE=false
 CHECK_VERSIONS=false
@@ -132,6 +134,18 @@ STOCK_MCPS=(
     "scripts/manage-mcps.sh"
 )
 
+STOCK_SCRIPTS=(
+    "scripts/harness-audit.js"
+    "scripts/start-observer.sh"
+    "scripts/instinct-cli.py"
+    "scripts/multi-model-query.py"
+    "scripts/setup-preset.sh"
+    "scripts/smoke-test.sh"
+    "scripts/init-project.sh"
+    "scripts/sync-template.sh"
+    "scripts/check-upstream.sh"
+)
+
 # Minimal set for quick adoption
 STOCK_MINIMAL=(
     "CLAUDE.md"
@@ -162,8 +176,9 @@ while [[ "$#" -gt 0 ]]; do
         --plugins) SYNC_PLUGINS=true ;;
         --hooks) SYNC_HOOKS=true ;;
         --mcps) SYNC_MCPS=true ;;
+        --scripts) SYNC_SCRIPTS=true ;;
         --rules) SYNC_RULES=true ;;
-        --all) SYNC_COMMANDS=true; SYNC_SKILLS=true; SYNC_PLUGINS=true; SYNC_HOOKS=true; SYNC_MCPS=true; SYNC_RULES=true ;;
+        --all) SYNC_COMMANDS=true; SYNC_SKILLS=true; SYNC_PLUGINS=true; SYNC_HOOKS=true; SYNC_MCPS=true; SYNC_SCRIPTS=true; SYNC_RULES=true ;;
         --minimal) MINIMAL=true ;;
         --force) FORCE=true ;;
         --check-versions) CHECK_VERSIONS=true ;;
@@ -242,6 +257,7 @@ build_file_list() {
     [ "$SYNC_PLUGINS" = true ] && ANY_FLAGS=true
     [ "$SYNC_HOOKS" = true ] && ANY_FLAGS=true
     [ "$SYNC_MCPS" = true ] && ANY_FLAGS=true
+    [ "$SYNC_SCRIPTS" = true ] && ANY_FLAGS=true
     [ "$SYNC_RULES" = true ] && ANY_FLAGS=true
 
     # If no flags given, default to rules only
@@ -267,6 +283,9 @@ build_file_list() {
     fi
     if [ "$SYNC_HOOKS" = true ]; then
         FILES_TO_SYNC+=("${STOCK_HOOKS[@]}")
+    fi
+    if [ "$SYNC_SCRIPTS" = true ]; then
+        FILES_TO_SYNC+=("${STOCK_SCRIPTS[@]}")
     fi
     if [ "$SYNC_MCPS" = true ]; then
         FILES_TO_SYNC+=("${STOCK_MCPS[@]}")
@@ -348,7 +367,7 @@ ensure_directories() {
     if [ "$SYNC_HOOKS" = true ] || [ "$COMMAND" = "adopt" ]; then
         mkdir -p .claude/hooks
     fi
-    if [ "$SYNC_MCPS" = true ] || [ "$COMMAND" = "adopt" ]; then
+    if [ "$SYNC_SCRIPTS" = true ] || [ "$SYNC_MCPS" = true ] || [ "$COMMAND" = "adopt" ]; then
         mkdir -p scripts
     fi
 }
