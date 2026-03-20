@@ -34,6 +34,7 @@ ALLOWED_FILES=(
     "SECURITY.md"
     "CODE_OF_CONDUCT.md"
     "SKILL.md"
+    "MEMORY.md"
 )
 
 for allowed in "${ALLOWED_FILES[@]}"; do
@@ -50,7 +51,13 @@ ALLOWED_DIRS=(
     "/.prd/"
     "/.github/"
     "/.template/"
+    "/docs/superpowers/"
 )
+
+# Allow *.plan.md files anywhere (micro-planning artifacts)
+if [[ "$FILENAME" == *.plan.md ]]; then
+    exit 0
+fi
 
 for dir in "${ALLOWED_DIRS[@]}"; do
     if [[ "$FILE_PATH" == *"$dir"* ]]; then
