@@ -88,7 +88,7 @@
           },
           {
             "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags-shell.sh console-log-audit $CLAUDE_PROJECT_DIR/.claude/hooks/console-log-audit.sh standard,strict"
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags.js console-log-audit $CLAUDE_PROJECT_DIR/.claude/hooks/console-log-audit.js standard,strict"
           },
           {
             "type": "command",
@@ -128,7 +128,7 @@
           },
           {
             "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags-shell.sh suggest-compact $CLAUDE_PROJECT_DIR/.claude/hooks/suggest-compact.sh standard,strict"
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags.js suggest-compact $CLAUDE_PROJECT_DIR/.claude/hooks/suggest-compact.js standard,strict"
           }
         ]
       }
@@ -139,6 +139,10 @@
           {
             "type": "command",
             "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags.js session-end $CLAUDE_PROJECT_DIR/.claude/hooks/session-end.js minimal,standard,strict"
+          },
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags.js check-console-log $CLAUDE_PROJECT_DIR/.claude/hooks/check-console-log.js standard,strict"
           },
           {
             "type": "command",

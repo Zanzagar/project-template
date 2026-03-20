@@ -14,8 +14,20 @@ INPUT=$(cat)
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty')
 OUTPUT=$(echo "$INPUT" | jq -r '.stdout // empty')
 
-# Only process git push commands
-[[ "$COMMAND" != *"git push"* ]] && exit 0
+# Process git push and gh pr create commands (merged trigger points)
+[[ "$COMMAND" != *"git push"* && "$COMMAND" != *"gh pr create"* ]] && exit 0
+
+# ECC pattern: extract PR URL from gh pr create output
+if [[ "$COMMAND" == *"gh pr create"* ]]; then
+    CREATED_PR=$(echo "$OUTPUT" | grep -oE 'https://github\.com/[^/]+/[^/]+/pull/[0-9]+' | head -1)
+    if [ -n "$CREATED_PR" ]; then
+        REPO=$(echo "$CREATED_PR" | sed 's|https://github.com/\([^/]*/[^/]*\)/pull/.*|\1|')
+        PR_NUM=$(echo "$CREATED_PR" | sed 's|.*/pull/\([0-9]*\)|\1|')
+        echo "PR created: $CREATED_PR"
+        echo "To review: gh pr review $PR_NUM --repo $REPO"
+    fi
+    exit 0
+fi
 
 # Extract PR URL patterns:
 # GitHub: https://github.com/owner/repo/pull/new/branch-name
