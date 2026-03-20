@@ -4200,12 +4200,12 @@
         "dependencies": [
           "16"
         ],
-        "status": "in-progress",
+        "status": "done",
         "subtasks": [],
         "complexity": 5,
         "recommendedSubtasks": 3,
         "expansionPrompt": "Break down: 1) Map audit adoptions to v2.5.0 tasks (project-detect.js → Task 3, resolve-formatter.js → Task 4, harness-audit.js → Task 11, etc.), 2) Update Task Master statuses for resolved/simplified tasks, 3) Re-run complexity analysis and document impact in AUDIT_SUMMARY.md",
-        "updatedAt": "2026-03-20T05:36:41.404Z"
+        "updatedAt": "2026-03-20T05:44:43.640Z"
       },
       {
         "id": "18",
@@ -4218,19 +4218,19 @@
           "15",
           "16"
         ],
-        "status": "in-progress",
+        "status": "done",
         "subtasks": [],
         "complexity": 3,
         "recommendedSubtasks": 0,
         "expansionPrompt": "Documentation task: create docs/audit/MAINTENANCE.md with monthly workflow steps, adoption criteria matrix, local patches to re-apply list, manifest schema update procedures. Add reminder to CLAUDE.md. Straightforward technical writing.",
-        "updatedAt": "2026-03-20T05:36:42.484Z"
+        "updatedAt": "2026-03-20T05:44:45.258Z"
       }
     ],
     "metadata": {
       "version": "1.0.0",
-      "lastModified": "2026-03-20T05:36:42.484Z",
+      "lastModified": "2026-03-20T05:44:45.259Z",
       "taskCount": 18,
-      "completedCount": 16,
+      "completedCount": 18,
       "tags": [
         "component-audit"
       ]
