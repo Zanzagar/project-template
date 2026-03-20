@@ -88,7 +88,7 @@
           },
           {
             "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags-shell.sh typescript-check $CLAUDE_PROJECT_DIR/.claude/hooks/typescript-check.sh strict"
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags.js typescript-check $CLAUDE_PROJECT_DIR/.claude/hooks/typescript-check.js strict"
           }
         ]
       },
