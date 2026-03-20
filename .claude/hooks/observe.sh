@@ -144,13 +144,35 @@ if parsed.get('output'):
 print(json.dumps(observation))
 " >> "$OBSERVATIONS_FILE" 2>/dev/null
 
-# Signal observer if running
+# Throttled observer signaling (every N observations)
+SIGNAL_INTERVAL=${TEMPLATE_OBSERVER_SIGNAL_INTERVAL:-20}
+SIGNAL_COUNTER_FILE="$CONFIG_DIR/.signal_counter"
 OBSERVER_PID_FILE="$CONFIG_DIR/.observer.pid"
-if [ -f "$OBSERVER_PID_FILE" ]; then
-    observer_pid=$(cat "$OBSERVER_PID_FILE")
-    if kill -0 "$observer_pid" 2>/dev/null; then
-        kill -USR1 "$observer_pid" 2>/dev/null || true
+
+# Read and increment counter
+if [ -f "$SIGNAL_COUNTER_FILE" ]; then
+    SIGNAL_COUNT=$(cat "$SIGNAL_COUNTER_FILE" 2>/dev/null || echo "0")
+else
+    SIGNAL_COUNT=0
+fi
+SIGNAL_COUNT=$((SIGNAL_COUNT + 1))
+
+# Signal only every N observations
+if [ $((SIGNAL_COUNT % SIGNAL_INTERVAL)) -eq 0 ]; then
+    if [ -f "$OBSERVER_PID_FILE" ]; then
+        observer_pid=$(cat "$OBSERVER_PID_FILE")
+        # Validate PID is a positive integer > 1 (avoid signaling init)
+        if [[ "$observer_pid" =~ ^[0-9]+$ ]] && [ "$observer_pid" -gt 1 ]; then
+            if kill -0 "$observer_pid" 2>/dev/null; then
+                kill -USR1 "$observer_pid" 2>/dev/null || true
+            else
+                # Stale PID file — remove it
+                rm -f "$OBSERVER_PID_FILE"
+            fi
+        fi
     fi
 fi
+
+echo "$SIGNAL_COUNT" > "$SIGNAL_COUNTER_FILE"
 
 exit 0
