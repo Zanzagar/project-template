@@ -134,11 +134,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags-shell.sh session-end $CLAUDE_PROJECT_DIR/.claude/hooks/session-end.sh minimal,standard,strict"
-          },
-          {
-            "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags-shell.sh session-summary $CLAUDE_PROJECT_DIR/.claude/hooks/session-summary.sh standard,strict"
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/lib/run-with-flags.js session-end $CLAUDE_PROJECT_DIR/.claude/hooks/session-end.js minimal,standard,strict"
           },
           {
             "type": "command",
