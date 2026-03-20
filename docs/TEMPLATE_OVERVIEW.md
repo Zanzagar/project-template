@@ -17,13 +17,13 @@ This template transforms Claude Code from a reactive code-completion tool into a
 | Skills | 48 | On relevance | 0 |
 | Commands | 56 | On `/command` | 0 |
 | Rules | 17 | 11 always + 6 on file edit | ~6K |
-| Hooks | 21 | On event trigger | 0 |
+| Hooks | 22 | On event trigger | 0 |
 | MCP tools | 6 (recommended) | Always | ~3K |
 | Superpowers | 13 skills | Always | ~3-5K |
 | **Startup total** | | | **~35-40K** |
 | **Working context** | | | **~160-165K** |
 
-**v2.5.0 adds:** Hook profile system (minimal/standard/strict), quality gate consolidation, cost tracking telemetry, file size enforcement for source code, deterministic harness scoring (70-point scale), OWASP Agentic Top 10 security mapping, secret scrubbing in observations, three new skills (agentic-engineering, autonomous-loops, eval-metrics), and two new commands (/model-route, /harness-audit).
+**v2.5.0 adds:** Hook profile system (minimal/standard/strict), quality gate consolidation, usage telemetry, file size enforcement for source code, deterministic harness scoring (70-point scale), OWASP Agentic Top 10 security mapping, secret scrubbing in observations, three new skills (agentic-engineering, autonomous-loops, eval-metrics), and two new commands (/model-route, /harness-audit).
 
 ---
 
@@ -86,7 +86,7 @@ project-template/
 │   ├── commands/        # 56 slash commands
 │   ├── skills/          # 48 domain knowledge modules
 │   ├── rules/           # 11 core + 6 language-specific rules
-│   ├── hooks/           # 21 hooks (bash + Node.js)
+│   ├── hooks/           # 22 hooks (bash + Node.js)
 │   │   └── lib/         # hook-flags.js, resolve-formatter.js, utils.js
 │   ├── presets/         # 5 project-type presets
 │   ├── instincts/       # Continuous learning patterns (JSON)
@@ -121,7 +121,7 @@ The template operates in five layers. Information flows upward; authority flows 
 │  RULES (17)         Behavioral constraints, auto-loaded     │
 │  Commit format, TDD workflow, phase detection, security     │
 ├─────────────────────────────────────────────────────────────┤
-│  HOOKS (21)         Event-driven automation                 │
+│  HOOKS (22)         Event-driven automation                 │
 │  Format, guard, track, persist — 3 profile tiers            │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -140,16 +140,16 @@ All hooks are controlled by the `TEMPLATE_HOOK_PROFILE` environment variable. Ea
 
 | Profile | Active Hooks | Use Case |
 |---------|-------------|----------|
-| **minimal** | 8 — lifecycle + safety | Fast sessions, debugging, exploration |
-| **standard** | 17 — adds formatting, analysis, learning, cost tracking | Normal development (default) |
-| **strict** | 21 — adds doc blocking, TS checking, tmux enforcement | Pre-commit, CI, thorough review |
+| **minimal** | 7 — lifecycle + safety | Fast sessions, debugging, exploration |
+| **standard** | 18 — adds formatting, analysis, learning, cost tracking | Normal development (default) |
+| **strict** | 22 — adds doc blocking, TS checking, tmux enforcement | Pre-commit, CI, thorough review |
 
 ```bash
 export TEMPLATE_HOOK_PROFILE=minimal               # Switch profile
 export TEMPLATE_DISABLED_HOOKS=build-analysis       # Disable specific hooks
 ```
 
-Alternatively, use presets: `/settings fast` (all hooks off), `/settings optimized` (lightweight subset), `/settings safe` (safety only).
+Alternatively, use presets: `/settings fast` (all hooks off), `/settings minimal` (lightweight subset), `/settings safe` (safety only).
 
 ### Quality Gate Consolidation (v2.5.0)
 
@@ -171,21 +171,22 @@ Alternatively, use presets: `/settings fast` (all hooks off), `/settings optimiz
 | project-index.sh | SessionStart | — | all | Codebase JSON index for sub-agents |
 | observe.sh | Pre+PostToolUse | * | std,str | Tool observation with secret scrubbing |
 | pre-commit-check.sh | PreToolUse | Bash | all | Conventional commit format, branch protection |
+| auto-tmux-dev.js | PreToolUse | Bash | std,str | Auto-run dev servers in tmux (non-blocking) |
 | protect-sensitive-files.sh | PreToolUse | Edit,Write | all | Block .env/.pem/credentials; config tamper guard |
-| dev-server-blocker.sh | PreToolUse | Bash | str | Block dev servers outside tmux |
+| dev-server-blocker.js | PreToolUse | Bash | str | Block dev servers outside tmux |
 | long-running-tmux-hint.sh | PreToolUse | Bash | str | Advisory tmux reminder for slow commands |
 | file-size-guard.js | PreToolUse | Write | std,str | Block source code files exceeding 800 lines |
 | doc-file-blocker.sh | PreToolUse | Write | str | Block .md creation outside docs/ |
 | quality-gate.js | PostToolUse | Edit,Write | std,str | Consolidated format + debug audit + TS check |
-| post-edit-format.sh | PostToolUse | Edit,Write | std,str | Legacy formatter (delegates to quality-gate) |
-| console-log-audit.sh | PostToolUse | Edit | std,str | Legacy debug audit (delegates to quality-gate) |
-| typescript-check.sh | PostToolUse | Edit | str | Legacy TS check (delegates to quality-gate) |
+| post-edit-format.js | PostToolUse | Edit,Write | std,str | Legacy formatter (delegates to quality-gate) |
+| console-log-audit.js | PostToolUse | Edit | std,str | Legacy debug audit (delegates to quality-gate) |
+| typescript-check.js | PostToolUse | Edit | str | Legacy TS check (delegates to quality-gate) |
 | build-analysis.sh | PostToolUse | Bash | std,str | Advisory analysis of build command output |
 | pr-url-extract.sh | PostToolUse | Bash | std,str | PR creation URL from git push output |
 | pre-compact.sh | UserPromptSubmit | — | all | Save working state before context compaction |
 | suggest-compact.js | UserPromptSubmit | — | std,str | Suggest compaction at 50/75 tool calls |
-| session-end.sh | Stop | — | all | Detailed session summary to .claude/sessions/ |
-| session-summary.sh | Stop | — | all | Lightweight YAML session activity log |
+| session-end.js | Stop | — | all | Detailed session summary to .claude/sessions/ |
+| check-console-log.js | Stop | — | std,str | End-of-session debug statement check |
 | pattern-extraction.sh | Stop | — | all | Extract instinct candidates from git history |
 | cost-tracker.js | Stop | — | std,str | Session token/cost metrics to cost-log.jsonl |
 
@@ -410,18 +411,20 @@ Prescribed sequence from `workflow-enforcement.md`: (1) `/code-review` → addre
 5. Thesis committee asks: "How did you handle spatial autocorrelation in your cross-validation?" The student has no answer — they didn't realize that random k-fold CV is invalid for spatially correlated data, and the AI didn't mention it because it wasn't asked
 
 **With template:**
-1. `/plan Build a kriging pipeline with cross-validation for soil heavy metal data` → Planner agent creates phased plan: (1) data loading & CRS validation, (2) exploratory spatial analysis, (3) variogram modeling, (4) kriging with spatial cross-validation, (5) export & visualization. Waits for approval.
-2. Student approves Phase 1 (data loading)
-3. `/tdd` → TDD guide writes failing tests: "test that input data is reprojected to UTM", "test that NaN values are handled", "test that output CRS matches input CRS"
-4. `/verify` → Tests pass, ruff linting clean, mypy types checked
-5. `/commit` → `feat(data): Add borehole CSV loader with CRS validation`
-6. Repeat for Phase 2 (variogram), Phase 3 (kriging), Phase 4 (spatial CV — the planner flags that random k-fold is invalid for spatial data and recommends spatial leave-one-out or block CV)
-7. `/code-review` → Python reviewer checks for NumPy anti-patterns, type safety, proper error handling
-8. `/python-review` → Catches mutable default arguments, missing type hints, hardcoded file paths
-9. `/pr` → Pull request documenting methodology decisions with test plan
-10. `/learn` → Captures "spatial CV required for spatially correlated data" as an instinct for future sessions
+1. `/brainstorm Build a kriging pipeline with cross-validation for soil heavy metal data` → Superpowers brainstorming explores approaches: ordinary vs universal kriging, variogram model selection, spatial vs random CV. Produces a design doc identifying that random k-fold is invalid for spatially autocorrelated data — catching this *before* any code is written.
+2. `/research` → Validates technical assumptions: pykrige API for variogram fitting, rasterio CRS handling, spatial CV libraries (scikit-learn's `GroupKFold` with spatial blocks).
+3. `/prd-generate` → Structures the validated design into a PRD with dependency graph: (1) data loading & CRS validation, (2) exploratory spatial analysis, (3) variogram modeling, (4) kriging with spatial cross-validation, (5) export & visualization.
+4. Task Master parses the PRD into tracked tasks with dependencies. Student starts with Task 1 (data loading).
+5. `/tdd` → TDD guide writes failing tests: "test that input data is reprojected to UTM", "test that NaN values are handled", "test that output CRS matches input CRS"
+6. `/verify` → Tests pass, ruff linting clean, mypy types checked
+7. `/commit` → `feat(data): Add borehole CSV loader with CRS validation`
+8. Repeat for Tasks 2-5 (variogram, kriging, spatial CV, export) — each following the RED-GREEN-REFACTOR TDD cycle
+9. `/code-review` → Python reviewer checks for NumPy anti-patterns, type safety, proper error handling
+10. `/python-review` → Catches mutable default arguments, missing type hints, hardcoded file paths
+11. `/pr` → Pull request documenting methodology decisions with test plan
+12. `/learn` → Captures "spatial CV required for spatially correlated data" as an instinct for future sessions
 
-The difference isn't just quality — it's **reproducibility**. The template produces consistently high-quality output because the process is enforced, not optional. And critically, the planner agent caught the spatial cross-validation issue *before* code was written — saving the student from a methodological error that would have undermined the entire thesis.
+The difference isn't just quality — it's **reproducibility**. The template produces consistently high-quality output because the process is enforced, not optional. And critically, the brainstorming phase caught the spatial cross-validation issue *before* code was written — saving the student from a methodological error that would have undermined the entire thesis.
 
 ### Quantitative Comparison
 
@@ -490,7 +493,7 @@ Critically, **quality scales with the project.** A thesis codebase that grows to
 
 | Situation | What the Template Does | What the Student Learns |
 |-----------|----------------------|----------------------|
-| Starting a new analysis | `/plan` creates phased approach, waits for approval | Methodology design before coding, scope management |
+| Starting a new analysis | `/brainstorm` → `/research` → `/prd-generate` → Task Master | Methodology design before coding, scope management |
 | Writing any code | TDD enforces tests first | Defining expected behavior before implementation |
 | Committing code | Rules require conventional format | Professional version control, traceable development |
 | Completing a pipeline stage | `/verify` runs test + lint + type + security pipeline | Multi-stage quality gates for research code |
@@ -586,11 +589,11 @@ The template changes this:
 | Rule | Trigger Files |
 |------|--------------|
 | python/coding-standards.md | `.py` |
-| typescript/coding-standards.md | `.ts`, `.tsx` |
+| typescript/coding-standards.md | `.ts`, `.tsx`, `.js`, `.jsx` |
 | golang/coding-standards.md | `.go` |
 | java/coding-standards.md | `.java` |
 | frontend/component-standards.md | `.jsx`, `.tsx`, `.vue`, `.svelte` |
-| frontend/workflow.md | `.jsx`, `.tsx`, `.vue`, `.svelte` |
+| frontend/workflow.md | `.jsx`, `.tsx`, `.vue`, `.svelte`, `.css` |
 
 ### Skills (48)
 
@@ -635,7 +638,7 @@ The template changes this:
 | ai-regression-testing | Sandbox-mode API testing, AI blind spot detection |
 | eval-harness | Eval-driven development: pass@k capability, pass^k regression |
 | eval-metrics | Development (pass@k) and production (pass^k) evaluation frameworks |
-| agentic-engineering | Eval-first AI coding: task decomposition, model routing, cost discipline |
+| agentic-engineering | Eval-first AI coding: task decomposition, capability-based model routing |
 | autonomous-loops | Non-interactive agent patterns: pipelines, de-sloppify, PR loops |
 | continuous-learning-v2 | Instinct-based learning with confidence scoring and evolution |
 | skill-stocktake | Quality audit of skills and commands (Quick Scan + Full Stocktake) |
@@ -651,7 +654,7 @@ The template changes this:
 |---------|-------------|
 | **Setup & Config** | |
 | /setup | Guided project setup wizard |
-| /settings | Configure settings (presets: fast, optimized, safe, thorough) |
+| /settings | Configure settings (presets: fast, minimal, safe, thorough, autoformat) |
 | /health | Project health check with AgentShield status |
 | /plugins | Plugin management |
 | /mcps | MCP server management |
@@ -769,12 +772,12 @@ Systematic dogfood testing (Phases 0-6, 25 tasks, 263 tests, 21 commits) reveale
 - Missing technical validation step → added VALIDATE phase between brainstorming and PRD
 - TDD doesn't fit infrastructure tasks → added validation testing exceptions
 
-### v2.5.0: Hook Architecture & Cost Discipline
+### v2.5.0: Hook Architecture & Quality Infrastructure
 
 Major infrastructure release adding:
 - **Hook profile system** (minimal/standard/strict) — trade thoroughness for speed via `TEMPLATE_HOOK_PROFILE`
 - **Quality gate consolidation** — `quality-gate.js` replaces 3 separate hooks with progressive delegation
-- **Cost tracker** — per-session token/cost telemetry to `cost-log.jsonl`
+- **Usage telemetry** — per-session token tracking to `cost-log.jsonl`
 - **File size guard** — blocks source code files exceeding 800 lines (documentation/data files exempt)
 - **Harness audit** — deterministic 70-point health scoring across 7 categories
 - **Security hardening** — OWASP Agentic Top 10 mapping, config tamper guard, secret scrubbing in observations
@@ -930,4 +933,4 @@ Any student using this template starts their project with the workflow enforceme
 ---
 
 *Built with Claude Code (Anthropic) | Informed by Everything Claude Code (45K+ stars)*
-*Template v2.5.0 | 14 agents, 48 skills, 56 commands, 17 rules, 21 hooks | 70/70 harness score*
+*Template v2.5.0 | 14 agents, 48 skills, 56 commands, 17 rules, 22 hooks | 70/70 harness score*

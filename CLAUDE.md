@@ -280,7 +280,7 @@ See `docs/MCP_SETUP.md` for configuration by project type.
 
 ## Hooks (Enabled by Default)
 
-All 21 hooks are enabled by default via the tracked `.claude/settings.json`. Use presets to slim down:
+All 22 hooks are enabled by default via the tracked `.claude/settings.json`. Use presets to slim down:
 
 ```bash
 # Slim down with a preset (writes to settings.local.json, overrides tracked config)
@@ -297,9 +297,9 @@ Control which hooks run via environment variables (no config file changes needed
 
 | Profile | Hooks Enabled | Use Case |
 |---------|--------------|----------|
-| `minimal` | ~7 lifecycle + safety hooks | Fast sessions, debugging |
-| `standard` | ~17 hooks (default) | Normal development |
-| `strict` | All 21 hooks | Pre-commit, CI, thorough review |
+| `minimal` | 7 lifecycle + safety hooks | Fast sessions, debugging |
+| `standard` | 18 hooks (default) | Normal development |
+| `strict` | All 22 hooks | Pre-commit, CI, thorough review |
 
 ```bash
 # Set profile for session

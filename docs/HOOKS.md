@@ -430,7 +430,7 @@ Use `/settings` to quickly configure common hook combinations:
 | `thorough` | Pre-commit check, session-init, session-end |
 | `safe` | Pre-commit + file protection, session-init, session-end |
 | `autoformat` | Post-edit formatting |
-| `optimized` | Session-init, pre-compact, session-end |
+| `minimal` | Lifecycle + safety hooks (via TEMPLATE_HOOK_PROFILE) |
 
 See `.claude/settings-presets.json` for full configurations.
 

@@ -6,7 +6,7 @@ Usage:
 - `/settings thorough` - Apply thorough mode preset
 - `/settings safe` - Apply safe mode preset
 - `/settings autoformat` - Apply auto-format mode preset
-- `/settings optimized` - Apply optimized mode preset (token-efficient)
+- `/settings minimal` - Apply minimal mode preset (lightweight hooks only)
 
 Arguments: $ARGUMENTS
 
@@ -18,7 +18,7 @@ Arguments: $ARGUMENTS
 | `thorough` | No | Explanatory | Pre-commit | Learning, complex changes |
 | `safe` | No | Explanatory | File protection + Pre-commit | Production, unfamiliar code |
 | `autoformat` | Yes | Concise | Post-edit formatting | Strict style enforcement |
-| `optimized` | Yes | Concise | None | Token-efficient, long sessions |
+| `minimal` | — | — | Minimal profile | Fast debugging, exploration |
 
 ## Actions
 

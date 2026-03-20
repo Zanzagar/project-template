@@ -42,7 +42,7 @@ The hook is already installed at `.claude/hooks/suggest-compact.sh`. Enable it v
 ```bash
 /settings safe       # Includes suggest-compact
 /settings thorough   # Includes suggest-compact
-/settings optimized  # Includes suggest-compact
+/settings minimal    # Lightweight hooks, includes suggest-compact in standard profile
 ```
 
 Or add manually to `.claude/settings.local.json`:
