@@ -38,19 +38,97 @@ Analyzes instincts and clusters related ones into higher-level structures:
 - Instincts with triggers like "when creating a new X"
 - Instincts that follow a repeatable sequence
 
+Example:
+- `new-table-step1`: "when adding a database table, create migration"
+- `new-table-step2`: "when adding a database table, update schema"
+- `new-table-step3`: "when adding a database table, regenerate types"
+
+→ Creates: **new-table** command
+
 **Skill (Auto-Triggered):** When instincts describe behaviors that should happen automatically:
 - Pattern-matching triggers
 - Error handling responses
 - Code style enforcement
+
+Example:
+- `prefer-functional`: "when writing functions, prefer functional style"
+- `use-immutable`: "when modifying state, use immutable patterns"
+- `avoid-classes`: "when designing modules, avoid class-based design"
+
+→ Creates: **functional-patterns** skill
 
 **Agent (Needs Depth/Isolation):** When instincts describe complex, multi-step processes:
 - Debugging workflows
 - Refactoring sequences
 - Research tasks
 
+Example:
+- `debug-step1`: "when debugging, first check logs"
+- `debug-step2`: "when debugging, isolate the failing component"
+- `debug-step3`: "when debugging, create minimal reproduction"
+- `debug-step4`: "when debugging, verify fix with test"
+
+→ Creates: **debugger** agent
+
 ### Generated Files
 
 On `--generate`, evolved structures are written to `.claude/instincts/evolved/`
+
+### Generated File Format
+
+**Command:**
+```markdown
+---
+name: new-table
+description: Create a new database table with migration, schema update, and type generation
+command: /new-table
+evolved_from:
+  - new-table-migration
+  - update-schema
+  - regenerate-types
+---
+
+# New Table Command
+
+[Generated content based on clustered instincts]
+
+## Steps
+1. ...
+2. ...
+```
+
+**Skill:**
+```markdown
+---
+name: functional-patterns
+description: Enforce functional programming patterns
+evolved_from:
+  - prefer-functional
+  - use-immutable
+  - avoid-classes
+---
+
+# Functional Patterns Skill
+
+[Generated content based on clustered instincts]
+```
+
+**Agent:**
+```markdown
+---
+name: debugger
+description: Systematic debugging agent
+model: sonnet
+evolved_from:
+  - debug-check-logs
+  - debug-isolate
+  - debug-reproduce
+---
+
+# Debugger Agent
+
+[Generated content based on clustered instincts]
+```
 
 ### Example Output Format
 
