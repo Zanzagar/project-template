@@ -1,28 +1,29 @@
-# Project Template: An AI-Augmented Software Engineering Framework
+# Project Template v2.5.0: An AI-Augmented Software Engineering Framework
 
 **Author:** Corey Hoydic
-**Date:** February 13, 2026
-**Version:** 2.4.0
+**Version:** 2.5.0
+**Date:** March 20, 2026
 **Repository:** github.com/Zanzagar/project-template
 
 ---
 
 ## Executive Summary
 
-This project template is a **comprehensive configuration framework for AI-assisted software development** built on top of Claude Code (Anthropic's CLI agent). It transforms a general-purpose LLM from a reactive code-completion tool into a **structured engineering co-pilot** with enforced workflows, specialized sub-agents, persistent learning, and resource-conscious context management.
+This template transforms Claude Code from a reactive code-completion tool into a **structured engineering co-pilot** with enforced workflows, specialized sub-agents, persistent learning, and resource-conscious context management. Built on [Everything Claude Code](https://github.com/affaan-m/everything-claude-code) (45K+ stars) with [Task Master](https://github.com/eyaltoledano/claude-task-master) integration and [Superpowers](https://github.com/obra/superpowers) TDD enforcement.
 
-The template was developed through systematic analysis and integration of best practices from the open-source community — most notably [Everything Claude Code](https://github.com/affaan-m/everything-claude-code) (45K+ stars, Anthropic hackathon winner) — combined with original workflow enforcement patterns designed for disciplined, production-quality software development.
+| Component | Count | Loading | Startup Cost |
+|-----------|-------|---------|--------------|
+| Agents | 14 | On invocation | 0 |
+| Skills | 48 | On relevance | 0 |
+| Commands | 56 | On `/command` | 0 |
+| Rules | 17 | 11 always + 6 on file edit | ~6K |
+| Hooks | 21 | On event trigger | 0 |
+| MCP tools | 6 (recommended) | Always | ~3K |
+| Superpowers | 13 skills | Always | ~3-5K |
+| **Startup total** | | | **~35-40K** |
+| **Working context** | | | **~160-165K** |
 
-**By the numbers:**
-- 14 specialized AI agents
-- 40 skills (domain-specific knowledge modules)
-- 48 slash commands
-- 16 behavior rules (10 core + 6 language-specific)
-- 18 automation hooks (enhanced with workflow guardrails)
-- 5 project-type presets for one-command scaffolding
-- Multi-model collaboration (Claude + Gemini + GPT)
-- Continuous learning system with cross-session memory
-- Status line with context %, model, branch, and session duration
+**v2.5.0 adds:** Hook profile system (minimal/standard/strict), quality gate consolidation, cost tracking telemetry, file size enforcement for source code, deterministic harness scoring (70-point scale), OWASP Agentic Top 10 security mapping, secret scrubbing in observations, three new skills (agentic-engineering, autonomous-loops, eval-metrics), and two new commands (/model-route, /harness-audit).
 
 ---
 
@@ -55,7 +56,7 @@ Here's what they don't realize happened:
 | **Memory** | Every session starts from zero. The AI forgets your architecture, conventions, and past decisions. | Persistent session summaries, work logs, instinct system, and CLAUDE.md carry context across sessions indefinitely. |
 | **Discipline** | The AI writes whatever you ask for, including insecure code, untested features, and broken commits. | TDD enforcement (Superpowers deletes untested code), security gates, conventional commit rules, and verification pipelines make bad practices harder than good ones. |
 | **Resources** | 50K+ tokens consumed by unused tools at startup. Quality degrades silently mid-session with no recovery. | Token-conscious design (35K startup, 165K working). Strategic compaction, tiered documentation lookups, and on-demand skill loading maximize working context. |
-| **Context** | Generic "textbook" code that doesn't fit the project's patterns, framework idioms, or architectural decisions. | 16 behavior rules, 40 domain skills, and language-specific coding standards teach the AI your project's conventions. |
+| **Context** | Generic "textbook" code that doesn't fit the project's patterns, framework idioms, or architectural decisions. | 17 behavior rules, 48 domain skills, and language-specific coding standards teach the AI your project's conventions. |
 | **Specialization** | One general-purpose model handles security review, architecture planning, test generation, and documentation with equal (shallow) depth. | 14 purpose-built agents with appropriate model tiers, tool access, and domain training produce categorically deeper results in each specialty. |
 
 ### What a well-configured template provides
@@ -70,6 +71,7 @@ Here's what they don't realize happened:
 | **Workflow** | Reactive (does what you say) | Proactive (detects phase, suggests next steps, catches mistakes) |
 | **Learning** | Starts fresh daily | Instinct system captures patterns, evolves into skills |
 | **Collaboration** | Single model | Multi-model parallel execution (Claude + Gemini + GPT) |
+| **Cost visibility** | No tracking | Per-session cost telemetry, model routing recommendations |
 
 The difference is analogous to the difference between giving someone a text editor and giving them an IDE. The underlying capability is the same, but the **scaffolding around it** determines whether that capability translates into reliable, high-quality output.
 
@@ -80,563 +82,332 @@ The difference is analogous to the difference between giving someone a text edit
 ```
 project-template/
 ├── .claude/
-│   ├── agents/          # 14 specialized sub-agents
-│   ├── commands/        # 48 slash commands (user-invocable)
-│   ├── skills/          # 40 domain knowledge modules (on-demand)
-│   ├── rules/           # 16 behavior rules (auto-loaded)
-│   ├── hooks/           # 18 automation hooks
-│   ├── presets/         # Project-type preset definitions (JSON)
+│   ├── agents/          # 14 sub-agents (opus/sonnet/haiku tiers)
+│   ├── commands/        # 56 slash commands
+│   ├── skills/          # 48 domain knowledge modules
+│   ├── rules/           # 11 core + 6 language-specific rules
+│   ├── hooks/           # 21 hooks (bash + Node.js)
+│   │   └── lib/         # hook-flags.js, resolve-formatter.js, utils.js
+│   ├── presets/         # 5 project-type presets
 │   ├── instincts/       # Continuous learning patterns (JSON)
-│   ├── contexts/        # Session mode injection (dev/review/research)
-│   ├── sessions/        # Session persistence and summaries
-│   └── work-log.md      # Cross-session decision ledger
-├── .taskmaster/         # Task Master integration (AI task management)
-├── scripts/
-│   ├── init-project.sh    # Initialize local .claude/ structure (symlinks or copies)
-│   ├── setup-preset.sh    # One-command project scaffolding
-│   ├── smoke-test.sh      # Validate template overlay deployments
-│   ├── sync-template.sh   # Sync/adopt template updates into existing projects
-│   ├── manage-mcps.sh     # MCP server management
-│   ├── manage-plugins.sh  # Plugin management
-│   ├── multi-model-query.py  # Gemini/OpenAI API integration
-│   ├── instinct-cli.py       # Instinct management CLI
-│   └── start-observer.sh     # Observer daemon lifecycle
-├── docs/
-│   ├── TEMPLATE_OVERVIEW.md
-│   ├── TEMPLATE_OVERLAY_FRICTION.md  # Overlay testing results and fix status
-│   ├── ECC_INTEGRATION.md
-│   ├── ECC_COMPARISON.md
-│   ├── SECURITY.md
-│   ├── MCP_SETUP.md
-│   ├── PLUGINS.md
-│   ├── HOOKS.md
-│   └── CODEMAPS/        # Auto-generated architecture documentation
-├── CLAUDE.md            # Master configuration (loaded every session)
-└── CHANGELOG.md         # Release history
+│   ├── contexts/        # Session modes (dev/review/research)
+│   ├── sessions/        # Summaries, cost logs, handoff docs
+│   └── upstream-manifest.json  # 85 tracked upstream files
+├── .taskmaster/         # Task Master (AI task management)
+├── scripts/             # harness-audit.js, multi-model-query.py, etc.
+├── docs/                # TEMPLATE_OVERVIEW, SECURITY, HOOKS, MCP_SETUP
+├── .github/workflows/   # CI validators
+├── CLAUDE.md            # Master config (~12K, loaded every session)
+└── CHANGELOG.md
 ```
 
-### Token Budget Awareness
+---
 
-A critical but often overlooked aspect of LLM-assisted development is **context window management**. The template is designed with precise token accounting:
+## System Layer Model
 
-| Component | Tokens | Loading |
-|-----------|--------|---------|
-| MCP tool definitions | ~25-30K | Always (startup) |
-| Core behavior rules | ~5K | Always (startup) |
-| CLAUDE.md | ~2K | Always (startup) |
-| **Startup overhead** | **~35K** | **Before any work** |
-| Skills (39 total) | 0 | On-demand only |
-| Presets (5 project types) | 0 | On-demand only |
-| Slash commands | 0 | On-demand only |
-| Language rules | 0 | Only when matching files edited |
-| **Working context** | **~165K** | **Available for actual work** |
+The template operates in five layers. Information flows upward; authority flows downward.
 
-This design ensures maximum working context. Previous iterations loaded everything upfront and wasted 50K+ tokens on tools that might never be used.
+```
+┌─────────────────────────────────────────────────────────────┐
+│  AGENTS (14)        Isolated context windows                │
+│  Opus (reasoning) · Sonnet (frequent) · Haiku (lightweight) │
+├─────────────────────────────────────────────────────────────┤
+│  COMMANDS (56)      User-invocable workflows                │
+│  /plan, /tdd, /verify, /pr, /orchestrate, /brainstorm      │
+├─────────────────────────────────────────────────────────────┤
+│  SKILLS (48)        Domain knowledge, loaded on relevance   │
+│  python-testing, api-design, eval-harness, tdd-workflow     │
+├─────────────────────────────────────────────────────────────┤
+│  RULES (17)         Behavioral constraints, auto-loaded     │
+│  Commit format, TDD workflow, phase detection, security     │
+├─────────────────────────────────────────────────────────────┤
+│  HOOKS (21)         Event-driven automation                 │
+│  Format, guard, track, persist — 3 profile tiers            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Hooks** enforce constraints at the tool level. **Rules** define behavioral standards Claude must follow. **Skills** provide domain expertise when relevant. **Commands** orchestrate multi-step workflows. **Agents** handle specialized tasks in isolated context windows with dedicated model tiers.
+
+**Authority hierarchy:** Rules > Superpowers enforcement > Instincts > Defaults. A rule cannot be overridden by an instinct. Superpowers TDD enforcement requires explicit user acknowledgment to bypass.
+
+---
+
+## Hook System
+
+### Profile System (v2.5.0)
+
+All hooks are controlled by the `TEMPLATE_HOOK_PROFILE` environment variable. Each hook checks its profile assignment at startup via `lib/hook-flags.js` — if the current profile isn't in the hook's allowed set, it exits immediately (zero overhead).
+
+| Profile | Active Hooks | Use Case |
+|---------|-------------|----------|
+| **minimal** | 8 — lifecycle + safety | Fast sessions, debugging, exploration |
+| **standard** | 17 — adds formatting, analysis, learning, cost tracking | Normal development (default) |
+| **strict** | 21 — adds doc blocking, TS checking, tmux enforcement | Pre-commit, CI, thorough review |
+
+```bash
+export TEMPLATE_HOOK_PROFILE=minimal               # Switch profile
+export TEMPLATE_DISABLED_HOOKS=build-analysis       # Disable specific hooks
+```
+
+Alternatively, use presets: `/settings fast` (all hooks off), `/settings optimized` (lightweight subset), `/settings safe` (safety only).
+
+### Quality Gate Consolidation (v2.5.0)
+
+`quality-gate.js` consolidates three concerns into one PostToolUse hook:
+
+| Concern | Legacy Hook | Behavior |
+|---------|-------------|----------|
+| Auto-formatting | post-edit-format | Biome/Prettier (JS/TS), ruff (Python), gofmt, rustfmt |
+| Debug detection | console-log-audit | Warns on console.log, print(), fmt.Print, System.out |
+| Type checking | typescript-check | tsc --noEmit filtered to the edited file |
+
+**Architecture:** Both quality-gate.js and the three legacy hooks are configured in settings.json. The legacy Node.js hooks detect quality-gate.js via `require.resolve()` — if found, they delegate and exit. If quality-gate.js is removed, they fall back to their original behavior. This progressive consolidation pattern avoids breaking changes.
+
+### Hook Inventory
+
+| Hook | Event | Matcher | Profiles | Purpose |
+|------|-------|---------|----------|---------|
+| session-init.sh | SessionStart | — | all | Phase detection, health check, session resume |
+| project-index.sh | SessionStart | — | all | Codebase JSON index for sub-agents |
+| observe.sh | Pre+PostToolUse | * | std,str | Tool observation with secret scrubbing |
+| pre-commit-check.sh | PreToolUse | Bash | all | Conventional commit format, branch protection |
+| protect-sensitive-files.sh | PreToolUse | Edit,Write | all | Block .env/.pem/credentials; config tamper guard |
+| dev-server-blocker.sh | PreToolUse | Bash | str | Block dev servers outside tmux |
+| long-running-tmux-hint.sh | PreToolUse | Bash | str | Advisory tmux reminder for slow commands |
+| file-size-guard.js | PreToolUse | Write | std,str | Block source code files exceeding 800 lines |
+| doc-file-blocker.sh | PreToolUse | Write | str | Block .md creation outside docs/ |
+| quality-gate.js | PostToolUse | Edit,Write | std,str | Consolidated format + debug audit + TS check |
+| post-edit-format.sh | PostToolUse | Edit,Write | std,str | Legacy formatter (delegates to quality-gate) |
+| console-log-audit.sh | PostToolUse | Edit | std,str | Legacy debug audit (delegates to quality-gate) |
+| typescript-check.sh | PostToolUse | Edit | str | Legacy TS check (delegates to quality-gate) |
+| build-analysis.sh | PostToolUse | Bash | std,str | Advisory analysis of build command output |
+| pr-url-extract.sh | PostToolUse | Bash | std,str | PR creation URL from git push output |
+| pre-compact.sh | UserPromptSubmit | — | all | Save working state before context compaction |
+| suggest-compact.js | UserPromptSubmit | — | std,str | Suggest compaction at 50/75 tool calls |
+| session-end.sh | Stop | — | all | Detailed session summary to .claude/sessions/ |
+| session-summary.sh | Stop | — | all | Lightweight YAML session activity log |
+| pattern-extraction.sh | Stop | — | all | Extract instinct candidates from git history |
+| cost-tracker.js | Stop | — | std,str | Session token/cost metrics to cost-log.jsonl |
+
+Profiles: **all** = minimal+standard+strict; **std,str** = standard+strict; **str** = strict only.
+
+---
+
+## Security Model
+
+Four security layers cover different attack surfaces:
+
+| Layer | Scope | Mechanism |
+|-------|-------|-----------|
+| **Runtime guards** | File-level protection | `protect-sensitive-files.sh` — blocks .env, .pem, credentials |
+| **Config tamper guard** | Linter/formatter settings | Same hook — blocks edits to ruff.toml, .eslintrc, biome.json |
+| **Behavioral rules** | Agent behavior constraints | `security-hardening.md` — deny lists, prompt injection guardrails |
+| **Config audit** | CLAUDE.md, MCPs, hooks, agents | AgentShield (`npx ecc-agentshield scan`) |
+| **Code audit** | OWASP Top 10, secrets, deps | `/security-audit` → security-reviewer agent |
+
+### OWASP Agentic Top 10 Mapping (v2.5.0)
+
+| OWASP Risk | Template Mitigation |
+|------------|---------------------|
+| A01: Excessive Agency | Hook profiles limit scope; tool allowlists in settings |
+| A02: Data Leakage | Secret scrubbing in observe.sh; protect-sensitive-files.sh |
+| A03: Tool Misuse | file-size-guard.js; protect-sensitive-files.sh |
+| A04: Prompt Injection | Guardrails in security-hardening.md rule |
+| A05: Insecure Output | /code-review + /security-audit commands |
+| A06: Autonomy Abuse | SIGUSR1 throttling; cost-tracker.js; suggest-compact.js |
+| A07: System Prompt Leak | N/A (Claude Code runs locally, no API exposure) |
+| A08: Data Integrity | Config tamper guard in protect-sensitive-files.sh |
+| A09: Insecure Plugin | MCP audit (manage-mcps.sh); 10/80 rule (max 10 servers, 80 tools) |
+| A10: Supply Chain | AgentShield CI scan; upstream-manifest.json tracking |
+
+### Config Tamper Guard (v2.5.0)
+
+`protect-sensitive-files.sh` blocks edits to linter/formatter configs (ruff.toml, .eslintrc, biome.json, .prettierrc, .golangci.yml, etc.) to prevent Claude from weakening code quality settings. Override with `TEMPLATE_ALLOW_CONFIG_EDIT=1`. Multi-purpose configs (tsconfig.json, pyproject.toml) get a warning instead of a block.
+
+See `docs/SECURITY.md` for full security documentation including AgentShield CI integration, deny list recommendations, and the PR audit checklist.
+
+---
+
+## Cost & Token Management
+
+### Cost Tracker (v2.5.0)
+
+`cost-tracker.js` (Stop hook) appends per-session token usage to `.claude/sessions/cost-log.jsonl`:
+
+```json
+{"timestamp":"2026-03-20T01:00:00Z","session_id":"abc","model":"opus","input_tokens":45000,"output_tokens":12000,"estimated_cost_usd":0.9075}
+```
+
+Cost estimation uses blended rates per million tokens: Haiku ($0.80/$4.00 in/out), Sonnet ($3/$15), Opus ($15/$75).
+
+### Model Routing
+
+`/model-route` recommends the appropriate model tier for a task:
+
+| Task Type | Recommended | Why |
+|-----------|-------------|-----|
+| Bug fix, routine code | Sonnet | Cost-effective, sufficient for scoped changes |
+| Architecture, complex planning | Opus | Deep reasoning for high-stakes decisions |
+| Documentation, exploration | Haiku | Lightweight, high-frequency tasks |
+| Sub-agent research | Haiku | Fresh context, low-stakes information gathering |
+
+Set `CLAUDE_CODE_SUBAGENT_MODEL=haiku` to route sub-agents to cheaper models automatically.
+
+### Token Optimization Settings
+
+Apply via `/settings optimized` or set individually:
+
+| Setting | Default | Optimized | Savings |
+|---------|---------|-----------|---------|
+| `MAX_THINKING_TOKENS` | 31,999 | 10,000 | ~70% per response |
+| `CLAUDE_CODE_AUTOCOMPACT_PCT_OVERRIDE` | ~95% | 50% | Earlier compaction |
+| `CLAUDE_CODE_SUBAGENT_MODEL` | (inherits) | haiku | ~80% on sub-agents |
+
+Combined savings: 60-80% cost reduction with maintained quality for typical development work.
+
+---
+
+## Continuous Learning Pipeline
+
+### Observation → Pattern → Instinct
+
+```
+observe.sh (Pre+PostToolUse, matcher: *)
+  ├── Captures tool name, input/output (truncated to 5KB)
+  ├── Scrubs secrets (Bearer tokens, API keys, passwords)    ← v2.5.0
+  ├── Archives observations >10MB with auto-purge (30 days)  ← v2.5.0
+  └── Writes to .claude/instincts/observations.jsonl
+           ↓
+  Observer daemon (haiku, background)
+  ├── Signaled every 20 tool uses (SIGUSR1 throttle)         ← v2.5.0
+  └── Creates instinct candidates (confidence 0.3-0.5)
+           ↓
+  .claude/instincts/
+  ├── candidates/  (0.3-0.5 confidence, auto-created)
+  ├── personal/    (0.5-0.7+, reinforced by repetition)
+  └── inherited/   (team-shared via /instinct-import)
+           ↓
+  /learn       — manual extraction (nudged at 75 tool calls)
+  /evolve      — cluster instincts → promote to full skills
+  /instinct-export / /instinct-import — team sharing
+```
+
+**v2.5.0 improvements to observe.sh:**
+- **Secret scrubbing:** Regex-based removal of Bearer tokens, API keys (sk-, ghp_, AKIA...), passwords, and auth headers before persisting to disk
+- **SIGUSR1 throttling:** Observer daemon signaled every N observations (default 20, configurable via `TEMPLATE_OBSERVER_SIGNAL_INTERVAL`) instead of every tool use
+- **Auto-purge:** Archived observation files older than 30 days automatically deleted (daily check via marker file)
+
+**Authority:** Rules > Instincts > Defaults (always). Active instincts (confidence >0.7) decay at -0.05/week when unused. Instincts supplement rules — they never override them.
+
+---
+
+## Harness Audit Scoring (v2.5.0)
+
+`node scripts/harness-audit.js` runs a deterministic 70-point health check across 7 categories. All checks are file-existence or content-based — reproducible for the same commit.
+
+| Category | Points | What It Measures |
+|----------|--------|-----------------|
+| **Tool Coverage** | 10 | Hooks in settings.json, MCP servers, agents (3+), skills (10+), commands (10+) |
+| **Context Efficiency** | 10 | CLAUDE.md exists and <20KB, conditional language rules, context modes, token docs |
+| **Quality Gates** | 10 | Pre-commit hook, formatter, quality gate, file size guard, sensitive file protection |
+| **Memory & Persistence** | 10 | Session init/end hooks, pre-compact, sessions dir, compaction advisor |
+| **Eval & Testing** | 10 | Test command, linter configured, CI workflow, /verify command, /eval command |
+| **Security Guardrails** | 10 | Sensitive file protection, security rule, .gitignore blocks .env, no secrets, doc blocker |
+| **Cost Efficiency** | 10 | Cost tracker, /model-route, hook profiles, sub-agent routing docs, settings presets |
+
+**Grading:** A (90-100%), B (80-89%), C (70-79%), D (60-69%), F (<60%). Exit code 1 if below 50%.
+
+```bash
+node scripts/harness-audit.js              # Full audit (text)
+node scripts/harness-audit.js --format json # Machine-readable
+node scripts/harness-audit.js security      # Single category
+/harness-audit                              # Via slash command
+```
+
+Current score: **70/70 (100%) A**.
 
 ---
 
 ## Project Lifecycle Pipeline
 
-This section shows **what fires when** across all 190 components during a project lifecycle. Use this as a reference for understanding the system and identifying gaps.
+### Always Active (every session, ~35-40K tokens)
 
-### Always Active (every session, ~35k tokens)
+CLAUDE.md, 11 core rules, 2 MCP servers (Task Master + Context7), Superpowers plugin (13 skills).
 
-| Component | Type | Purpose |
-|-----------|------|---------|
-| CLAUDE.md | Config | Project name, tech stack, patterns, constraints |
-| 9 core rules | Auto-loaded | Commit style, git workflow, reasoning patterns, phase detection, context management, proactive steering, authority hierarchy, Superpowers integration, workflow enforcement |
-| 5 language rules | Conditional | Load only when matching files are edited (.py, .ts, .go, .java, .jsx/.vue) |
-| task-master-ai MCP | Tools | Task management (list, show, set-status, next, expand, parse-prd) |
-| context7 MCP | Tools | Up-to-date library documentation lookup |
-| Superpowers plugin | Skills | TDD enforcement, systematic debugging, brainstorming, verification |
-
-### Session Lifecycle (automatic hooks)
-
-**Session Start:**
-- `session-init.sh` — Displays template version and project phase (ideation/planning/building/review/shipping), shows status, loads last session summary (<24h), auto-starts observer daemon. v2.4.0: no longer shows false "update available" when versions match; missing optional components shown as advisory instead of upgrade trigger.
-- `project-index.sh` — Scans source files for signatures, writes `.claude/project-index.json`
-
-**Every Tool Use:**
-- `observe.sh` (pre+post) — Logs tool usage to `observations.jsonl` for continuous learning
-
-**Every User Prompt:**
-- `pre-compact.sh` — Saves working state including active tag, TDD phase, and uncommitted changes (17 tests)
-- `suggest-compact.sh` — Nudges at 50 tool calls, `/learn` nudge at 75
-
-**On File Edit/Write:**
-- `protect-sensitive-files.sh` — **BLOCKS** edits to .env, .pem, credentials
-- `doc-file-blocker.sh` — **BLOCKS** random .md file creation outside docs/
-- `post-edit-format.sh` — Auto-formats (ruff, prettier, gofmt, rustfmt, shfmt)
-- `console-log-audit.sh` — Warns on debug statements (print, console.log, fmt.Println)
-- `typescript-check.sh` — Runs `tsc --noEmit` after .ts/.tsx edits
-
-**On Bash Commands:**
-- `pre-commit-check.sh` — Conventional commit format validation, main branch protection, lint + test + staged file scan before `git commit` (22 tests)
-- `dev-server-blocker.sh` — **BLOCKS** dev servers outside tmux
-- `long-running-tmux-hint.sh` — Advisory tmux reminder for slow commands
-- `build-analysis.sh` — Advisory analysis after build commands
-- `pr-url-extract.sh` — Shows PR creation URL after `git push`
-
-**Session End (Stop event):**
-- `session-end.sh` — Saves detailed session summary to `.claude/sessions/`
-- `session-summary.sh` — Lightweight YAML session log
-- `pattern-extraction.sh` — Extracts instinct candidates from git history (3+ commits)
-
-### Phase 1: Ideation ("I want to build...")
+### Phase 1: Ideation — "I want to build..."
 
 | Action | Component | Type |
 |--------|-----------|------|
-| Explore ideas | `superpowers:brainstorming` | Skill (mandatory) |
-| Research topic | `/research` | Command |
-| Multi-model perspectives | `/multi-plan` → `multi-model-query.py` | Command + Script |
-| Web research | WebSearch, WebFetch, Context7 | Tools |
-| **Output** | `docs/plans/YYYY-MM-DD-<topic>-design.md` | Design doc |
+| Explore ideas | `superpowers:brainstorming` | Skill (mandatory for non-trivial work) |
+| Research | `/research`, WebSearch, WebFetch | Command + tools |
+| Multi-model perspectives | `/multi-plan` → `multi-model-query.py` | Command + script |
+| **Output** | `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` | Design doc |
 
-### Phase 2: Planning ("Here's what we'll build")
+### Phase 2: Planning — "Here's what we'll build"
 
 | Action | Component | Type |
 |--------|-----------|------|
+| Validate tech assumptions | `/research` (after brainstorming) | Command |
 | Create PRD | `/prd-generate` or manual | Command |
-| Parse into tasks | `task-master parse-prd --num-tasks 0` | MCP |
-| Analyze complexity | `task-master analyze-complexity` | MCP |
-| Expand complex tasks | `task-master expand --id=<id>` | MCP |
-| Architecture planning | planner agent (opus, read-only) | Agent |
-| System design | architect agent (opus, read-only) | Agent |
-| **Output** | Tasks with subtasks in Task Master | Task state |
-
-### Phase 3: Building ("Implement task by task")
-
-For each task, the TDD cycle runs:
-
-| Step | Action | Component | Type |
-|------|--------|-----------|------|
-| Get task | `task-master next` / `set-status in-progress` | MCP | |
-| **RED** | Write failing tests | `superpowers:test-driven-development`, `/tdd`, `/generate-tests` | Skill + Commands |
-| **GREEN** | Make tests pass | Language rules + domain skills (40 available) load on demand | Rules + Skills |
-| **REFACTOR** | Clean up | `/optimize` if needed | Command |
-| Verify | Run pipeline | `/verify` (test + lint + types + security) | Command |
-| Commit | Conventional commit | `/commit` → `pre-commit-check.sh` fires | Command + Hook |
-| Complete | Mark done | `task-master set-status --id=X --status=done` | MCP |
-
-**When things break:** `superpowers:systematic-debugging` (4 phases: Reproduce → Hypothesize → Test → Fix)
-
-**Agents available:** build-resolver, go-build-resolver, tdd-guide, e2e-runner, database-reviewer
-
-### Phase 4: Review ("Is it good enough?")
-
-| Action | Component | Type |
-|--------|-----------|------|
-| Verify before claiming done | `superpowers:verification-before-completion` | Skill (mandatory) |
-| Request code review | `superpowers:requesting-code-review` | Skill (mandatory) |
-| Code quality | `/code-review` → code-reviewer agent (sonnet) | Command + Agent |
-| Security scan | `/security-audit` → security-reviewer agent (sonnet) | Command + Agent |
-| Multi-agent review | `/orchestrate review` → code + security + database reviewers | Command + Agents |
-| Language-specific | `/python-review`, `/go-review` → specialized agents | Commands + Agents |
-| Update docs | `/update-docs` → doc-updater agent (haiku) | Command + Agent |
-| Architecture docs | `/update-codemaps` | Command |
-
-### Phase 5: Shipping ("Get it out the door")
-
-The branch completion workflow (`workflow-enforcement.md`) defines the prescribed sequence:
-
-| Step | Action | Component | Type |
-|------|--------|-----------|------|
-| 1 | Review code | `/code-review` → code-reviewer agent | Command + Agent |
-| 2 | Push branch | `git push -u origin <branch>` → `pr-url-extract.sh` | Git + Hook |
-| 3 | Create PR | `/pr` (squash merge default) | Command |
-| 4 | Verify CI | `gh run list` → `gh run watch` | Git + CLI |
-| 5 | Merge | Squash merge via GitHub | GitHub |
-| 6 | Sync local | `git checkout main && git pull` | Git |
-| 7 | Cleanup | `git branch -d <branch>` | Git |
-| 8 | Update tasks | `task-master set-status <id> done` | MCP |
-| 9 | Tag release | `git tag -a v<version>` (if release-worthy) | Git |
-
-| Also available | Component | Type |
-|----------------|-----------|------|
-| Update changelog | `/changelog` | Command |
-| Sync issues | `/github-sync` | Command |
-| Quality snapshot | `/eval [--save]` | Command |
-
-### Background Systems (always running)
-
-**Continuous Learning:**
-```
-observe.sh → observations.jsonl → observer daemon (every 5 min)
-                                       ↓
-                                 .claude/instincts/
-                                 ├── candidates/ (confidence 0.3-0.5)
-                                 ├── personal/   (confidence 0.5-0.7+)
-                                 └── inherited/  (shared across team)
-
-pattern-extraction.sh (session end) ──► candidates/
-/learn (manual, nudged at 75 calls) ──► candidates/
-/evolve (cluster instincts into skills)
-/instinct-export / /instinct-import (team sharing)
-
-Authority: Rules > Instincts > Defaults (always)
-```
-
-**Session Persistence (three layers):**
-
-Each layer captures different information — they complement, not duplicate:
-
-| Layer | Mechanism | Captures | Cannot Capture |
-|-------|-----------|----------|----------------|
-| **Automatic snapshots** | `session-end.sh` (Stop hook) | Git diff, commits, modified files, active tasks | Intent, decisions, reasoning |
-| **Pre-compaction state** | `pre-compact.sh` (UserPromptSubmit hook) | Branch, uncommitted changes, active task at that moment | Anything beyond a point-in-time snapshot |
-| **Handoff documents** | Claude writes manually | Why decisions were made, exact next steps, continuation instructions | Automated — requires Claude to synthesize |
-
-```
-Automatic (hooks):
-  session-end.sh ──► .claude/sessions/session_*.md   (what changed)
-  pre-compact.sh ──► .claude/sessions/pre-compact-state.md (snapshot)
-
-Manual (Claude-written):
-  Handoff docs ────► .claude/sessions/handoff-*.md    (what it means + what's next)
-  Work log ────────► .claude/work-log.md              (decisions + reasoning)
-
-Always persistent:
-  Instincts ───────► .claude/instincts/               (learned patterns)
-  Tasks ───────────► .taskmaster/                     (task state)
-```
-
-Hooks capture **observable state** (what git and task-master report). Handoff documents capture **interpreted state** (what the work means and what to do next). Start a new session with `Read .claude/sessions/handoff-*.md and MEMORY.md` to resume complex multi-session work.
-
-### Component Summary
-
-| Type | Count | Loading | Token Cost |
-|------|-------|---------|-----------|
-| Rules (core) | 10 | Always | ~6k |
-| Rules (language) | 6 | On file edit | 0 at startup |
-| Agents | 14 | On invocation | 0 at startup |
-| Skills | 40 | On relevance | 0 at startup |
-| Commands | 48 | On `/command` | 0 at startup |
-| Hooks | 18 | On event trigger | 0 (shell scripts) |
-| MCP tools | 6 (recommended) | Always | ~3k |
-| Superpowers | 13 skills | Always | ~3-5k |
-| **Total** | **~155 components** | | **~12k startup** |
-
-*MCP tool count: 6 recommended tools via `TASK_MASTER_TOOLS` env var (v2.4.0). AI operations use CLI, not MCP. See `.claude/rules/taskmaster-usage.md` and `docs/MCP_SETUP.md` for details.*
-
----
-
-## Component Deep Dive
-
-### 1. Specialized Agents (14)
-
-Rather than using one general-purpose model for everything, the template deploys **purpose-built sub-agents** that operate in isolated context windows with appropriate tool access:
-
-| Agent | Model | Purpose | Why Specialized? |
-|-------|-------|---------|-------------------|
-| **Planner** | Opus | Architecture planning | Needs deep reasoning, read-only to prevent premature coding |
-| **Architect** | Opus | System design, ADR output | High-stakes decisions warrant strongest model |
-| **Code Reviewer** | Sonnet | Quality review, severity tiers | >80% confidence filtering, cost-effective for frequent use |
-| **Security Reviewer** | Sonnet | OWASP Top 10, dependency scanning | Needs Bash access for scanning tools |
-| **TDD Guide** | Sonnet | Test-driven development coaching | Advisory role (Superpowers plugin enforces) |
-| **Build Resolver** | Sonnet | Fix compilation errors | Needs all tools for surgical fixes |
-| **E2E Runner** | Sonnet | End-to-end test generation | Playwright/Cypress/Selenium expertise |
-| **Database Reviewer** | Sonnet | SQL optimization, N+1 detection | Domain-specific patterns |
-| **Doc Updater** | Haiku | Documentation maintenance | Low-stakes, high-frequency — cheapest model |
-| **Refactor Cleaner** | Sonnet | Dead code removal | Write access, but preserves all tests |
-| **Go Reviewer** | Sonnet | Go-specific patterns | Goroutine leaks, error wrapping, interface design |
-| **Go Build Resolver** | Sonnet | Go module/CGO errors | Go-specific build toolchain |
-| **Python Reviewer** | Sonnet | Python async, metaclasses, GIL | Framework-specific (Django, FastAPI, Flask) |
-| **Observer** | Haiku | Background pattern analysis | Analyzes session observations, creates instincts automatically |
-
-**Why this matters:** A security review by a dedicated security agent with OWASP training produces categorically better results than asking a general-purpose model "does this code have security issues?" The specialization is in the system prompt, tool access, and model selection — not just the question asked.
-
-### 2. Slash Commands (48)
-
-Commands are user-invocable workflows triggered by typing `/command-name`. They range from simple shortcuts to complex multi-step pipelines:
-
-**Development Commands:**
-`/plan`, `/tdd`, `/build-fix`, `/test`, `/lint`, `/verify`, `/test-coverage`
-
-**Review Commands:**
-`/code-review`, `/python-review`, `/go-review`, `/security-audit`, `/e2e`
-
-**Language-Specific:**
-`/go-build`, `/go-test`, `/go-review`, `/python-review`
-
-**Project Management:**
-`/tasks`, `/task-status`, `/prd`, `/github-sync`, `/orchestrate`
-
-**Quality & Documentation:**
-`/eval`, `/update-codemaps`, `/update-docs`, `/changelog`, `/health`
-
-**AI Collaboration:**
-`/multi-plan`, `/multi-execute`, `/brainstorm`, `/research`
-
-**Learning & Evolution:**
-`/learn`, `/skill-create`, `/evolve`, `/instinct-status`, `/instinct-import`, `/instinct-export`
-
-**Infrastructure:**
-`/setup`, `/settings`, `/plugins`, `/mcps`, `/commit`, `/pr`, `/checkpoint`, `/sessions`
-
-### 3. Skills (39 domain knowledge modules)
-
-Skills are **on-demand reference material** that Claude loads only when relevant. They cost zero tokens at startup but provide deep domain knowledge when activated:
-
-**Backend:** api-design, backend-patterns, database-patterns, database-migrations, postgresql-patterns, deployment-patterns, docker-patterns
-
-**Frontend:** frontend-patterns, typescript-patterns, e2e-testing
-
-**Python Ecosystem:** python-testing, python-django, python-data-science, django-security
-
-**Go Ecosystem:** golang-patterns, golang-testing
-
-**Java Ecosystem:** java-springboot
-
-**Workflow:** code-review, debugging, git-recovery, iterative-retrieval, continuous-learning-v2
-
-**Infrastructure:** api-design, deployment-patterns, docker-patterns
-
-### 4. Behavior Rules (16)
-
-Rules are **auto-loaded constraints** that define how Claude behaves. They're the "constitution" of the template:
-
-**Core Rules (always loaded, ~6K tokens):**
-- **claude-behavior.md** — Commit frequency, conventional commits, proactive git behavior
-- **git-workflow.md** — Branch naming, recovery commands, team collaboration rules
-- **reasoning-patterns.md** — Clarification before assumption, brainstorming before building, five whys debugging
-- **workflow-guide.md** — Phase detection (ideation → planning → building → review → shipping), tool selection
-- **context-management.md** — Thinking modes, compaction strategy, session persistence
-- **proactive-steering.md** — Project co-pilot behaviors, scope management, milestone tracking
-- **authority-hierarchy.md** — Rules > Superpowers > Instincts > Defaults (4-tier precedence)
-- **superpowers-integration.md** — Overrides Superpowers brainstorming→writing-plans routing; adds VALIDATE step between brainstorming and PRD
-- **workflow-enforcement.md** — Explicit decision thresholds for 6 workflow types, branch completion sequence, TDD exceptions for infrastructure tasks
-- **taskmaster-usage.md** — CLI vs MCP decision matrix for Task Master operations, token-conscious viewing patterns, required flags/timeouts *(new in v2.4.0)*
-
-**Language Rules (loaded only when editing matching files):**
-- Python, TypeScript, Go, Java, Frontend (React/Vue/Svelte — 2 rules: component standards + workflow)
-
-The **frontend workflow rule** (v2.4.0) guides Magic MCP (21st.dev) tool selection, frontend-design skill invocation, recommended stacks (React+Vite+Tailwind+shadcn for internal tools; Next.js for public apps), and component testing with Vitest + React Testing Library.
-
-### 5. Continuous Learning System
-
-One of the fundamental limitations of LLMs is that they don't learn from experience. A model that makes a mistake on Monday will make the same mistake on Tuesday, because each session starts with the same weights. The template's continuous learning system works around this limitation by **persisting patterns as structured data** that gets loaded into future sessions.
-
-#### How It Works
-
-The system operates on three levels:
-
-```
-Level 1: INSTINCTS (lightweight, automatic)
-  Session Work → Pattern Extraction → Instinct JSON (confidence 0.3)
-                                           ↓ reinforced by repetition
-                                      Active Instinct (confidence >0.7)
-                                           ↓ unused for 2+ weeks
-                                      Decayed Instinct (confidence <0.3) → removed
-
-Level 2: SKILLS (permanent, curated)
-  Multiple related instincts → /evolve command → Promoted to SKILL.md
-  Skills don't decay. They become permanent reference material.
-
-Level 3: RULES (immutable, project-defined)
-  Rules are written by the developer and never modified by the learning system.
-  Authority hierarchy: Rules > Instincts > Defaults (always)
-```
-
-#### Concrete Example
-
-Suppose a student is building a geostatistical pipeline and discovers that all spatial operations must use a projected CRS (meters) rather than geographic coordinates (degrees) — otherwise distance-based computations like variogram fitting produce nonsensical results. The first time this happens:
-
-1. The student (or Claude) debugs the variogram issue and adds a CRS reprojection step
-2. `/learn` or the automatic pattern extraction hook captures this as an instinct:
-
-```json
-{
-  "pattern": "spatial-crs-projection",
-  "trigger": "When performing distance-based spatial operations (kriging, IDW, variograms, buffer, nearest-neighbor)",
-  "action": "Verify data is in a projected CRS (units=meters). If geographic (EPSG:4326), reproject with geopandas.to_crs() before computing distances.",
-  "confidence": 0.5,
-  "source": "session-2026-02-13"
-}
-```
-
-3. The next session, when Claude sees spatial code using `pykrige` or `scipy.spatial`, it proactively checks the CRS and suggests reprojection — even though the student didn't ask
-4. If the student confirms this is useful (by accepting the suggestion), confidence increases toward 0.7
-5. After several reinforcements, the pattern becomes an active instinct that Claude applies automatically
-6. If the student accumulates several geospatial instincts (CRS handling, NoData masking, raster alignment), `/evolve` clusters them into a full `geospatial-data-hygiene` skill
-
-#### Why This Matters
-
-The learning system means that a student's Claude instance **gets better over the course of a semester**. The template they use in September is more knowledgeable than the one they started with in August — not because the model changed, but because the accumulated instincts represent the student's growing expertise, persisted in a format the AI can use.
-
-For teams, instincts can be exported and imported (`/instinct-export`, `/instinct-import`). When one team member discovers a workaround, the entire team benefits in their next session.
-
-#### Governance
-
-The authority hierarchy prevents learned patterns from overriding explicit project rules:
-
-| Source | Authority | Can Override? |
-|--------|-----------|--------------|
-| Rules (`.claude/rules/`) | Highest | Cannot be overridden by anything |
-| Instincts (`.claude/instincts/`) | Medium | Override defaults, but yield to rules |
-| Default Claude behavior | Lowest | Overridden by everything above |
-
-This means a rule like "always use conventional commits" cannot be weakened by an instinct that says "batch commits are faster." The learning system supplements the rules — it never contradicts them.
-
-### 6. Multi-Model Collaboration
-
-A single AI model, no matter how capable, has blind spots. It was trained on a specific dataset, optimized for specific objectives, and develops characteristic patterns in its outputs. When an architect makes all decisions alone, the result reflects their biases. The same is true for AI models.
-
-The template addresses this by enabling **parallel execution across multiple AI models**, synthesizing diverse perspectives into a single plan or implementation:
-
-#### How It Works
-
-```
-/multi-plan "Design spatial interpolation pipeline for soil contamination mapping"
-
-    ┌───────────────────────────────────────────────────────────┐
-    │  Claude (Opus)            Gemini                GPT       │
-    │  ─────────────            ──────                ───       │
-    │  Ordinary Kriging with    Random Forest with    Gaussian  │
-    │  automatic variogram      spatial features      Process   │
-    │  fitting. Cross-          (lat, lon, elevation, Regression│
-    │  validation with          distance to source).  with RBF  │
-    │  leave-one-out.           Argues: handles non-  kernel.   │
-    │  Argues: geostatistical   stationarity better,  Argues:   │
-    │  gold standard, provides  no variogram needed,  provides  │
-    │  uncertainty estimates.   scales to many vars.  native UQ.│
-    └───────────────────────────────────────────────────────────┘
-                                ↓
-    ┌───────────────────────────────────────────────────────────┐
-    │  SYNTHESIZED PLAN                                         │
-    │  ─────────────────                                        │
-    │  Primary: Ordinary Kriging (Claude) — gold standard for   │
-    │    the geostatistics audience, provides defensible UQ     │
-    │  Adopted from Gemini: Add RF as comparison model to show  │
-    │    kriging outperforms ML on this sparse-data problem     │
-    │  Adopted from GPT: Use GPR's RBF kernel as a              │
-    │    third comparison — mathematically equivalent to kriging │
-    │    but connects to the ML literature                      │
-    │  Rejected: Gemini's "no variogram needed" — the thesis    │
-    │    committee expects variogram analysis as methodology     │
-    └───────────────────────────────────────────────────────────┘
-```
-
-#### Why Multiple Models?
-
-Each model brings different strengths:
-
-| Model | Strength | Weakness |
-|-------|----------|----------|
-| **Claude (Opus)** | Deep reasoning, mathematical rigor, understanding of statistical methodology | Can over-engineer, favors complexity |
-| **Gemini** | Broad knowledge across ML literature, strong on recent papers and alternative approaches | Less depth on classical geostatistics |
-| **GPT** | Practical implementation patterns, strong on NumPy/scikit-learn/PyTorch code generation | Less methodological reasoning |
-
-When all three agree, you can be highly confident in the approach. When they disagree, the disagreement itself is valuable — it surfaces trade-offs that a single model might gloss over.
-
-#### Practical Impact
-
-For a research project, multi-model collaboration means:
-- **Methodology decisions** get three independent perspectives before code is written — reducing the risk of choosing an approach just because it was the first one the AI suggested
-- **Implementation** can route numerical computation to the model strongest at NumPy/SciPy (GPT) and experimental design to the model strongest at methodology (Claude), with results synthesized
-- **Literature awareness** from Gemini surfaces recent papers and alternative approaches that Claude or GPT might miss, broadening the student's awareness of the field
-
-The template gracefully degrades when API keys aren't available — `/multi-plan` works with just Claude, but produces richer results with all three models.
+| Parse into tasks | `task-master parse-prd --num-tasks 0 --force` | CLI (not MCP) |
+| Analyze complexity | `task-master analyze-complexity` → `complexity-report` | CLI |
+| Expand complex tasks | `task-master expand --id=<id>` (score >= 5) | CLI |
+
+### Phase 3: Building — "Implement task by task"
+
+| Step | Action | Component |
+|------|--------|-----------|
+| Claim | `task-master next` / `set-status in-progress` | MCP |
+| **RED** | Write failing tests | `superpowers:test-driven-development` |
+| **GREEN** | Make tests pass | Language rules + domain skills (on demand) |
+| **REFACTOR** | Clean up | Maintain green tests |
+| Verify | `/verify` (test + lint + types + security) | Command |
+| Commit | `git commit` → pre-commit-check.sh validates | Hook |
+| Complete | `task-master set-status <id> done` | MCP |
+
+**Exceptions:** Infrastructure/config tasks use validation testing instead of TDD. Documentation skips TDD entirely.
+
+### Phase 4: Review — "Is it good enough?"
+
+| Action | Component |
+|--------|-----------|
+| Code quality | `/code-review` → code-reviewer agent |
+| Security scan | `/security-audit` → security-reviewer agent |
+| Multi-agent review | `/orchestrate review` → code + security + database agents |
+| Language-specific | `/python-review`, `/go-review` → specialized agents |
+| Verify before done | `superpowers:verification-before-completion` |
+
+### Phase 5: Shipping — "Get it out the door"
+
+Prescribed sequence from `workflow-enforcement.md`: (1) `/code-review` → address critical/high findings, (2) `git push -u origin <branch>` → pr-url-extract.sh fires, (3) `/pr` → squash merge default for feature/bugfix, (4) `gh run watch <id>` → verify CI, (5) merge → sync main → cleanup branch → update tasks → tag if release-worthy.
 
 ---
 
 ## Workflow Enforcement
 
-### Three Enforcement Tiers
-
-The template uses a layered enforcement model — hard gates where violations are costly, advisory checks where context matters, and normative rules where Claude's judgment applies:
-
-| Tier | Mechanism | What It Covers | Can Override? |
-|------|-----------|----------------|---------------|
-| **Hard (hooks)** | `pre-commit-check.sh` | Commit format, branch protection, lint, tests | `SKIP_*` env vars |
-| **Hard (plugin)** | Superpowers TDD | Tests before production code | Explicit user acknowledgment |
-| **Advisory** | `/phase-check` | Phase prerequisites (PRD exists, tests pass, etc.) | Always — reports only |
-| **Normative (rules)** | `workflow-enforcement.md` | Pipeline sequence, size thresholds, merge strategy | Claude discipline |
-
-### The End-to-End Pipeline
-
-Every non-trivial feature follows this complete sequence, defined in `workflow-enforcement.md`:
-
-```
-IDEATE     → superpowers:brainstorming (explore, clarify, propose)
-VALIDATE   → /research (validate APIs, libraries, rate limits, known bugs)
-SPECIFY    → /prd-generate or manual PRD (includes Technical Constraints section)
-DECOMPOSE  → task-master parse-prd → analyze-complexity → expand
-IMPLEMENT  → superpowers:test-driven-development (RED-GREEN-REFACTOR per task)
-REVIEW     → /code-review, /security-audit
-SHIP       → push → /pr (squash merge) → verify CI → sync main → cleanup → tag
-```
-
-The **VALIDATE** step (new in v2.4.0) catches broken technical assumptions before they're baked into the PRD. Dogfood testing showed that skipping this step caused mid-implementation discovery of API bugs, rate limits, and integration method preferences — all of which should have been known before writing the PRD.
-
-The **branch completion** step (SHIP) is explicitly prescribed — squash merge is the default for feature/bugfix/hotfix branches, merge commit for release branches. Claude does not present merge strategy as a choice.
-
-**TDD exceptions:** Infrastructure and configuration tasks (Docker, CI/CD, env config, shell scripts) use **validation testing** instead of standard RED-GREEN-REFACTOR. TDD requires testable behavior; infrastructure tasks produce configurations. Validate syntax and loading instead of writing unit tests for YAML files. See `workflow-enforcement.md` for the full task-type exception table.
-
-### Workflow Decision Thresholds
-
-`workflow-enforcement.md` defines explicit size thresholds so there is no ambiguity:
+### Decision Thresholds
 
 | Work Type | Size | Workflow |
 |-----------|------|----------|
-| **Feature** | Multi-task | Full pipeline (brainstorm → PRD → tasks → TDD) |
-| **Feature** | Single task | TDD directly, skip brainstorm/PRD |
-| **Bug fix** | < 10 lines | Direct TDD, no task needed |
-| **Bug fix** | 10-50 lines | Create task, then TDD |
-| **Bug fix** | > 50 lines | systematic-debugging first, then task + TDD |
-| **Refactor** | < 50 lines | Direct with tests |
-| **Refactor** | 50-200 lines | Create task + TDD |
-| **Refactor** | 200+ lines | Full pipeline (PRD, tasks, TDD per subtask) |
-| **Docs** | Any | No TDD. `docs:` commit prefix. |
-| **Hotfix** | Any | `hotfix/` branch, minimal TDD, skip PRD |
+| Feature (multi-task) | — | Full pipeline: brainstorm → validate → PRD → tasks → TDD |
+| Feature (single task) | — | TDD directly (skip brainstorm/PRD) |
+| Bug fix | < 10 lines | Direct TDD, no task needed |
+| Bug fix | 10-50 lines | Create task, then TDD |
+| Bug fix | > 50 lines | systematic-debugging first, then task + TDD |
+| Refactor | < 50 lines | Direct with tests |
+| Refactor | 50-200 lines | Create task + TDD |
+| Refactor | 200+ lines | Full pipeline: PRD, tasks, TDD per subtask |
+| Documentation | Any | No TDD. `docs:` commit prefix |
+| Infrastructure | Any | Validation testing (syntax + loading), not TDD |
 
-### The TDD Cycle
+### Three Enforcement Tiers
 
-The template doesn't just suggest test-driven development — it **enforces** it:
-
-1. **Superpowers plugin** (required) will delete production code written without failing tests
-2. **RED phase:** Write a failing test that defines the desired behavior
-3. **GREEN phase:** Write the minimum code to make the test pass
-4. **REFACTOR phase:** Improve the code while keeping tests green
-
-This enforcement catches the most common failure mode in AI-assisted development: the AI generates plausible-looking code that was never tested.
-
-### The Verification Pipeline
-
-`/verify` runs a structured quality gate:
-
-```
-Stage 1: Tests (pytest/jest/go test)     → PASS/FAIL/SKIP
-Stage 2: Linting (ruff/eslint/golint)    → PASS/FAIL/SKIP
-Stage 3: Type Checking (mypy/tsc)        → PASS/FAIL/SKIP
-Stage 4: Security (bandit/npm audit)     → PASS/FAIL/SKIP
-
-Result: READY / NOT READY for PR
-```
-
-SKIP (tool not installed) is distinct from FAIL — the template adapts to whatever tooling the project actually has, rather than demanding a specific stack.
-
-### Proactive Phase Detection
-
-The template automatically detects what phase of development you're in and adjusts behavior. The `/phase-check` command validates prerequisites before phase transitions:
-
-| Phase | Signals | Behavior | `/phase-check` Validates |
-|-------|---------|----------|-------------------------|
-| **Ideation** | "I want to build..." | Brainstorming, research, NO code | Always passes |
-| **Planning** | PRD exists, creating tasks | Task breakdown, dependency mapping | PRD exists, tasks parsed, complexity analyzed |
-| **Building** | Task in progress | TDD enforcement, frequent commits | Task claimed, feature branch, tests exist |
-| **Review** | Code complete | Security audit, quality review | Tests passing, linter clean, no debug stmts |
-| **Shipping** | Ready to merge | PR creation, changelog, issue sync | Branch pushed, CHANGELOG updated, task done |
-
-### Authority Hierarchy
-
-When guidance from different sources conflicts:
-
-```
-1. Rules (.claude/rules/)     — Highest. Cannot be overridden.
-2. Superpowers (plugin)       — Hard enforcement. Override requires explicit acknowledgment.
-3. Instincts (.claude/instincts/) — Learned patterns. Override freely.
-4. Defaults (Claude behavior) — Baseline. Override freely.
-```
+| Tier | Mechanism | Scope |
+|------|-----------|-------|
+| **Hard (hooks)** | pre-commit-check.sh | Commit format, branch protection |
+| **Hard (plugin)** | Superpowers TDD | Tests before production code |
+| **Advisory** | /phase-check | Phase prerequisites (reports only) |
+| **Normative** | workflow-enforcement.md | Pipeline sequence, thresholds, merge strategy |
 
 ---
 
@@ -679,6 +450,32 @@ The difference isn't just quality — it's **reproducibility**. The template pro
 | Documentation | Manual or forgotten | Auto-generated codemaps, session summaries |
 | Learning | Starts fresh every session | Persistent instinct system, cross-session memory |
 | Reproducibility | Hardcoded paths, no seeds | Verified by `/verify` pipeline |
+| Cost tracking | None | Per-session telemetry via cost-tracker.js |
+
+---
+
+## Multi-Model Collaboration
+
+`/multi-plan` and `/multi-execute` query multiple AI models in parallel, synthesizing diverse perspectives. Claude generates all perspectives by default. Optionally add API keys for genuinely independent perspectives:
+
+- `GOOGLE_AI_KEY` — Gemini (free tier available)
+- `OPENAI_API_KEY` — GPT (pay-as-you-go)
+
+Gracefully degrades to Claude-only without API keys. Check: `python3 scripts/multi-model-query.py --check`
+
+---
+
+## Session Persistence
+
+Three complementary layers:
+
+| Layer | Mechanism | Captures |
+|-------|-----------|----------|
+| **Automatic snapshots** | session-end.sh (Stop hook) | Git diff, commits, files, tasks |
+| **Pre-compaction state** | pre-compact.sh (UserPromptSubmit) | Branch, uncommitted changes, active task |
+| **Handoff documents** | Claude writes on request | Decisions, reasoning, exact next steps |
+
+Resume complex work: `Read .claude/sessions/handoff-YYYYMMDD.md and MEMORY.md`
 
 ---
 
@@ -698,7 +495,7 @@ With the template:
 
 **The result isn't just a better pipeline — it's a better researcher.** The template's enforced workflows become muscle memory. Students who use it for a semester internalize TDD, version control discipline, reproducibility practices, and code review habits that distinguish reliable research from one-off scripts.
 
-Beyond enforcement, the template provides **domain expertise on demand.** Need to configure a PostgreSQL spatial database? The `postgresql-patterns` skill knows about GiST indexing for geometry columns, PostGIS query optimization, and migration safety. Need Python testing patterns? The `python-testing` skill provides pytest fixtures, parametrization, and mocking strategies. The 40 skills act as an always-available senior engineer across every domain the student might encounter — without requiring the student to know the right questions to ask.
+Beyond enforcement, the template provides **domain expertise on demand.** Need to configure a PostgreSQL spatial database? The `postgresql-patterns` skill knows about GiST indexing for geometry columns, PostGIS query optimization, and migration safety. Need Python testing patterns? The `python-testing` skill provides pytest fixtures, parametrization, and mocking strategies. The 48 skills act as an always-available senior engineer across every domain the student might encounter — without requiring the student to know the right questions to ask.
 
 Critically, **quality scales with the project.** A thesis codebase that grows to 10,000+ lines maintains the same quality standards as the first 100 lines, because the template's enforcement doesn't fatigue. The TDD guide is just as strict on line 10,000 as on line 1. The security reviewer doesn't get tired of scanning. This is where AI-assisted development fundamentally differs from manual discipline — the template never has a bad day.
 
@@ -754,13 +551,188 @@ The template changes this:
 
 4. **The template itself is a teaching tool.** The rules and skills encode best practices that students absorb through use — not through lectures. The authority hierarchy (Rules > Instincts > Defaults) teaches software engineering governance: some constraints are non-negotiable (rules), some are learned suggestions (instincts), and some are baseline defaults. This mirrors real-world engineering organizations where certain practices are mandated by policy, others are team conventions, and others are individual preferences. Students who internalize this hierarchy understand governance — a concept that's difficult to teach abstractly but natural to learn through a system that enforces it.
 
-5. **Grading becomes more meaningful.** Instead of evaluating only the final output (does the app work?), the professor can evaluate the process (was the app built well?). The template's audit trail — commits, task completion, code review findings, test coverage — provides evidence of engineering discipline that a working demo alone cannot show.
+5. **Grading becomes more meaningful.** Instead of evaluating only the final output (does the app work?), the professor can evaluate the process (was the app built well?). The template's audit trail — commits, task completion, code review findings, test coverage — provides evidence of engineering discipline that a working demo alone cannot show. The harness audit (`/harness-audit`) provides a deterministic 70-point health score across 7 categories that can serve as a baseline assessment.
 
 ---
 
-## Development Timeline
+## Component Inventory
 
-### Completed (v2.0.0 — v2.2.0)
+### Agents (14)
+
+| Agent | Model | Purpose |
+|-------|-------|---------|
+| planner | Opus | Architecture planning, implementation design |
+| architect | Opus | System design, ADR output, technology selection |
+| code-reviewer | Sonnet | Quality review with severity tiers, >80% confidence filtering |
+| security-reviewer | Sonnet | OWASP Top 10, dependency scanning, secret detection |
+| tdd-guide | Sonnet | Test-driven development coaching (advisory) |
+| build-resolver | Sonnet | Build failure diagnosis, CI fixes (polyglot) |
+| database-reviewer | Sonnet | SQL optimization, N+1 detection, migration safety |
+| e2e-runner | Sonnet | Playwright/Cypress/Selenium test generation |
+| refactor-cleaner | Sonnet | Dead code removal, preserves all tests |
+| go-reviewer | Sonnet | Go idioms, goroutine leaks, error wrapping |
+| go-build-resolver | Sonnet | Go modules, CGO, cross-compilation errors |
+| python-reviewer | Sonnet | Python async, metaclasses, GIL, packaging |
+| doc-updater | Haiku | README, docstrings, API docs, CHANGELOG |
+| observer | Haiku | Background pattern analysis, instinct creation |
+
+### Rules (17)
+
+**Core (11, always loaded, ~6K tokens):**
+
+| Rule | Governs |
+|------|---------|
+| claude-behavior.md | Commit frequency, conventional commits, immutability, security checklist |
+| git-workflow.md | Branch naming, recovery commands, team collaboration |
+| reasoning-patterns.md | Clarification, brainstorming, five whys, adopt/extend/compose/build matrix |
+| workflow-guide.md | Phase detection, tool selection decision tree, commitment checkpoints |
+| workflow-enforcement.md | Task-type workflows, size thresholds, merge strategy, branch completion |
+| context-management.md | Thinking modes, compaction strategy, token budgets, sub-agent patterns |
+| proactive-steering.md | Project co-pilot behaviors, scope management, auto-tool invocation |
+| authority-hierarchy.md | Rules > Superpowers > Instincts > Defaults precedence |
+| superpowers-integration.md | Pipeline override: brainstorm → validate → PRD; writing-plans scope |
+| taskmaster-usage.md | CLI vs MCP matrix, flags, timeouts, token-conscious task viewing |
+| security-hardening.md | Deny lists, prompt injection guardrails, PR audit, OWASP mapping |
+
+**Language-specific (6, loaded on file edit, 0 startup tokens):**
+
+| Rule | Trigger Files |
+|------|--------------|
+| python/coding-standards.md | `.py` |
+| typescript/coding-standards.md | `.ts`, `.tsx` |
+| golang/coding-standards.md | `.go` |
+| java/coding-standards.md | `.java` |
+| frontend/component-standards.md | `.jsx`, `.tsx`, `.vue`, `.svelte` |
+| frontend/workflow.md | `.jsx`, `.tsx`, `.vue`, `.svelte` |
+
+### Skills (48)
+
+| Skill | Description |
+|-------|-------------|
+| tdd-workflow | RED-GREEN-REFACTOR patterns, coverage thresholds, Arrange-Act-Assert |
+| verification-loop | 6-phase verification: build → types → lint → test → security → diff |
+| debugging | Systematic debugging: reproduce → diagnose → fix |
+| code-review | Quality, security, and maintainability review patterns |
+| git-recovery | Emergency recovery: lost commits, merge conflicts, detached HEAD |
+| iterative-retrieval | Progressive context refinement for large codebases |
+| search-first | Research-before-coding: search for existing tools and patterns |
+| python-patterns | Python idioms, type hints (3.9+), async/await, dataclasses, pathlib |
+| python-testing | pytest strategies, fixtures, mocking, parametrization, coverage |
+| python-django | Django ORM, middleware, signals, admin, DRF patterns |
+| python-data-science | NumPy, pandas, scikit-learn, matplotlib, Jupyter, geostatistics |
+| django-patterns | Django architecture, REST API design with DRF |
+| django-security | Authentication, CSRF, SQL injection prevention, secure deployment |
+| django-tdd | pytest-django, TestCase, factory_boy, DRF APIClient testing |
+| django-verification | System checks, manage.py check --deploy, migration verification |
+| typescript-patterns | Strict mode, generics, utility types, discriminated unions |
+| golang-patterns | Idiomatic Go, error handling, interface design, concurrency |
+| golang-testing | Table-driven tests, subtests, benchmarks, fuzzing, coverage |
+| java-springboot | Spring Boot, dependency injection, JPA/Hibernate, actuator |
+| spring-boot-security | Spring Security, OAuth2/JWT, CORS, CSRF, filter chains |
+| spring-boot-tdd | JUnit 5, Mockito, @WebMvcTest, @DataJpaTest, TestContainers |
+| springboot-verification | Build, static analysis, tests, security scans for Spring Boot |
+| jpa-patterns | Entity mapping, lazy/eager loading, N+1 prevention, @EntityGraph |
+| cpp-coding-standards | C++ Core Guidelines, modern safe idioms |
+| cpp-testing | GoogleTest, CTest, sanitizers, coverage, benchmarks |
+| frontend-patterns | React/Vue/Svelte, state management, accessibility, performance |
+| frontend-design | Distinctive production-grade UI, avoids generic AI aesthetics |
+| api-design | REST resource naming, status codes, pagination, versioning |
+| backend-patterns | Caching, message queues, service communication, resilience |
+| database-patterns | SQL optimization, indexing, N+1 prevention, connection pooling |
+| database-migrations | Schema changes, data migrations, rollbacks, zero-downtime |
+| postgresql-patterns | EXPLAIN ANALYZE, B-tree/GIN/GiST indexes, JSONB, partitioning |
+| docker-patterns | Docker Compose, container security, networking, volumes |
+| deployment-patterns | CI/CD pipelines, health checks, rollback strategies |
+| security-scan | AgentShield auditing: CLAUDE.md secrets, MCP, hooks, agents |
+| e2e-testing | Playwright Page Object Model, CI/CD integration, flaky tests |
+| ai-regression-testing | Sandbox-mode API testing, AI blind spot detection |
+| eval-harness | Eval-driven development: pass@k capability, pass^k regression |
+| eval-metrics | Development (pass@k) and production (pass^k) evaluation frameworks |
+| agentic-engineering | Eval-first AI coding: task decomposition, model routing, cost discipline |
+| autonomous-loops | Non-interactive agent patterns: pipelines, de-sloppify, PR loops |
+| continuous-learning-v2 | Instinct-based learning with confidence scoring and evolution |
+| skill-stocktake | Quality audit of skills and commands (Quick Scan + Full Stocktake) |
+| blueprint | Multi-session construction plans with cold-start step briefs |
+| strategic-compact | Manual compaction at logical intervals for context preservation |
+| cost-aware-llm-pipeline | LLM cost optimization: model routing, budget tracking, caching |
+| claude-api | Claude API patterns: Messages, streaming, tool use, batches |
+| regex-vs-llm-structured-text | Decision framework: regex vs LLM for structured text parsing |
+
+### Commands (56)
+
+| Command | Description |
+|---------|-------------|
+| **Setup & Config** | |
+| /setup | Guided project setup wizard |
+| /settings | Configure settings (presets: fast, optimized, safe, thorough) |
+| /health | Project health check with AgentShield status |
+| /plugins | Plugin management |
+| /mcps | MCP server management |
+| **Task Management** | |
+| /tasks | List Taskmaster tasks for current or specified tag |
+| /task-status | Update Taskmaster task status |
+| /prd | Show or parse PRD documents |
+| /prd-generate | Research-backed PRD generation with architecture diagrams |
+| /phase-check | Validate phase transition prerequisites |
+| **Testing & Quality** | |
+| /test | Run project test suite |
+| /lint | Run linting and code quality checks |
+| /verify | Full verification pipeline (test + lint + types + security) |
+| /test-coverage | Analyze coverage gaps, generate missing tests |
+| /tdd | Enforce test-driven development workflow |
+| /go-test | Go TDD with table-driven tests and coverage |
+| /e2e | Generate and run end-to-end tests (Playwright/Cypress) |
+| /quality-gate | Run consolidated quality gate manually |
+| **Code Review** | |
+| /code-review | Comprehensive code review (quality + security) |
+| /python-review | Python-specific review (PEP 8, type hints, idioms) |
+| /go-review | Go-specific review (idioms, concurrency, security) |
+| /security-audit | Security vulnerability scan (code-level OWASP) |
+| **Implementation** | |
+| /plan | Create implementation plan, wait for confirmation |
+| /build-fix | Fix build and type errors incrementally |
+| /go-build | Fix Go build errors and linter issues |
+| /optimize | Performance analysis and optimization |
+| /refactor-clean | Safe dead code removal with test verification |
+| /generate-tests | Generate tests for specified file or module |
+| **Planning & Research** | |
+| /brainstorm | Structured brainstorming with approaches |
+| /research | Structured research (papers, docs, exploration) |
+| /multi-plan | Multi-model planning (Claude + Gemini + GPT) |
+| /multi-execute | Multi-model implementation |
+| /orchestrate | Multi-agent analysis pipeline (review, security, refactor) |
+| /aside | Quick side question without losing current context |
+| **Git & Release** | |
+| /commit | Create conventional commit |
+| /pr | Create GitHub Pull Request |
+| /rollback | Guided rollback with session context |
+| /changelog | Generate changelog from git history |
+| /check-upstream | Check upstream repos for changes |
+| /github-sync | Sync tasks with GitHub Issues |
+| **Session & Learning** | |
+| /sessions | Session history viewer with cleanup |
+| /checkpoint | Manual session state save |
+| /save-session | Save session state for later resume |
+| /resume-session | Resume from saved session |
+| /learn | Extract reusable patterns from current session |
+| /learn-eval | Extract patterns with self-evaluation |
+| /instinct-status | View learned instinct patterns and confidence scores |
+| /instinct-import | Import instincts from shared JSON file |
+| /instinct-export | Export instincts for team sharing |
+| /evolve | Cluster instincts into new skills |
+| /skill-create | Auto-generate skills from git commit history |
+| **Documentation & Scoring** | |
+| /update-codemaps | Generate architecture docs in docs/CODEMAPS/ |
+| /update-docs | Trigger doc-updater agent on changed files |
+| /eval | Code quality metrics with trend tracking |
+| /model-route | Get model tier recommendation for a task |
+| /harness-audit | Run deterministic template health scoring (70 points) |
+
+---
+
+## Development History
+
+### v2.0.0 — v2.2.0: ECC Integration & Feature Parity
 
 The template's development followed a deliberate research-first methodology: study the best existing implementations, understand their design decisions, then build something that combines their strengths with our unique requirements.
 
@@ -781,83 +753,50 @@ The template's development followed a deliberate research-first methodology: stu
 
 #### Phase 2: Full Feature Parity (35 tasks, 175 subtasks)
 
-**The goal:** Bring the template to feature parity with ECC's component inventory — 13 agents, comprehensive skill coverage, multi-language support — while maintaining our architectural advantages.
-
 **Key implementation decisions:**
 - **Language-specific rules use `paths:` frontmatter** so they load only when matching files are edited. A Python developer never pays the token cost for Go rules. This was our innovation — ECC loads all language rules at startup.
-- **Skills are on-demand** (loaded when Claude detects relevance), not startup-loaded. This means 40 skills contribute exactly 0 tokens to startup overhead. ECC handles this similarly.
+- **Skills are on-demand** (loaded when Claude detects relevance), not startup-loaded. This means 48 skills contribute exactly 0 tokens to startup overhead.
 - **The instinct system uses confidence scoring** (0.0-1.0) with automatic decay. Unused patterns lose 0.05 confidence per week and are removed when they reach 0. This prevents knowledge rot — outdated patterns fade naturally instead of persisting forever.
 
 **Delivery:** 50 tasks, 250 subtasks total across both phases. All implemented through Claude Code itself — the template was built using the template's own workflow enforcement, which served as both a development tool and a stress test.
 
-#### Phase 2.1: Gap-Filling Release (v2.1.0)
+#### v2.1.0: The Honest Reckoning
 
-**The honest reckoning:** After declaring "feature parity," we performed a quantitative audit against ECC's actual component inventory. The results were humbling:
-- Raw coverage: ~62% (we had claimed ~82% "effective" coverage by counting functional equivalents)
-- The gap: we had been generous in counting our components as "equivalent" without actually comparing implementations
+After declaring "feature parity," we performed a quantitative audit against ECC's actual component inventory. The results were humbling — raw coverage was ~62% (we had claimed ~82% by counting functional equivalents). We fetched ECC's actual source code for every overlapping command and compared line-by-line, replaced 2 commands entirely where ECC's design was superior, merged improvements into 3 more, and added 6 new skills plus 12 agent-invoking commands.
 
-**What we did about it:**
-1. **Fetched ECC's actual source code** for every overlapping command and compared line-by-line
-2. **Replaced 2 commands entirely** (`/eval`, `/update-codemaps`) where ECC's design philosophy was fundamentally superior — ECC's feature-level eval model (`pass@k` capability, `pass^k` regression) was architecturally better than our metrics-only approach
-3. **Merged improvements into 3 commands** (`/orchestrate`, `/checkpoint`, `/update-docs`) taking the best from both implementations
-4. **Kept 3 commands unchanged** (`/verify`, `/code-review`, `/skill-create`) where our implementations were genuinely stronger — our `/verify` is more polyglot and our `/code-review` has confidence filtering that ECC lacks
-5. **Added 6 new skills** covering gaps in Docker, API design, deployment, database migrations, backend patterns, and iterative retrieval
-6. **Added 12 agent-invoking commands** (`/plan`, `/tdd`, `/code-review`, `/e2e`, `/build-fix`, `/refactor-clean`, `/go-review`, `/python-review`, `/go-build`, `/go-test`, `/test-coverage`, `/learn`) — the biggest UX gap, as we had all 13 agents but no user-facing commands to invoke most of them
+#### v2.2.0: Feature Parity Completion
 
-#### Phase 2.2: ECC Feature Parity Completion (v2.2.0)
+Completed ECC feature parity with 12 domain skills, 9 automation hooks, and documentation updates — all gap-analyzed against ECC's source code.
 
-This release completed ECC feature parity by adding the remaining domain skills, automation hooks, and documentation updates. All items were gap-analyzed against ECC's source code and implemented.
+### v2.3.0: Template Overlay Infrastructure
 
-#### 12 Domain Skills
+Real-world overlay testing on three projects revealed a **critical architectural finding**: Claude Code's parent-directory traversal registers rules and CLAUDE.md from parent directories, but does NOT register commands, skills, or hooks. This meant all slash commands and skills were silently broken for any project that didn't have its own local `.claude/` directory.
 
-Each skill is a self-contained knowledge module that loads on-demand (zero startup cost) when Claude detects it's relevant to the current task.
+Built `init-project.sh` (bootstraps local `.claude/` structure), `smoke-test.sh` (validates overlay deployments), and the `superpowers-integration.md` rule (fixes a workflow conflict where Superpowers brainstorming skill bypassed the template's PRD pipeline).
 
-| Skill | What It Provides | Why It's Needed |
-|-------|-----------------|-----------------|
-| **tdd-workflow** | Complete RED-GREEN-REFACTOR cycle patterns, coverage thresholds by code type, mocking strategies per framework (Jest, pytest, Go test) | Our `tdd-guide` agent exists but lacks a portable skill reference. ECC's version includes framework-specific test patterns and Arrange-Act-Assert templates. |
-| **verification-loop** | 6-phase verification system (build → types → lint → test → security → diff review) with continuous mode for long sessions | Complements our `/verify` command with reusable verification patterns that any agent can reference, not just the command itself. |
-| **eval-harness** | Eval-driven development (EDD) framework with `pass@k` (capability) and `pass^k` (regression) metrics, code-based and model-based graders | Our `/eval` command was rewritten with ECC's model, but the underlying skill for building evaluation harnesses is missing. This teaches Claude how to construct evals, not just run them. |
-| **security-scan** | AgentShield configuration auditing — scans CLAUDE.md for hardcoded secrets, hooks for command injection, MCP configs for supply-chain risks, agents for overly broad tool access | Our `security-reviewer` agent does code-level OWASP scanning. This skill covers *configuration-level* security — a different attack surface entirely. |
-| **python-patterns** | Framework-agnostic Python idioms: type hints (3.9+ syntax), context managers, decorators, comprehensions, `__slots__`, async/await patterns, `pyproject.toml` configuration | We have `python-django` (Django-specific) but nothing for general Python. A student building a CLI tool or data pipeline gets no Python guidance without this. |
-| **postgresql-patterns** | Query optimization (EXPLAIN ANALYZE), indexing strategies (B-tree vs GIN vs GiST), partitioning, connection pooling, JSONB patterns, CTE performance, vacuum tuning | Our `database-patterns` skill is generic SQL. PostgreSQL has specific optimization patterns (e.g., partial indexes, covering indexes) that generic advice misses. |
-| **spring-boot-security** | Spring Security configuration, OAuth2/JWT integration, CORS policies, CSRF protection, method-level security annotations, security filter chain | Our `java-springboot` skill covers general Spring Boot but has zero security content. Security misconfigurations are the #1 vulnerability in Spring applications. |
-| **spring-boot-tdd** | JUnit 5 + Mockito patterns, `@SpringBootTest` vs `@WebMvcTest` slice testing, `@DataJpaTest` for repository layers, TestContainers for integration tests | Our `java-springboot` skill has no testing patterns. Without this, Claude generates untested Spring code — exactly what TDD enforcement is meant to prevent. |
-| **django-tdd** | pytest-django fixtures, `TestCase` vs `TransactionTestCase`, factory_boy patterns, API testing with DRF's `APIClient`, model testing, middleware testing | We have `django-security` but no TDD guidance for Django. Testing Django views, models, and middleware has framework-specific patterns that generic pytest advice doesn't cover. |
-| **django-verification** | Django system checks framework, `manage.py check --deploy`, migration verification, template validation, URL resolution testing, settings validation | Quality assurance specific to Django — verifying migrations are complete, no missing template variables, deployment checklist passes. |
-| **jpa-patterns** | Entity mapping (`@OneToMany`, `@ManyToOne`), lazy vs eager loading, N+1 query prevention with `@EntityGraph`, JPQL optimization, second-level caching, transaction boundaries | Our `java-springboot` skill covers Spring Boot generally but JPA/Hibernate is a deep domain with its own anti-patterns (the "open session in view" problem, detached entity exceptions). |
-| **cpp-testing** | Google Test / Catch2 patterns, test fixtures, parameterized tests, mocking with GMock, memory leak detection with AddressSanitizer, benchmark testing | New language coverage. C++ testing has unique challenges (no reflection, manual memory management) that require specialized patterns. |
+### v2.4.0: Dogfood Remediation
 
-#### 6 Automation Hooks
+Systematic dogfood testing (Phases 0-6, 25 tasks, 263 tests, 21 commits) revealed 15 findings. Key discoveries:
+- Claude uses MCP despite CLI documentation (4 violations) → added `taskmaster-usage.md` rule
+- Process overhead degrades brainstorming → streamlined workflow
+- Missing technical validation step → added VALIDATE phase between brainstorming and PRD
+- TDD doesn't fit infrastructure tasks → added validation testing exceptions
 
-Hooks are shell scripts that execute automatically in response to Claude Code events (before/after tool use, session start/end). They enforce discipline without requiring the developer to remember to run checks.
+### v2.5.0: Hook Architecture & Cost Discipline
 
-| Hook | Trigger | What It Does | Why It Matters |
-|------|---------|-------------|----------------|
-| **Doc File Blocker** | PreToolUse (Write) | Blocks creation of random `.md` / `.txt` files. Allows `README.md`, `CLAUDE.md`, `CONTRIBUTING.md`, and files in `docs/`. | LLMs have a tendency to create unnecessary documentation files ("let me create a NOTES.md..."). This prevents documentation sprawl by funneling all docs through proper channels. |
-| **Console.log Audit** | PostToolUse (Edit) | Scans edited files for `console.log`, `print()`, `fmt.Println` debug statements and warns if found. | Debug statements that slip into production are a code review classic. Catching them at edit time is cheaper than catching them in review. |
-| **Pattern Extraction** | SessionEnd | Analyzes the completed session for recurring patterns, error resolutions, and workarounds. Saves candidates as instincts (confidence 0.3-0.5) for the continuous learning system. | This is the engine that powers cross-session learning. Without it, the instinct system only grows via manual `/learn` invocations. With it, the template learns automatically from every session. |
-| **Build Analysis** | PostToolUse (Bash) | After build commands (`npm run build`, `cargo build`, `go build`), runs a background analysis of build output without blocking the developer. | Provides proactive feedback about build health. Runs asynchronously so it doesn't slow down the workflow — results appear as advisory messages. |
-| **TypeScript Check** | PostToolUse (Edit) | After editing `.ts` / `.tsx` files, runs `tsc --noEmit` on the changed file to catch type errors immediately. | Type errors caught at edit time take 5 seconds to fix. Type errors discovered 30 minutes later during a build take 5 minutes to fix. Immediate feedback dramatically reduces debugging time. |
-| **Dev Server Blocker** | PreToolUse (Bash) | Blocks `npm run dev`, `pnpm dev`, and similar commands unless running inside tmux. Suggests the tmux command instead. | Dev servers run indefinitely and capture the terminal. Inside tmux, you can detach and reattach. Outside tmux, killing the terminal kills the server — and any unsaved session state with it. |
-| **PR URL Extract** | Stop | Extracts PR creation URL from `git push` output and suggests review commands. | After pushing, the next natural step is creating a PR — this hook surfaces the URL automatically so the developer doesn't need to navigate to GitHub manually. |
-| **Tmux Hint** | PreToolUse (Bash) | Advisory reminder to use tmux for long-running commands (npm, pytest, cargo, docker). | Long-running commands can capture the terminal. Inside tmux, you detach and reattach; outside, an interrupted terminal kills the process. |
-| **Observe** | PreToolUse/PostToolUse | Captures tool usage patterns to `observations.jsonl` for the continuous learning system. | The engine that feeds the observer agent — records what tools are used, on what files, enabling automatic pattern detection across sessions. |
+Major infrastructure release adding:
+- **Hook profile system** (minimal/standard/strict) — trade thoroughness for speed via `TEMPLATE_HOOK_PROFILE`
+- **Quality gate consolidation** — `quality-gate.js` replaces 3 separate hooks with progressive delegation
+- **Cost tracker** — per-session token/cost telemetry to `cost-log.jsonl`
+- **File size guard** — blocks source code file creation exceeding 800 lines (documentation files exempt)
+- **Harness audit** — deterministic 70-point health scoring across 7 categories
+- **Security hardening** — OWASP Agentic Top 10 mapping, config tamper guard, secret scrubbing in observations
+- **Three new skills** — agentic-engineering, autonomous-loops, eval-metrics
+- **Two new commands** — `/model-route`, `/harness-audit`
 
-#### v3.0 Phase 1: Project-Type Presets (Completed)
+### Project-Type Presets
 
-The first step beyond ECC feature parity: **one-command project scaffolding.** Previously, adopting the template required manually selecting which skills and rules were relevant, creating directory structures, and editing CLAUDE.md. Presets automate all of this.
-
-**What was built:**
-
-| Component | Description |
-|-----------|-------------|
-| `.claude/presets/project-presets.json` | Registry of 5 project-type presets with tech stacks, directory structures, dev commands, patterns, and package lists |
-| `scripts/setup-preset.sh` | Bash script with `--dry-run`, `--force`, and `--name` options. Uses `awk` for surgical CLAUDE.md section replacement. |
-| `.claude/skills/python-data-science/SKILL.md` | New skill: NumPy, pandas, scikit-learn, matplotlib, Jupyter, spatial/geostatistics patterns |
-| `.claude/commands/setup.md` | Extended with `/setup preset <name>` subcommand |
-| `.claude/hooks/session-init.sh` | Displays active preset name in session startup output |
-
-**Available presets:**
+One-command project scaffolding — a student can clone the template, run one command, and have a fully configured project:
 
 | Preset | Stack | Skills Activated |
 |--------|-------|-----------------|
@@ -867,48 +806,16 @@ The first step beyond ECC feature parity: **one-command project scaffolding.** P
 | `java-spring` | Spring Boot 3.2+ + JPA + PostgreSQL + Flyway | java-springboot, spring-boot-security, spring-boot-tdd, jpa-patterns |
 | `python-data-science` | pandas + scikit-learn + Jupyter + matplotlib | python-patterns, python-testing, database-patterns |
 
-**What each preset does:**
-1. Creates the full directory structure with `.gitkeep` files
-2. Rewrites CLAUDE.md sections (Tech Stack, Structure, Development Commands, Patterns) using `awk`-based section replacement
-3. Writes `.claude/project-state.json` with preset metadata and tech stack
-4. Appends preset-specific entries to `.gitignore`
-5. Includes safety checks: blocks overwriting already-customized CLAUDE.md without `--force`
-
-**Usage:**
 ```bash
-# Interactive: preview first, then apply
-./scripts/setup-preset.sh python-fastapi --dry-run
 ./scripts/setup-preset.sh python-fastapi --name "My API Project"
-
-# Via slash command
-/setup preset python-fastapi
+# Or: /setup preset python-fastapi
 ```
 
-**Why this matters for adoption:** A student can now clone the template, run one command, and have a fully configured project with the right directory structure, dev commands, linting configuration, and skill activation for their stack. The 30-minute manual setup becomes a 30-second command.
+---
 
-#### v3.0 Phase 2: Template Overlay Infrastructure (Completed)
+## Future Roadmap
 
-Real-world overlay testing on three projects (analog_image_generator, rideshare-rescue, postiz-social-automation) revealed a **critical architectural finding**: Claude Code's parent-directory traversal registers rules and CLAUDE.md from parent directories, but does NOT register commands, skills, or hooks. This meant all 50 slash commands and 40 skills were silently broken for any project that didn't have its own local `.claude/` directory.
-
-**What was built to fix this:**
-
-| Component | Description |
-|-----------|-------------|
-| `scripts/init-project.sh` | Bootstraps local `.claude/` structure. Auto-detects nested projects (creates symlinks) vs standalone projects (copies files). Handles 6 subdirs: rules, commands, skills, agents, contexts, hooks. Idempotent, supports `--dry-run`, `--force`, `--mode`. |
-| `scripts/smoke-test.sh` | Validates template overlay deployments. 8 checks (rules, commands, skills, agents, contexts, hooks, CLAUDE.md, .gitignore) with CRITICAL/WARN distinction. Uses `find -L` to follow symlinks. |
-| `.claude/rules/superpowers-integration.md` | Rule override fixing a workflow conflict: Superpowers brainstorming skill hard-routed to `writing-plans`, bypassing the template's PRD → Task Master pipeline. Rules take precedence per authority hierarchy, so this override is enforced. |
-| `session-init.sh` enhancements | Detects missing local commands/skills at session start, shows CRITICAL warning with fix instructions. |
-| `/setup` Step 0 | Setup wizard now initializes local `.claude/` structure before all other setup steps. |
-| `sync-template.sh` enhancements | `adopt` mode now copies all `.claude/` subdirectories, not just curated file lists. |
-| `docs/TEMPLATE_OVERLAY_FRICTION.md` | Friction log documenting all 3 overlay tests, findings, and fix status. |
-
-**Key architectural insight:** The correct workflow for the template is: brainstorm → **validate** (technical research) → PRD → parse-prd → analyze-complexity → expand → TDD per task. The Superpowers plugin's brainstorming skill previously bypassed this by routing directly to its own `writing-plans` skill. The `superpowers-integration.md` rule corrects this at the authority hierarchy level. The validation step (v2.4.0) ensures technical assumptions are verified before the PRD is written.
-
-See `docs/TEMPLATE_OVERLAY_FRICTION.md` for the complete overlay testing results and friction pattern tracker.
-
-### Future Roadmap (v3.0+)
-
-#### Phase 1: Journel Server Deployment
+### Phase 1: Journel Server Deployment
 
 The template moves from a WSL development environment to Journel (departmental Linux server), which changes several operational assumptions:
 
@@ -920,7 +827,7 @@ The template moves from a WSL development environment to Journel (departmental L
 | **Shared instinct repository** | Currently, instincts live in each developer's `.claude/instincts/`. For team use, instincts should be shareable. | Create a shared instinct directory on Journel. Use `/instinct-export` and `/instinct-import` to sync patterns between team members. |
 | **Git configuration** | Journel may have different git credentials, SSH keys, and remote access. | Configure git with SSH key for GitHub access. Verify `git push` works from Journel to the template repository. |
 
-#### Phase 2: Team Collaboration Features
+### Phase 2: Team Collaboration Features
 
 | Feature | Description | Value |
 |---------|-------------|-------|
@@ -929,7 +836,7 @@ The template moves from a WSL development environment to Journel (departmental L
 | **Team review aggregation** | Combine `/code-review` findings across team members to build a shared understanding of codebase quality. | Faculty can see aggregated quality metrics across all student projects without reviewing each one individually. |
 | **Instinct conflict resolution** | When two developers' instincts contradict, surface the conflict and let the team decide which pattern wins. | Prevents "my Claude says X, your Claude says Y" disagreements by making learned patterns explicit and reviewable. |
 
-#### Phase 3: CI/CD Integration
+### Phase 3: CI/CD Integration
 
 The template's `/verify` pipeline currently runs locally. CI/CD integration runs it automatically on every push:
 
@@ -963,7 +870,7 @@ jobs:
 
 This means the same quality gates enforced locally by the template are also enforced in CI — no code merges to main without passing all stages.
 
-#### Phase 4: Metrics Dashboard
+### Phase 4: Metrics Dashboard
 
 Track development quality and velocity over time:
 
@@ -975,10 +882,11 @@ Track development quality and velocity over time:
 | **TDD compliance** | Superpowers enforcement logs | What percentage of code was written test-first? |
 | **Instinct growth** | `.claude/instincts/` file count and confidence scores | Is the team's collective knowledge growing? |
 | **Code quality scores** | `/eval` pass@k metrics | Are feature implementations becoming more reliable? |
+| **Session costs** | `cost-log.jsonl` telemetry | Token usage trends, model distribution, cost per task |
 
 This data enables faculty to assess not just *what* students built, but *how* they built it — measuring process quality alongside output quality.
 
-#### Phase 5: Academic Workflow Mode
+### Phase 5: Academic Workflow Mode
 
 Specialized rules and workflows for research-oriented development:
 
@@ -991,7 +899,7 @@ Specialized rules and workflows for research-oriented development:
 | **Data pipeline validation** | Skills for validating data pipelines: schema checks, null handling, data drift detection, train/test leakage prevention. |
 | **Thesis/paper integration** | `/update-docs` gains a mode for updating LaTeX or Markdown thesis chapters when the underlying code changes, keeping implementation descriptions in sync with actual code. |
 
-#### Phase 6: Custom Agent Creation Framework
+### Phase 6: Custom Agent Creation Framework
 
 Allow students and faculty to define project-specific agents without modifying the template core:
 
@@ -1035,4 +943,4 @@ Any student using this template starts their project with the workflow enforceme
 ---
 
 *Built with Claude Code (Anthropic) | Informed by Everything Claude Code (45K+ stars)*
-*Template version 2.4.0 | 14 agents, 40 skills, 48 commands, 16 rules, 18 hooks | 5 project-type presets*
+*Template v2.5.0 | 14 agents, 48 skills, 56 commands, 17 rules, 21 hooks | 70/70 harness score*
