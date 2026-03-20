@@ -114,7 +114,7 @@ Report: "Session file found but appears empty or unreadable. You may need to cre
 ## Example Output
 
 ```
-SESSION LOADED: /Users/you/.claude/sessions/2024-01-15-abc123de-session.tmp
+SESSION LOADED: .claude/sessions/2024-01-15-abc123de-session.tmp
 ════════════════════════════════════════════════
 
 PROJECT: my-app — JWT Authentication

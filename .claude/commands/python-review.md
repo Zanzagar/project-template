@@ -223,6 +223,18 @@ def append(value, items=None):
     return items
 ```
 
+### Use List Comprehensions
+```python
+# Before
+result = []
+for item in items:
+    if item.is_valid():
+        result.append(item.value)
+
+# After
+result = [item.value for item in items if item.is_valid()]
+```
+
 ### Use f-strings (Python 3.6+)
 ```python
 # Before
@@ -230,6 +242,17 @@ greeting = "Hello, " + name + "!"
 
 # After
 greeting = f"Hello, {name}!"
+```
+
+### Fix String Concatenation in Loops
+```python
+# Before
+result = ""
+for word in words:
+    result += word + " "
+
+# After
+result = " ".join(words)
 ```
 
 ## Python Version Compatibility

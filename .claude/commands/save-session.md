@@ -271,5 +271,5 @@ Then test with Postman — the response should include a `Set-Cookie` header.
 - The "What Did NOT Work" section is the most critical — future sessions will blindly retry failed approaches without it
 - If the user asks to save mid-session (not just at the end), save what's known so far and mark in-progress items clearly
 - The file is meant to be read by Claude at the start of the next session via `/resume-session`
-- Use the canonical global session store: `.claude/sessions/`
+- Use the project session store: `.claude/sessions/`
 - Prefer the short-id filename form (`YYYY-MM-DD-<short-id>-session.tmp`) for any new session file
