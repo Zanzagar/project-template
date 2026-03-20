@@ -5,8 +5,10 @@
  * Matcher: Write
  * Exit 2 to block the tool use, Exit 0 to allow.
  *
- * Exempt: lockfiles, generated files, vendor directories.
+ * Exempt: lockfiles, generated files, vendor directories, documentation files.
  * Adapted for template from claude-behavior.md (<800 lines rule).
+ * The 800-line rule targets source code modularity — documentation, skills,
+ * PRDs, and data files are legitimately long and should not be constrained.
  */
 
 'use strict';
@@ -25,6 +27,13 @@ const EXEMPT_FILES = new Set([
   'Gemfile.lock',
   'composer.lock',
   'pnpm-workspace.yaml',
+]);
+
+// Documentation and data files — length means thoroughness, not poor design
+const EXEMPT_EXTENSIONS = new Set([
+  '.md', '.mdx', '.txt', '.rst', '.adoc',  // documentation
+  '.csv', '.tsv', '.jsonl', '.log',         // data/logs
+  '.sql',                                    // migrations, seeds
 ]);
 
 const EXEMPT_PATH_SEGMENTS = [
@@ -55,6 +64,10 @@ function run(rawInput) {
     // Check exempt filenames
     const filename = path.basename(filePath);
     if (EXEMPT_FILES.has(filename)) return rawInput;
+
+    // Check exempt extensions (documentation, data, logs)
+    const ext = path.extname(filePath).toLowerCase();
+    if (EXEMPT_EXTENSIONS.has(ext)) return rawInput;
 
     // Check exempt path segments
     if (EXEMPT_PATH_SEGMENTS.some(seg => filePath.includes(seg))) return rawInput;
