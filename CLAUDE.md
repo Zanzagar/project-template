@@ -228,16 +228,6 @@ alias claude-research='claude --append-system-prompt "$(cat .claude/contexts/res
 
 Add aliases to `~/.bashrc` or `~/.zshrc`. Default `claude` (no alias) uses the project's normal settings.
 
-## Token Optimization
-
-For cost-conscious development or long sessions, use the optimized preset:
-
-```bash
-/settings optimized
-```
-
-This reduces costs 60-80% by capping thinking tokens, compacting context earlier, and using lighter sub-agent models. See `docs/ECC_INTEGRATION.md` for details.
-
 ## Status Line
 
 A status line script ships at `.claude/statusline.sh` showing model, git branch, context usage, and session duration:
@@ -260,7 +250,7 @@ Sessions automatically save summaries on exit (when `session-end.sh` hook is ena
 - `session-init.sh` detects and displays summaries from the last 24 hours
 - `pre-compact.sh` preserves state before context compaction
 
-Enable via `/settings safe`, `/settings thorough`, or `/settings optimized`.
+Enable via `/settings safe`, `/settings thorough`, or `/settings standard`.
 
 ## Agents
 
@@ -295,7 +285,7 @@ All 21 hooks are enabled by default via the tracked `.claude/settings.json`. Use
 ```bash
 # Slim down with a preset (writes to settings.local.json, overrides tracked config)
 /settings fast        # Disables all hooks
-/settings optimized   # Lightweight subset + token savings
+/settings safe        # Safety hooks only (lightweight subset)
 /settings safe        # Safety hooks only (no formatting/analysis)
 ```
 

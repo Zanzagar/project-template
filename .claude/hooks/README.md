@@ -138,7 +138,7 @@ All hooks are enabled by default in `.claude/settings.json` (tracked). To custom
 1. **Use a preset** (writes to `settings.local.json`, overrides tracked config):
    ```bash
    /settings fast        # Disables all hooks
-   /settings optimized   # Lightweight subset + token savings
+   /settings safe        # Safety hooks only (lightweight subset)
    /settings safe        # Safety hooks only
    ```
 

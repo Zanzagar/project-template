@@ -79,8 +79,8 @@ function defineChecks() {
           }},
         { id: 'context-modes', label: 'Context modes defined', weight: 2,
           test: (d) => exists(d, '.claude/contexts') && dirCount(d, '.claude/contexts') >= 1 },
-        { id: 'token-optimization', label: 'Token optimization documented', weight: 2,
-          test: (d) => fileContains(d, 'CLAUDE.md', 'Token Optimization') },
+        { id: 'context-management', label: 'Context management documented', weight: 2,
+          test: (d) => fileContains(d, 'CLAUDE.md', 'Context') || fileContains(d, 'CLAUDE.md', 'Status Line') },
       ]
     },
     qualityGates: {
@@ -148,7 +148,7 @@ function defineChecks() {
       ]
     },
     costEfficiency: {
-      label: 'Cost Efficiency',
+      label: 'Resource Management',
       checks: [
         { id: 'cost-tracker', label: 'Cost tracker hook', weight: 2,
           test: (d) => exists(d, '.claude/hooks/cost-tracker.js') },

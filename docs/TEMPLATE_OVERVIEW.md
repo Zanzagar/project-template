@@ -71,7 +71,7 @@ Here's what they don't realize happened:
 | **Workflow** | Reactive (does what you say) | Proactive (detects phase, suggests next steps, catches mistakes) |
 | **Learning** | Starts fresh daily | Instinct system captures patterns, evolves into skills |
 | **Collaboration** | Single model | Multi-model parallel execution (Claude + Gemini + GPT) |
-| **Cost visibility** | No tracking | Per-session cost telemetry, model routing recommendations |
+| **Observability** | No tracking | Per-session usage telemetry, model capability routing |
 
 The difference is analogous to the difference between giving someone a text editor and giving them an IDE. The underlying capability is the same, but the **scaffolding around it** determines whether that capability translates into reliable, high-quality output.
 
@@ -228,42 +228,29 @@ See `docs/SECURITY.md` for full security documentation including AgentShield CI 
 
 ---
 
-## Cost & Token Management
+## Resource Observability
 
-### Cost Tracker (v2.5.0)
+### Usage Telemetry (v2.5.0)
 
-`cost-tracker.js` (Stop hook) appends per-session token usage to `.claude/sessions/cost-log.jsonl`:
+`cost-tracker.js` (Stop hook) logs per-session token usage to `.claude/sessions/cost-log.jsonl` for understanding session patterns:
 
 ```json
-{"timestamp":"2026-03-20T01:00:00Z","session_id":"abc","model":"opus","input_tokens":45000,"output_tokens":12000,"estimated_cost_usd":0.9075}
+{"timestamp":"2026-03-20T01:00:00Z","session_id":"abc","model":"opus","input_tokens":45000,"output_tokens":12000}
 ```
 
-Cost estimation uses blended rates per million tokens: Haiku ($0.80/$4.00 in/out), Sonnet ($3/$15), Opus ($15/$75).
+This telemetry helps identify which tasks consume the most context and when sessions are approaching limits — it's an observability tool, not a cost-saving mechanism.
 
-### Model Routing
+### Model Routing by Capability
 
-`/model-route` recommends the appropriate model tier for a task:
+`/model-route` recommends the appropriate model tier based on **task complexity and risk**, not cost:
 
 | Task Type | Recommended | Why |
 |-----------|-------------|-----|
-| Bug fix, routine code | Sonnet | Cost-effective, sufficient for scoped changes |
-| Architecture, complex planning | Opus | Deep reasoning for high-stakes decisions |
-| Documentation, exploration | Haiku | Lightweight, high-frequency tasks |
-| Sub-agent research | Haiku | Fresh context, low-stakes information gathering |
+| Architecture, complex planning | Opus | Maximum reasoning depth for high-stakes decisions |
+| Implementation, code review | Sonnet | Strong for scoped, well-defined work |
+| Formatting, simple transforms | Haiku | Sufficient for mechanical, deterministic tasks |
 
-Set `CLAUDE_CODE_SUBAGENT_MODEL=haiku` to route sub-agents to cheaper models automatically.
-
-### Token Optimization Settings
-
-Apply via `/settings optimized` or set individually:
-
-| Setting | Default | Optimized | Savings |
-|---------|---------|-----------|---------|
-| `MAX_THINKING_TOKENS` | 31,999 | 10,000 | ~70% per response |
-| `CLAUDE_CODE_AUTOCOMPACT_PCT_OVERRIDE` | ~95% | 50% | Earlier compaction |
-| `CLAUDE_CODE_SUBAGENT_MODEL` | (inherits) | haiku | ~80% on sub-agents |
-
-Combined savings: 60-80% cost reduction with maintained quality for typical development work.
+**Default to the highest-capability model when in doubt.** Never sacrifice reasoning depth for speed.
 
 ---
 
@@ -313,7 +300,7 @@ observe.sh (Pre+PostToolUse, matcher: *)
 | **Memory & Persistence** | 10 | Session init/end hooks, pre-compact, sessions dir, compaction advisor |
 | **Eval & Testing** | 10 | Test command, linter configured, CI workflow, /verify command, /eval command |
 | **Security Guardrails** | 10 | Sensitive file protection, security rule, .gitignore blocks .env, no secrets, doc blocker |
-| **Cost Efficiency** | 10 | Cost tracker, /model-route, hook profiles, sub-agent routing docs, settings presets |
+| **Resource Management** | 10 | Usage tracker, /model-route, hook profiles, sub-agent routing docs, settings presets |
 
 **Grading:** A (90-100%), B (80-89%), C (70-79%), D (60-69%), F (<60%). Exit code 1 if below 50%.
 
@@ -450,7 +437,7 @@ The difference isn't just quality — it's **reproducibility**. The template pro
 | Documentation | Manual or forgotten | Auto-generated codemaps, session summaries |
 | Learning | Starts fresh every session | Persistent instinct system, cross-session memory |
 | Reproducibility | Hardcoded paths, no seeds | Verified by `/verify` pipeline |
-| Cost tracking | None | Per-session telemetry via cost-tracker.js |
+| Usage telemetry | None | Per-session tracking via cost-tracker.js |
 
 ---
 
@@ -788,7 +775,7 @@ Major infrastructure release adding:
 - **Hook profile system** (minimal/standard/strict) — trade thoroughness for speed via `TEMPLATE_HOOK_PROFILE`
 - **Quality gate consolidation** — `quality-gate.js` replaces 3 separate hooks with progressive delegation
 - **Cost tracker** — per-session token/cost telemetry to `cost-log.jsonl`
-- **File size guard** — blocks source code file creation exceeding 800 lines (documentation files exempt)
+- **File size guard** — blocks source code files exceeding 800 lines (documentation/data files exempt)
 - **Harness audit** — deterministic 70-point health scoring across 7 categories
 - **Security hardening** — OWASP Agentic Top 10 mapping, config tamper guard, secret scrubbing in observations
 - **Three new skills** — agentic-engineering, autonomous-loops, eval-metrics

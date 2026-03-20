@@ -135,17 +135,6 @@ Start a fresh session when you observe **symptoms**, not arbitrary thresholds:
 
 **Don't reset preemptively** - if Claude is performing well, continue working regardless of token count.
 
-## Token Optimization Settings
-
-These settings reduce token consumption by 60-80%. Apply via `/settings optimized` or set individually as environment variables.
-
-| Setting | Default | Optimized | Savings | Impact |
-|---------|---------|-----------|---------|--------|
-| `MAX_THINKING_TOKENS` | 31,999 | 10,000 | ~70% | Caps extended thinking — faster but shallower reasoning |
-| `CLAUDE_CODE_AUTOCOMPACT_PCT_OVERRIDE` | ~95% | 50% | N/A | Compacts earlier — preserves working room proactively |
-| `CLAUDE_CODE_SUBAGENT_MODEL` | (inherits) | haiku | ~80% | Cheaper sub-agents for research/exploration tasks |
-| Default model | opus | sonnet | ~60% | Maintains quality for typical development work |
-
 ### When to Compact (Decision Table)
 
 Use this when deciding whether to trigger compaction or start fresh:
@@ -185,7 +174,7 @@ After approximately **50-75 tool invocations** in a single session, consider whe
 
 If you notice symptoms from the quality degradation checklist (forgetting, contradicting, declining output) AND you're past 50 tool invocations, compaction or a fresh session is likely beneficial.
 
-Setting `CLAUDE_CODE_AUTOCOMPACT_PCT_OVERRIDE=50` makes automatic compaction proactive, reducing the need for manual monitoring. With this setting, context is compacted at 50% capacity instead of waiting until 95%.
+If auto-compaction is enabled (not recommended — prefer fresh sessions), it triggers at ~95% capacity by default.
 
 ## Session Management Best Practices
 
@@ -290,16 +279,13 @@ Context feeling sluggish?
     ├─ Context 70-80% → Ask user: proceed or fresh session?
     └─ Context > 80% → Default: handoff doc + fresh session
 
-Token optimization:
-├─► Using default settings?
-│   └─ Consider: /settings optimized for 60-80% cost reduction
+Context health:
+├─► Should I start a fresh session?
+│   ├─ After research/debug/milestone → CONSIDER (natural breakpoint)
+│   ├─ Mid-implementation → NO (preserve context)
+│   └─ >50 tool calls + quality symptoms → YES (fresh session)
 │
-├─► Should I compact now?
-│   ├─ After research/debug/milestone → YES
-│   ├─ Mid-implementation → NO
-│   └─ >50 tool calls + quality symptoms → CONSIDER
-│
-└─► What survives compaction?
+└─► What survives a fresh session?
     ├─ Rules, CLAUDE.md, git state, Task Master → YES
     └─ Conversation history, read file contents → NO (re-read)
 

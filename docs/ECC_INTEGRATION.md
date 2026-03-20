@@ -42,28 +42,13 @@ Features integrated from [Everything Claude Code](https://github.com/anthropics/
 
 ## Quick Start
 
-### Token Optimization
-
-```bash
-/settings optimized
-```
-
-Sets three environment variables:
-| Variable | Value | Effect |
-|----------|-------|--------|
-| `MAX_THINKING_TOKENS` | 10000 | Caps thinking budget (default: 31999) |
-| `CLAUDE_CODE_AUTOCOMPACT_PCT_OVERRIDE` | 50 | Compacts earlier (default: ~95%) |
-| `CLAUDE_CODE_SUBAGENT_MODEL` | haiku | Lighter sub-agents |
-
-**Trade-off:** Shallower reasoning + earlier context loss, but 60-80% cost reduction.
-
 ### Session Persistence
 
 Enable with any preset that includes hooks:
 ```bash
 /settings safe       # Includes session-init + session-end
 /settings thorough   # Includes session-init + session-end
-/settings optimized  # Includes session-init + pre-compact + session-end
+/settings standard   # Full hook set including session persistence
 ```
 
 **How it works:**

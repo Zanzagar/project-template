@@ -1,28 +1,23 @@
 ---
 name: model-route
-description: Get model tier recommendation for a task
+description: Get model tier recommendation for a task based on complexity and risk
 arguments:
   - name: task
     description: Task description
     required: true
-  - name: budget
-    description: Budget constraint (low, med, high)
-    required: false
 ---
 
 # Model Route
 
-Analyze the task "$task" and recommend the appropriate model tier.
-
-Budget constraint: $budget (default: no constraint)
+Analyze the task "$task" and recommend the appropriate model tier based on **capability requirements**, not cost.
 
 ## Routing Heuristics
 
-| Model | Use For | Cost | Speed |
-|-------|---------|------|-------|
-| **haiku** | Deterministic ops, formatting, simple transforms, status checks | Lowest | Fastest |
-| **sonnet** | Implementation, refactoring, code generation, moderate review | Balanced | Fast |
-| **opus** | Architecture, deep review, ambiguous problems, complex debugging | Highest | Slower |
+| Model | Use For | Capability | Speed |
+|-------|---------|------------|-------|
+| **haiku** | Deterministic ops, formatting, simple transforms, status checks | Sufficient for mechanical tasks | Fastest |
+| **sonnet** | Implementation, refactoring, code generation, moderate review | Strong for scoped work | Fast |
+| **opus** | Architecture, deep review, ambiguous problems, complex debugging | Maximum reasoning depth | Slower |
 
 ## Decision Factors
 
@@ -43,10 +38,7 @@ Evaluate each factor and weight toward the appropriate tier:
    - Mostly clear, some design decisions → sonnet
    - Exploratory, open-ended, novel → opus
 
-4. **Budget**: User-specified constraint
-   - "low" → cap at sonnet, prefer haiku
-   - "med" → default routing
-   - "high" → allow opus freely
+**Default to the highest-capability model when in doubt.** Never sacrifice reasoning depth for speed.
 
 ## Output Format
 
@@ -61,11 +53,11 @@ Fallback: [next tier up if recommendation struggles]
 
 ## Sub-Agent Routing
 
-When dispatching sub-agents via the Agent tool, use the `model` parameter:
+When dispatching sub-agents via the Agent tool, match model to task complexity:
 
-| Sub-Agent Task | Model |
-|----------------|-------|
-| Research, file search, exploration | haiku |
-| Code review, implementation | sonnet |
-| Architecture planning, security review | opus |
-| Doc updates, formatting | haiku |
+| Sub-Agent Task | Model | Why |
+|----------------|-------|-----|
+| Architecture planning, security review | opus | High-stakes, deep reasoning required |
+| Code review, implementation, complex research | sonnet | Strong analysis for scoped work |
+| File search, simple exploration, status checks | haiku | Sufficient for mechanical/deterministic tasks |
+| Doc updates, formatting, simple transforms | haiku | Well-defined output, no ambiguity |
