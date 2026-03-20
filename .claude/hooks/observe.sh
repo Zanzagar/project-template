@@ -58,6 +58,23 @@ PARSED=$(echo "$INPUT_JSON" | python3 -c '
 import json
 import sys
 import os
+import re
+
+def scrub_secrets(text):
+    """Remove API keys, tokens, passwords, and auth headers before persisting."""
+    if not text:
+        return text
+    # Bearer tokens
+    text = re.sub(r"Bearer\s+\S+", "Bearer [REDACTED]", text, flags=re.I)
+    # Authorization headers
+    text = re.sub(r"Authorization[\"'"'"':=\s]+\S+", "Authorization: [REDACTED]", text, flags=re.I)
+    # API keys and secret keys
+    text = re.sub(r"(api[_-]?key|apikey|secret[_-]?key|access[_-]?token)[\"'"'"':=\s]+\S+", r"\1=[REDACTED]", text, flags=re.I)
+    # Password fields
+    text = re.sub(r"(password|passwd|pwd)[\"'"'"':=\s]+\S+", r"\1=[REDACTED]", text, flags=re.I)
+    # Common key prefixes (sk-, pk-, ghp_, gho_, xoxb-, etc.)
+    text = re.sub(r"\b(sk-|pk-|ghp_|gho_|ghs_|xoxb-|xoxp-|AKIA)[A-Za-z0-9_-]{10,}\b", "[REDACTED]", text)
+    return text
 
 try:
     data = json.load(sys.stdin)
@@ -80,6 +97,10 @@ try:
         tool_output_str = json.dumps(tool_output)[:5000]
     else:
         tool_output_str = str(tool_output)[:5000]
+
+    # Scrub secrets before persisting
+    tool_input_str = scrub_secrets(tool_input_str)
+    tool_output_str = scrub_secrets(tool_output_str)
 
     # Determine event type from CLI phase argument
     event = "tool_start" if hook_phase == "pre" else "tool_complete"
@@ -109,6 +130,18 @@ raw = sys.stdin.read()[:2000]
 print(json.dumps({'timestamp': os.environ['TIMESTAMP'], 'event': 'parse_error', 'raw': raw}))
 " >> "$OBSERVATIONS_FILE" 2>/dev/null
     exit 0
+fi
+
+# Auto-purge old archives (once per day, checked via marker file)
+PURGE_MARKER="$CONFIG_DIR/.last_purge"
+PURGE_AGE_DAYS=30
+
+if [ ! -f "$PURGE_MARKER" ] || [ "$(find "$PURGE_MARKER" -mtime +1 2>/dev/null | wc -l)" -gt 0 ]; then
+    archive_dir="$CONFIG_DIR/observations.archive"
+    if [ -d "$archive_dir" ]; then
+        find "$archive_dir" -type f -name "*.jsonl" -mtime +"$PURGE_AGE_DAYS" -delete 2>/dev/null
+    fi
+    touch "$PURGE_MARKER"
 fi
 
 # Archive if file too large
