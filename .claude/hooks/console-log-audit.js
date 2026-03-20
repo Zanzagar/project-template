@@ -26,6 +26,9 @@ process.stdin.on('data', chunk => {
 });
 
 process.stdin.on('end', () => {
+  // Delegate to quality-gate.js when available (consolidates debug statement checking)
+  try { require.resolve('./quality-gate'); process.stdout.write(data); process.exit(0); } catch { /* fall through */ }
+
   try {
     const input = JSON.parse(data);
     const filePath = input.tool_input?.file_path;
