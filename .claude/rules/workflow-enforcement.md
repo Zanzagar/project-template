@@ -11,6 +11,17 @@ This complements but does not duplicate:
 
 This rule provides **explicit decision thresholds** so there is no ambiguity about which workflow applies.
 
+## Research Before Implementation
+
+**Search for existing implementations before writing net-new code.** This applies to ALL task types.
+
+1. **GitHub code search**: `gh search repos` and `gh search code` for existing implementations and patterns
+2. **Library docs**: Confirm API behavior and package usage before implementing
+3. **Package registries**: Search npm, PyPI, crates.io before writing utility code — prefer battle-tested libraries
+4. **Adaptable implementations**: Look for open-source projects solving 80%+ of the problem
+
+Prefer adopting or porting a proven approach over writing net-new code when it meets the requirement.
+
 ## Workflows by Task Type
 
 ### Feature Implementation
@@ -45,6 +56,8 @@ Choose workflow based on size and clarity:
 | Complex | > 50 lines or unclear root cause | `superpowers:systematic-debugging` first, then create task + TDD. |
 
 **All bug fixes require at least one test** proving the fix. The test should fail before the fix and pass after.
+
+**Fix the implementation, not the tests** (unless the tests themselves are wrong). When a test fails, the default assumption is that the code is broken, not the test.
 
 ### Refactoring
 

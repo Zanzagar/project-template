@@ -72,6 +72,7 @@ User has decided what to build, needs structured plan.
 Actively implementing features or fixes.
 
 **Do:**
+- Search for existing implementations before writing net-new code (see `workflow-enforcement.md`)
 - Check current task with `task-master show <id>` or `task-master next`
 - Follow Superpowers TDD workflow: RED → GREEN → REFACTOR
 - Run /test and /lint before considering done

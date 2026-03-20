@@ -118,6 +118,35 @@ Suggest starting with [#1] because [reason].
 Want me to add these as subtasks in Task Master?
 ```
 
+### 7. Use Parallel Execution for Independent Operations
+
+**ALWAYS launch independent agent operations in parallel**, not sequentially:
+
+```markdown
+# GOOD: Parallel execution
+Launch 3 agents simultaneously:
+1. Agent: Security analysis of auth module
+2. Agent: Performance review of cache system
+3. Agent: Type checking of utilities
+
+# BAD: Sequential when unnecessary
+Run agent 1, wait for result, then agent 2, wait, then agent 3
+```
+
+This applies to all Agent tool invocations where tasks don't depend on each other's output. Parallel execution reduces wall-clock time dramatically.
+
+### 8. Multi-Perspective Analysis
+
+For complex problems, spawn split-role sub-agents for diverse perspectives:
+
+| Role | Focus |
+|------|-------|
+| Factual reviewer | Correctness, logic errors, edge cases |
+| Senior engineer | Architecture, maintainability, patterns |
+| Security expert | Vulnerabilities, data exposure, input validation |
+| Consistency reviewer | Style, naming, conventions across codebase |
+| Redundancy checker | Duplication, dead code, unnecessary abstractions |
+
 ## Conversation Steering Patterns
 
 ### Pattern: The Check-In
