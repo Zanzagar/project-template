@@ -186,7 +186,7 @@ Use parallel execution when agents are doing independent reviews of the same cod
 
 ## Notes
 
-- Each agent runs in a fresh sub-agent context (isolated — stronger than manual `/clear`)
+- Each agent runs in a fresh sub-agent context (isolated — stronger than manual context clearing)
 - Agent outputs are persisted to `.claude/orchestrate/<pipeline>/` for auditability and resumption
 - Each agent is evaluated before acceptance; re-invoked up to 3 times if output is insufficient
 - Pipeline stops on CRITICAL findings (unless `--continue` flag)
