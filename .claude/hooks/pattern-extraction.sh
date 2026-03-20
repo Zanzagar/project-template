@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # pattern-extraction.sh - Extract patterns from session for continuous learning
 # Hook type: Stop (runs on session end)
 # Triggers when: Claude Code session ends
@@ -66,29 +66,32 @@ fi
 # Determine primary language from file types
 PRIMARY_LANG=$(echo "$FILE_TYPES" | head -1 | awk '{print $2}')
 
-# Generate session summary candidate
-cat > "$INSTINCT_DIR/session_${SESSION_ID}.json" << INSTINCT_EOF
-{
+# Generate session summary candidate using printf (avoids bash 5.3+ heredoc hang
+# with large variable expansion — $COMMIT_MESSAGES can be several KB)
+printf '{
   "type": "session-summary",
-  "extracted_at": "$TIMESTAMP",
-  "session_id": "$SESSION_ID",
-  "head_commit": "$HEAD_SHA",
-  "commit_count": $TOTAL_COMMITS,
+  "extracted_at": "%s",
+  "session_id": "%s",
+  "head_commit": "%s",
+  "commit_count": %s,
   "commit_types": {
-    "feat": $FEAT_COUNT,
-    "fix": $FIX_COUNT,
-    "test": $TEST_COUNT,
-    "refactor": $REFACTOR_COUNT
+    "feat": %s,
+    "fix": %s,
+    "test": %s,
+    "refactor": %s
   },
-  "file_types_touched": $FILE_TYPES_JSON,
-  "primary_language": "$PRIMARY_LANG",
-  "detected_category": "$CATEGORY",
-  "commit_messages": $COMMIT_MESSAGES,
+  "file_types_touched": %s,
+  "primary_language": "%s",
+  "detected_category": "%s",
+  "commit_messages": %s,
   "status": "candidate",
   "confidence": 0.3,
   "notes": "Auto-extracted from session. Use /learn to analyze and promote to instincts."
-}
-INSTINCT_EOF
+}\n' \
+  "$TIMESTAMP" "$SESSION_ID" "$HEAD_SHA" "$TOTAL_COMMITS" \
+  "$FEAT_COUNT" "$FIX_COUNT" "$TEST_COUNT" "$REFACTOR_COUNT" \
+  "$FILE_TYPES_JSON" "$PRIMARY_LANG" "$CATEGORY" "$COMMIT_MESSAGES" \
+  > "$INSTINCT_DIR/session_${SESSION_ID}.json"
 
 echo "Pattern extraction complete: $TOTAL_COMMITS commits analyzed."
 echo "Candidate saved to $INSTINCT_DIR/session_${SESSION_ID}.json"

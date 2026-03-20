@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # session-init.sh - Comprehensive project initialization and health check
 # Hook type: SessionStart
 # Triggers when: A new Claude Code session begins
@@ -148,14 +148,24 @@ if [ "$HAS_TASKMASTER" = true ] && command -v task-master &> /dev/null; then
 fi
 
 # Session continuity - find most recent session summary
+# Check both formats: session-end.js (.tmp) and legacy session-end.sh (.md)
 if [ -d "$SESSIONS_DIR" ]; then
-    LAST_SESSION=$(ls -t "$SESSIONS_DIR"/session_*.md 2>/dev/null | head -1)
+    LAST_SESSION=$(ls -t "$SESSIONS_DIR"/*-session.tmp "$SESSIONS_DIR"/session_*.md 2>/dev/null | head -1)
     if [ -n "$LAST_SESSION" ]; then
         # Cross-platform file age: GNU stat (-c) with BSD fallback (-f)
         SESSION_TIME=$(stat -c %Y "$LAST_SESSION" 2>/dev/null || stat -f %m "$LAST_SESSION" 2>/dev/null || echo "0")
         CURRENT_TIME=$(date +%s)
         if [ "$SESSION_TIME" -gt 0 ] 2>/dev/null; then
             LAST_SESSION_AGE=$(( (CURRENT_TIME - SESSION_TIME) / 3600 ))
+        fi
+
+        # Inject session content into Claude's context via stdout (ECC pattern)
+        # stdout = injected into Claude's context; stderr = shown to user
+        if [ -n "$LAST_SESSION_AGE" ] && [ "$LAST_SESSION_AGE" -lt "$SESSION_AGE_HOURS" ] 2>/dev/null; then
+            SESSION_CONTENT=$(cat "$LAST_SESSION" 2>/dev/null)
+            if [ -n "$SESSION_CONTENT" ] && ! echo "$SESSION_CONTENT" | grep -q '\[Session context goes here\]'; then
+                printf "Previous session summary:\n%s\n" "$SESSION_CONTENT" >&1
+            fi
         fi
     fi
 fi

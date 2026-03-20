@@ -1,0 +1,414 @@
+# Component Audit PRD — ECC v1.8.0 + Superpowers v5 Alignment
+
+## Overview
+
+Systematic comparison of every component in our project template against its equivalent in Everything Claude Code (ECC) v1.8.0 and Superpowers v5.0. The goal is to adopt upstream implementations where they are equal or better, and only retain our custom implementations where we have a genuine, documented improvement or philosophical divergence.
+
+This audit MUST complete before any further v2.5.0 feature implementation. Many v2.5.0 tasks may become "adopt ECC's version" rather than build-from-scratch.
+
+## Context
+
+### The Problem
+
+During v2.5.0 Task 1 implementation, we discovered we were writing inferior from-scratch code when a proven upstream implementation existed. ECC's `run-with-flags` architecture was superior in 4/6 dimensions to our hand-written `hook-profiles.js`. This pattern likely repeats across the entire template.
+
+### The Principle
+
+> At the component level, ECC and Superpowers will almost always implement things better than we can. Our value is in workflow integration, enforcement, and adaptation — not reimplementation.
+
+### Decision Framework
+
+For every component, assign one verdict:
+
+| Verdict | Criteria | Action |
+|---------|----------|--------|
+| **Adopt** | Their version is better or equivalent in every way | Copy + adapt (env vars, paths, naming) |
+| **Adapt** | Their skeleton is better but we have genuine improvements to merge | Start from theirs, merge our improvements |
+| **Keep** | Ours is philosophically better for our workflow or genuinely superior | Document why explicitly |
+| **New** | We have something they don't | Keep and document as our contribution |
+| **Skip** | They have something we don't need | Document why skipped |
+
+**Burden of proof is on "Keep"** — if you can't articulate a specific technical reason ours is better, the verdict is Adopt.
+
+### Upstream Provenance Tracking
+
+Every adopted/adapted file gets:
+1. A header comment noting source repo, source path, and commit SHA
+2. An entry in `.claude/upstream-manifest.json` with adaptations documented
+3. This enables future incremental sync when upstream improves
+
+## Architecture
+
+### Audit Workflow Per Category
+
+```
+1. INVENTORY    → List all files in both repos for this category
+2. MAP          → Identify overlapping components (same purpose, different implementation)
+3. FETCH        → Download all ECC equivalents via gh api
+4. COMPARE      → Side-by-side analysis: architecture, features, quality, performance
+5. DECIDE       → Assign verdict (Adopt/Adapt/Keep/New/Skip) with explicit reasoning
+6. EXECUTE      → Implement decisions: copy, adapt, or document
+7. TEST         → Verify adapted code passes existing + ECC-derived tests
+8. MANIFEST     → Update upstream-manifest.json with provenance
+```
+
+### Output Artifacts
+
+| Artifact | Path | Purpose |
+|----------|------|---------|
+| Decision matrices | `docs/audit/category-decisions.md` | Per-category verdicts with reasoning |
+| Upstream manifest | `.claude/upstream-manifest.json` | Provenance tracking for future sync |
+| Audit summary | `docs/audit/AUDIT_SUMMARY.md` | Overall findings, patterns, recommendations |
+| Sync script | `scripts/check-upstream.sh` | Future: detect upstream changes since last sync |
+
+## File Structure
+
+| File | Responsibility | New/Modify |
+|------|---------------|------------|
+| `docs/audit/hooks-decisions.md` | Hook comparison verdicts | Create |
+| `docs/audit/skills-decisions.md` | Skill comparison verdicts | Create |
+| `docs/audit/commands-decisions.md` | Command comparison verdicts | Create |
+| `docs/audit/agents-decisions.md` | Agent comparison verdicts | Create |
+| `docs/audit/rules-decisions.md` | Rule comparison verdicts | Create |
+| `docs/audit/scripts-decisions.md` | Script/lib comparison verdicts | Create |
+| `docs/audit/infra-decisions.md` | Config, CI, schemas comparison | Create |
+| `docs/audit/AUDIT_SUMMARY.md` | Overall audit findings | Create |
+| `.claude/upstream-manifest.json` | Provenance tracking | Create |
+| `scripts/check-upstream.sh` | Upstream diff checker | Create |
+
+## Dependency Graph
+
+### Foundation (no dependencies)
+- **Upstream manifest schema** — define the JSON structure for provenance tracking
+- **Decision matrix template** — standardized format for comparison verdicts
+
+### Phase 1: Hook Infrastructure (highest impact, already started)
+- **Hook scripts audit** — 18 ours vs 25 ECC scripts
+- **Hook libraries audit** — 4 ours (lib/) vs ECC's scripts/lib/ (23+ files)
+- Depends on: [Foundation]
+
+### Phase 2: Skills & Commands (largest volume)
+- **Skills audit** — 43 ours vs 108 ECC (identify ~30 overlapping)
+- **Commands audit** — 49 ours vs 57 ECC (identify ~35 overlapping)
+- Depends on: [Foundation]
+
+### Phase 3: Agents & Rules (medium volume)
+- **Agents audit** — 14 ours vs 25 ECC
+- **Rules audit** — 15 ours vs 49 ECC
+- Depends on: [Foundation]
+
+### Phase 4: Infrastructure
+- **Scripts audit** — 10 ours vs 26 ECC
+- **Config/CI audit** — settings, schemas, CI validators
+- **Superpowers audit** — compare our workflow rules against Superpowers v5 skill content
+- Depends on: [Foundation]
+
+### Phase 5: Execution & Tracking
+- **Execute all Adopt/Adapt verdicts** — bulk implementation
+- **Build upstream-manifest.json** — populated from audit results
+- **Build check-upstream.sh** — sync detection script
+- Depends on: [Phase 1, Phase 2, Phase 3, Phase 4]
+
+### Phase 6: v2.5.0 Reassessment
+- **Re-evaluate v2.5.0 task list** — which tasks are now "already done" via adoption?
+- **Update PRD and tag** — remove completed tasks, adjust remaining ones
+- Depends on: [Phase 5]
+
+## Requirements
+
+### 1. Hook Scripts Audit
+Compare all 18 template hooks against ECC's 25 hook scripts.
+
+- 1.1: Identify overlapping hooks by function (not name)
+- 1.2: For each overlap, fetch ECC's implementation and diff against ours
+- 1.3: Assess: architecture, features, error handling, performance, cross-platform support
+- 1.4: Assign verdict with explicit reasoning for each
+- 1.5: Execute Adopt/Adapt verdicts with tests
+- 1.6: Document in `docs/audit/hooks-decisions.md`
+
+**Known overlapping hooks (by function):**
+
+| Our Hook | ECC Equivalent | Prior Research Notes |
+|----------|---------------|---------------------|
+| session-init.sh | session-start.js | Ours has phase detection, theirs has transcript reading |
+| session-end.sh | session-end.js | Theirs reads transcripts for better summaries |
+| pre-compact.sh | pre-compact.js (in suggest-compact) | Ours has state preservation, theirs is simpler |
+| post-edit-format.sh | post-edit-format.js / quality-gate.js | Theirs consolidated into quality gate |
+| protect-sensitive-files.sh | (no direct equivalent) | Ours is unique |
+| project-index.sh | (no direct equivalent) | Ours is unique |
+| suggest-compact.sh | suggest-compact.js | Comparable |
+| session-summary.sh | evaluate-session.js | Different approach |
+| doc-file-blocker.sh | doc-file-warning.js / pre-write-doc-warn.js | Theirs warns, ours blocks |
+| console-log-audit.sh | post-edit-console-warn.js / check-console-log.js | Similar functionality |
+| pattern-extraction.sh | (observer handles this in ECC) | Different architecture |
+| build-analysis.sh | post-bash-build-complete.js | Similar |
+| typescript-check.sh | post-edit-typecheck.js | Similar |
+| dev-server-blocker.sh | pre-bash-dev-server-block.js / auto-tmux-dev.js | Theirs auto-launches tmux |
+| long-running-tmux-hint.sh | pre-bash-tmux-reminder.js | Similar |
+| pre-commit-check.sh | (no direct equivalent — they use git hooks) | Different approach |
+| pr-url-extract.sh | post-bash-pr-created.js | Similar |
+| observe.sh | (observer runs as daemon, not hook) | Fundamentally different |
+
+**ECC hooks we don't have:**
+
+| ECC Hook | Function | Verdict needed |
+|----------|----------|---------------|
+| cost-tracker.js | Token/cost telemetry | Already in v2.5.0 PRD (Task 6) |
+| quality-gate.js | Consolidated format+lint+typecheck | Already in v2.5.0 PRD (Task 5) |
+| insaits-security-wrapper.js | Security monitoring | Previously rejected (InsAIts) |
+| post-bash-pr-created.js | PR creation detection | We have pr-url-extract.sh |
+| session-end-marker.js | Session boundary marker | Evaluate for adoption |
+| evaluate-session.js | AI session evaluation | Evaluate for adoption |
+| pre-bash-git-push-reminder.js | Push reminder | Evaluate for adoption |
+
+### 2. Hook Libraries Audit
+Compare our `.claude/hooks/lib/` against ECC's `scripts/lib/`.
+
+- 2.1: Map our 4 lib files to ECC equivalents (hook-flags done, 3 remaining)
+- 2.2: Assess ECC libs we should adopt: `utils.js`, `resolve-formatter.js`, `project-detect.js`
+- 2.3: Assess ECC libs we don't need: install-*, session-*, skill-*, state-store/
+- 2.4: Execute adoptions
+- 2.5: Document in hooks-decisions.md
+
+**Mapping:**
+
+| Our File | ECC Equivalent | Status |
+|----------|---------------|--------|
+| hook-flags.js | scripts/lib/hook-flags.js | DONE (adopted in f9963ad) |
+| run-with-flags.js | scripts/hooks/run-with-flags.js | DONE (adopted in f9963ad) |
+| run-with-flags-shell.sh | scripts/hooks/run-with-flags-shell.sh | DONE (adopted in f9963ad) |
+| check-hook-enabled.js | scripts/hooks/check-hook-enabled.js | DONE (adopted in f9963ad) |
+| (none) | scripts/lib/utils.js | Evaluate — cross-platform utilities |
+| (none) | scripts/lib/resolve-formatter.js | v2.5.0 Task 4, should adopt |
+| (none) | scripts/lib/project-detect.js | v2.5.0 Task 3, should adopt |
+
+### 3. Skills Audit
+Compare our 43 skills against ECC's 108 skills.
+
+- 3.1: Map overlapping skills by name/function
+- 3.2: For each overlap, fetch ECC's SKILL.md and diff against ours
+- 3.3: Assess content quality, completeness, and relevance
+- 3.4: Assign verdicts
+- 3.5: Document in `docs/audit/skills-decisions.md`
+
+**Known overlapping skills (~30):**
+
+| Our Skill | ECC Equivalent | Notes |
+|-----------|---------------|-------|
+| api-design | api-design | Compare |
+| backend-patterns | backend-patterns | Compare |
+| code-review | (in commands) | Different layer |
+| continuous-learning-v2 | continuous-learning-v2 | ECC is the source |
+| cost-aware-llm-pipeline | cost-aware-llm-pipeline | Compare |
+| cpp-coding-standards | cpp-coding-standards | Compare |
+| cpp-testing | cpp-testing | Compare |
+| database-migrations | database-migrations | Compare |
+| database-patterns | (postgres-patterns?) | Different scope |
+| debugging | (in agents/commands) | Different layer |
+| deployment-patterns | deployment-patterns | Compare |
+| django-patterns | django-patterns | Compare |
+| django-security | django-security | Compare |
+| django-tdd | django-tdd | Compare |
+| django-verification | django-verification | Compare |
+| docker-patterns | docker-patterns | Compare |
+| e2e-testing | e2e-testing | Compare |
+| eval-harness | eval-harness | Compare |
+| frontend-design | (not in ECC) | Ours is unique |
+| frontend-patterns | frontend-patterns | Compare |
+| git-recovery | (not in ECC) | Ours is unique |
+| golang-patterns | golang-patterns | Compare |
+| golang-testing | golang-testing | Compare |
+| iterative-retrieval | iterative-retrieval | Compare |
+| java-springboot | (springboot-patterns) | Compare |
+| jpa-patterns | jpa-patterns | Compare |
+| postgresql-patterns | postgres-patterns | Compare |
+| python-patterns | python-patterns | Compare |
+| python-testing | python-testing | Compare |
+| regex-vs-llm-structured-text | regex-vs-llm-structured-text | Compare |
+| security-scan | security-scan (or security-review) | Compare |
+| spring-boot-security | springboot-security | Compare |
+| spring-boot-tdd | springboot-tdd | Compare |
+| springboot-verification | springboot-verification | Compare |
+| strategic-compact | strategic-compact | Compare |
+| tdd-workflow | tdd-workflow | Compare |
+| typescript-patterns | (coding-standards?) | Compare |
+| verification-loop | verification-loop | Compare |
+
+**Our unique skills (not in ECC):**
+- python-data-science, python-django, frontend-design, git-recovery, debugging
+
+**ECC skills we don't have (~65):**
+- Many are domain-specific (logistics, customs, investor materials, etc.) — likely Skip
+- Key candidates to evaluate: agentic-engineering, autonomous-loops, blueprint, ai-regression-testing, claude-api, search-first, deep-research, skill-stocktake
+
+### 4. Commands Audit
+Compare our 49 commands against ECC's 57 commands.
+
+- 4.1: Map overlapping commands
+- 4.2: For each overlap, fetch and diff
+- 4.3: Assign verdicts
+- 4.4: Document in `docs/audit/commands-decisions.md`
+
+**Known overlapping commands (~30):**
+
+| Our Command | ECC Equivalent | Notes |
+|-------------|---------------|-------|
+| brainstorm.md | (Superpowers skill) | Different source |
+| build-fix.md | build-fix.md | Compare |
+| changelog.md | (not in ECC) | Ours unique |
+| checkpoint.md | checkpoint.md | Compare |
+| code-review.md | code-review.md | Compare |
+| commit.md | (not in ECC) | Ours unique |
+| e2e.md | e2e.md | Compare |
+| eval.md | eval.md | Compare |
+| evolve.md | evolve.md | Compare |
+| go-build.md | go-build.md | Compare |
+| go-review.md | go-review.md | Compare |
+| go-test.md | go-test.md | Compare |
+| instinct-export.md | instinct-export.md | Compare |
+| instinct-import.md | instinct-import.md | Compare |
+| instinct-status.md | instinct-status.md | Compare |
+| learn.md | learn.md | Compare |
+| multi-execute.md | multi-execute.md | Compare |
+| multi-plan.md | multi-plan.md | Compare |
+| orchestrate.md | orchestrate.md | Compare |
+| plan.md | plan.md | Compare |
+| python-review.md | python-review.md | Compare |
+| refactor-clean.md | refactor-clean.md | Compare |
+| sessions.md | sessions.md | Compare |
+| skill-create.md | skill-create.md | Compare |
+| tdd.md | tdd.md | Compare |
+| test-coverage.md | test-coverage.md | Compare |
+| update-codemaps.md | update-codemaps.md | Compare |
+| update-docs.md | update-docs.md | Compare |
+| verify.md | verify.md | Compare |
+
+**ECC commands we don't have (~20):**
+- harness-audit.md (v2.5.0 Task 11 plans to create this)
+- model-route.md (v2.5.0 Task 15 plans this)
+- quality-gate.md, prompt-optimize.md, claw.md, devfleet.md
+- Language-specific: cpp-build/review/test, kotlin-build/review/test, rust-build/review/test
+- loop-start.md, loop-status.md, resume-session.md, save-session.md, projects.md
+
+### 5. Agents Audit
+Compare our 14 agents against ECC's 25 agents.
+
+- 5.1: Map overlapping agents
+- 5.2: For each overlap, fetch and diff agent definitions
+- 5.3: Assign verdicts
+- 5.4: Document in `docs/audit/agents-decisions.md`
+
+**Known overlapping agents (~12):**
+
+| Our Agent | ECC Equivalent |
+|-----------|---------------|
+| architect.md | architect.md |
+| build-resolver.md | build-error-resolver.md |
+| code-reviewer.md | code-reviewer.md |
+| database-reviewer.md | database-reviewer.md |
+| doc-updater.md | doc-updater.md |
+| e2e-runner.md | e2e-runner.md |
+| go-build-resolver.md | go-build-resolver.md |
+| go-reviewer.md | go-reviewer.md |
+| planner.md | planner.md |
+| python-reviewer.md | python-reviewer.md |
+| refactor-cleaner.md | refactor-cleaner.md |
+| security-reviewer.md | security-reviewer.md |
+| tdd-guide.md | tdd-guide.md |
+
+**ECC agents we don't have:**
+- chief-of-staff.md, docs-lookup.md, harness-optimizer.md, loop-operator.md
+- Language-specific: java-*, kotlin-*, cpp-*, rust-* (build-resolver, reviewer)
+
+**Our unique agents:**
+- observer.md (ECC runs observer differently)
+
+### 6. Rules Audit
+Compare our 15 rules against ECC's 49 rules.
+
+- 6.1: Map overlapping rules
+- 6.2: Compare rule content and philosophy
+- 6.3: Assign verdicts
+- 6.4: Document in `docs/audit/rules-decisions.md`
+
+**ECC rule structure:**
+- `rules/common/` (9 files): agents, coding-style, development-workflow, git-workflow, hooks, patterns, performance, security, testing
+- `rules/{language}/` (8 languages x 5 files): coding-style, hooks, patterns, security, testing
+
+**Our rule structure:**
+- `.claude/rules/` (10 core): authority-hierarchy, claude-behavior, context-management, git-workflow, proactive-steering, reasoning-patterns, superpowers-integration, taskmaster-usage, workflow-enforcement, workflow-guide
+- `.claude/rules/{language}/` (4 languages x 1 file): python, typescript, golang, java + frontend
+
+**Key differences:**
+- ECC splits per-language rules into 5 files each (coding-style, hooks, patterns, security, testing)
+- We have 1 file per language (coding-standards.md)
+- Our core rules include workflow enforcement that ECC doesn't have (superpowers-integration, taskmaster-usage, authority-hierarchy)
+- ECC has hooks.md and performance.md rules we don't
+
+### 7. Scripts & Infrastructure Audit
+Compare utility scripts, CI validators, configs.
+
+- 7.1: Map overlapping scripts
+- 7.2: Evaluate ECC's CI validators (8 scripts) for adoption
+- 7.3: Evaluate ECC's schemas (9 files) for adoption
+- 7.4: Compare settings/config structure
+- 7.5: Document in `docs/audit/scripts-decisions.md` and `docs/audit/infra-decisions.md`
+
+**ECC infrastructure we should evaluate:**
+- `scripts/ci/` — 8 validator scripts (validate hooks, agents, commands, rules, skills, install-manifests, no-personal-paths)
+- `schemas/` — 9 JSON schemas for hooks, plugins, state-store, etc.
+- `manifests/` — install profiles and component manifests
+- `scripts/harness-audit.js` — deterministic scoring engine
+- `scripts/doctor.js` — health check / diagnostic tool
+
+### 8. Upstream Manifest & Sync Script
+Build the provenance tracking system.
+
+- 8.1: Create `.claude/upstream-manifest.json` with all adopted files
+- 8.2: Create `scripts/check-upstream.sh` that diffs current upstream against our adapted versions
+- 8.3: Create `/check-upstream` command for easy invocation
+- 8.4: Document the sync workflow in `docs/audit/AUDIT_SUMMARY.md`
+
+### 9. v2.5.0 Reassessment
+Re-evaluate the existing v2.5.0 task list against audit findings.
+
+- 9.1: For each v2.5.0 task, check if the audit already resolved it via adoption
+- 9.2: Mark resolved tasks as done
+- 9.3: Update remaining tasks to reflect "adapt from ECC" approach
+- 9.4: Re-run complexity analysis on remaining tasks
+
+## Technology Stack
+
+- **Comparison tooling**: `gh api` for fetching, `diff` for comparison, markdown for decision matrices
+- **Adopted code**: Node.js (ECC's hook infrastructure), bash (where ECC uses bash)
+- **Testing**: Node.js built-in test runner, bash test scripts
+- **Provenance**: JSON manifest + shell script for upstream diff
+
+## Technical Constraints
+
+- ECC repo: `affaan-m/everything-claude-code` — use `gh api` (raw URLs 404)
+- ECC skills are directories (`skills/<name>/SKILL.md`), commands are flat (`commands/<name>.md`)
+- Our hooks are bash, ECC's are Node.js — adopt Node.js for new hooks, keep bash for existing
+- Superpowers is a plugin (separate install), not a repo to fetch from — compare against installed version at `~/.claude/plugins/cache/superpowers-marketplace/superpowers/5.0.2/`
+- Context budget: each phase should be one session to avoid context degradation
+- `gh api` rate limits: 60 requests/hour unauthenticated, 5000/hour with token
+
+## Success Criteria
+
+1. Every template component has a documented verdict (Adopt/Adapt/Keep/New/Skip)
+2. All Adopt/Adapt verdicts are executed with tests passing
+3. Upstream manifest covers every adopted file with source SHA and adaptations
+4. v2.5.0 task list is updated to reflect audit findings
+5. `scripts/check-upstream.sh` can detect upstream changes for adopted files
+
+## Estimated Scope
+
+| Phase | Components | Estimated comparisons | Session count |
+|-------|-----------|----------------------|---------------|
+| 1: Hooks | 18 + libs | ~20 comparisons | 1-2 sessions |
+| 2: Skills + Commands | 43 + 49 | ~60 comparisons | 2-3 sessions |
+| 3: Agents + Rules | 14 + 15 | ~25 comparisons | 1 session |
+| 4: Scripts + Infra | 10 + configs | ~15 comparisons | 1 session |
+| 5: Execution | All Adopt/Adapt | Depends on Phase 1-4 | 2-4 sessions |
+| 6: Reassessment | 36 v2.5.0 tasks | Task-by-task review | 1 session |
+| **Total** | | **~120 comparisons** | **8-12 sessions** |

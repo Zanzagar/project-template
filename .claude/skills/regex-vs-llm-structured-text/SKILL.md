@@ -1,6 +1,7 @@
 ---
 name: regex-vs-llm-structured-text
 description: Decision framework for choosing between regex and LLM when parsing structured text — start with regex, add LLM only for low-confidence edge cases.
+origin: ECC
 ---
 
 # Regex vs LLM for Structured Text Parsing
@@ -38,7 +39,7 @@ Source Text
     ▼
 [Confidence Scorer] ─── Flags low-confidence extractions
     │
-    ├── High confidence (>=0.95) → Direct output
+    ├── High confidence (≥0.95) → Direct output
     │
     └── Low confidence (<0.95) → [LLM Validator] → Output
 ```
@@ -114,15 +115,27 @@ def score_confidence(item: ParsedItem) -> ConfidenceFlag:
         score=max(0.0, score),
         reasons=tuple(reasons),
     )
+
+def identify_low_confidence(
+    items: list[ParsedItem],
+    threshold: float = 0.95,
+) -> list[ConfidenceFlag]:
+    """Return items below confidence threshold."""
+    flags = [score_confidence(item) for item in items]
+    return [f for f in flags if f.score < threshold]
 ```
 
 ### 3. LLM Validator (Edge Cases Only)
 
 ```python
-def validate_with_llm(item: ParsedItem, original_text: str, client) -> ParsedItem:
-    """Use cheapest LLM to fix low-confidence extractions."""
+def validate_with_llm(
+    item: ParsedItem,
+    original_text: str,
+    client,
+) -> ParsedItem:
+    """Use LLM to fix low-confidence extractions."""
     response = client.messages.create(
-        model="claude-haiku-4-5-20251001",  # Cheapest model
+        model="claude-haiku-4-5-20251001",  # Cheapest model for validation
         max_tokens=500,
         messages=[{
             "role": "user",
@@ -134,7 +147,7 @@ def validate_with_llm(item: ParsedItem, original_text: str, client) -> ParsedIte
             ),
         }],
     )
-    # Parse LLM response and return corrected item
+    # Parse LLM response and return corrected item...
     return corrected_item
 ```
 
@@ -159,10 +172,14 @@ def process_document(
 
     # Step 3: LLM validation (only for flagged items)
     low_conf_ids = {f.item_id for f in low_confidence}
-    return [
-        validate_with_llm(item, content, llm_client) if item.id in low_conf_ids else item
-        for item in items
-    ]
+    result = []
+    for item in items:
+        if item.id in low_conf_ids:
+            result.append(validate_with_llm(item, content, llm_client))
+        else:
+            result.append(item)
+
+    return result
 ```
 
 ## Real-World Metrics
@@ -175,19 +192,29 @@ From a production quiz parsing pipeline (410 items):
 | Low confidence items | 8 (2.0%) |
 | LLM calls needed | ~5 |
 | Cost savings vs all-LLM | ~95% |
+| Test coverage | 93% |
 
 ## Best Practices
 
 - **Start with regex** — even imperfect regex gives you a baseline to improve
 - **Use confidence scoring** to programmatically identify what needs LLM help
 - **Use the cheapest LLM** for validation (Haiku-class models are sufficient)
-- **Never mutate** parsed items — return new instances
+- **Never mutate** parsed items — return new instances from cleaning/validation steps
 - **TDD works well** for parsers — write tests for known patterns first, then edge cases
 - **Log metrics** (regex success rate, LLM call count) to track pipeline health
 
 ## Anti-Patterns to Avoid
 
-- Sending all text to an LLM when regex handles 95%+ (expensive and slow)
+- Sending all text to an LLM when regex handles 95%+ of cases (expensive and slow)
 - Using regex for free-form, highly variable text (LLM is better here)
 - Skipping confidence scoring and hoping regex "just works"
+- Mutating parsed objects during cleaning/validation steps
 - Not testing edge cases (malformed input, missing fields, encoding issues)
+
+## When to Use
+
+- Quiz/exam question parsing
+- Form data extraction
+- Invoice/receipt processing
+- Document structure parsing (headers, sections, tables)
+- Any structured text with repeating patterns where cost matters

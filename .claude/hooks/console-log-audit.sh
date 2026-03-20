@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # console-log-audit.sh - Warn about debug statements in edited files
 # Hook type: PostToolUse (matcher: "Edit")
 # Triggers after: Claude edits a file
@@ -61,8 +61,8 @@ case "$EXTENSION" in
 esac
 
 if [ -n "$WARNINGS" ]; then
-    echo -e "DEBUG AUDIT WARNING for $FILE_PATH:"
-    echo -e "$WARNINGS"
+    printf "DEBUG AUDIT WARNING for %s:\n" "$FILE_PATH"
+    printf "%b\n" "$WARNINGS"
     echo "These may be intentional, but review before committing."
 fi
 

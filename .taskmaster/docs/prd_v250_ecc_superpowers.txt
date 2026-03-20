@@ -1,0 +1,424 @@
+# Template v2.5.0 — ECC v1.8.0 + Superpowers v5 Integration
+
+## Overview
+
+Integrate the highest-value patterns from Everything Claude Code v1.8.0 and Superpowers v5.0 into our project template. This release focuses on four pillars: hook infrastructure (profile system, quality gate consolidation), developer experience commands (harness audit, model routing, session management), agentic engineering skills (eval-first loops, autonomous patterns), and security hardening (deny lists, AgentShield CI, reverse injection guardrails).
+
+## Context
+
+Research conducted 2026-03-18 across three sources:
+- **Superpowers v5.0.0-v5.0.5**: Visual brainstorming, spec/plan review loops, architecture guidance, SDD model selection, instruction priority hierarchy. Template alignment committed in `cd43e05`.
+- **ECC v1.8.0**: Hook profile system (`run-with-flags`), quality gate hook, cost tracker, harness audit, autonomous loops, agentic engineering, project auto-detection, security guide (212 actionable recommendations).
+- **Claude Code official docs**: 22 hook events (up from 5 we use), prompt-based hooks, agent-based hooks, HTTP hooks, `TaskCompleted` event, `SessionEnd` event.
+
+Current template state: v2.4.0 on main + Superpowers v5 alignment on `feature/superpowers-v5-alignment`. Template has 14 agents, 39 skills, 50 commands, 16 rules (9 core + 7 language), 18 hooks.
+
+Key prior decisions that constrain this PRD:
+- Hook-based enforcement stays (deterministic > probabilistic)
+- Superpowers handles workflow orchestration (brainstorming, TDD, SDD)
+- Task Master handles task decomposition (PRD → parse → expand)
+- Our template adds the enforcement + observability layer around both
+
+## Architecture
+
+### System Diagram
+
+```mermaid
+graph TB
+    subgraph "Session Lifecycle"
+        SS[SessionStart] --> PD[Project Auto-Detection]
+        PD --> HP[Hook Profile Loading]
+        HP --> CI[Context Injection]
+    end
+
+    subgraph "Enforcement Layer (Hooks)"
+        PTU[PreToolUse Hooks] --> QG[Quality Gate]
+        PTU --> FS[File Size Guard]
+        PTU --> SP[Sensitive File Protection]
+        POTU[PostToolUse Hooks] --> CT[Cost Tracker]
+        STOP[Stop Hooks] --> SA[Session Auto-Save]
+    end
+
+    subgraph "Guidance Layer (Skills + Rules)"
+        AE[Agentic Engineering Skill]
+        AL[Autonomous Loops Skill]
+        MR[Model Route Command]
+        HA[Harness Audit Command]
+    end
+
+    subgraph "Security Layer"
+        DL[Deny Lists]
+        RIG[Reverse Injection Guardrails]
+        ASH[AgentShield CI]
+    end
+
+    CI --> PTU
+    CI --> AE
+    PTU --> POTU
+    POTU --> STOP
+```
+
+### Key Architecture Decisions
+
+**Decision 1: Hook profile system uses environment variables, not config files**
+- Alternatives: JSON config file, settings.json overlay, per-project profiles
+- Rationale: Environment variables are runtime-toggleable without restarting sessions. ECC validated this approach across 4 platforms. `ECC_HOOK_PROFILE=minimal|standard|strict` + `TEMPLATE_DISABLED_HOOKS=id1,id2` gives maximum flexibility with zero config file changes.
+
+**Decision 2: Quality gate consolidation merges 3 hooks into 1 smart hook**
+- Alternatives: Keep separate hooks, add more granular hooks
+- Rationale: ECC's quality-gate.js handles Biome/Prettier/gofmt/ruff with auto-detection and smart deduplication. One hook that detects the right tool is better than three hooks that each run regardless. Reduces PostToolUse overhead by ~60%.
+
+**Decision 3: New hooks written in Node.js, existing hooks stay bash**
+- Alternatives: Rewrite all hooks in Node.js, keep everything bash
+- Rationale: Node.js hooks are cross-platform and ~50-100ms faster via require() optimization. But rewriting 18 working bash hooks is high-effort, low-value. New hooks (quality gate, cost tracker, file size guard, profile system) use Node.js. Existing hooks stay bash until natural rewrite opportunities arise.
+
+**Decision 4: Harness audit uses deterministic scripted scoring, not LLM evaluation**
+- Alternatives: LLM-based scoring, manual checklist
+- Rationale: ECC's harness-audit.js computes scores from explicit file/rule checks — reproducible for the same commit. LLM scoring varies between runs. Deterministic scoring enables trend tracking across versions.
+
+## Technology Stack
+
+### Core
+| Technology | Version | Purpose | Documentation |
+|------------|---------|---------|---------------|
+| Node.js | 20+ | New hook scripts (quality gate, cost tracker, profile system) | nodejs.org/docs |
+| Bash | 4.0+ | Existing hook scripts (18 hooks, portable shebangs) | gnu.org/software/bash |
+| jq | 1.6+ | JSON parsing in hook scripts | jqlang.github.io/jq |
+
+### Supporting
+| Library | Purpose | Notes |
+|---------|---------|-------|
+| `sql.js` (optional, future) | SQLite state store for session data | WASM-based, no native compilation. Deferred to future release. |
+| `ecc-agentshield` | Config-level security scanning | `npx ecc-agentshield scan` — zero install. 102 rules, 5 categories. |
+
+### Technical Constraints
+| Constraint | Source | Impact |
+|------------|--------|--------|
+| Hook timeout default 10 min, configurable per hook | Claude Code docs | Cost tracker and quality gate must complete within timeout |
+| PreToolUse is the only hook that can block actions | Claude Code docs | File size guard and profile system enforcement must use PreToolUse |
+| Hooks communicate via stdin/stdout/exit codes only | Claude Code docs | No direct inter-hook communication; use filesystem for state |
+| Prompt hooks add ~1-2s latency (Haiku call) | Measured | Avoid prompt hooks on high-frequency events (Edit/Write) |
+| Agent hooks add ~5-30s latency | Claude Code docs | Only viable for Stop hooks, not per-tool-call hooks |
+| Environment variables in hooks require shell profile sourcing | Claude Code docs | `bash -lc` prefix needed for env var access in hooks |
+
+## File Structure
+
+| File | Responsibility | New/Modify |
+|------|---------------|------------|
+| `.claude/hooks/lib/hook-profiles.js` | Hook profile checking (minimal/standard/strict) | Create |
+| `.claude/hooks/lib/resolve-formatter.js` | Auto-detect Biome/Prettier/ruff/gofmt | Create |
+| `.claude/hooks/lib/project-detect.js` | Language/framework auto-detection | Create |
+| `.claude/hooks/quality-gate.js` | Consolidated quality gate (PostToolUse Edit/Write) | Create |
+| `.claude/hooks/file-size-guard.js` | Block files >800 lines (PreToolUse Write) | Create |
+| `.claude/hooks/cost-tracker.js` | Token/cost telemetry per session (Stop) | Create |
+| `.claude/hooks/session-init.sh` | Add project auto-detection, hook profile display | Modify |
+| `.claude/hooks/post-edit-format.sh` | Delegate to quality-gate.js when available | Modify |
+| `.claude/hooks/console-log-audit.sh` | Delegate to quality-gate.js when available | Modify |
+| `.claude/hooks/typescript-check.sh` | Delegate to quality-gate.js when available | Modify |
+| `.claude/hooks/dev-server-blocker.sh` | Rewrite: block → auto-tmux transform for dev servers | Modify |
+| `.claude/hooks/session-end.sh` | Add transcript reading, idempotent markers, richer data | Modify |
+| `.claude/hooks/observe.sh` | Add secret scrubbing, SIGUSR1 throttling, auto-purge, PID validation | Modify |
+| `.claude/hooks/typescript-check.sh` | Add multi-path matching, explicit timeout | Modify |
+| `.claude/hooks/console-log-audit.sh` | Add exclusion patterns for test/config/scripts files | Modify |
+| `.claude/hooks/doc-file-blocker.sh` | Allow MEMORY.md, *.plan.md, .claude/plans/ | Modify |
+| `.claude/hooks/pr-url-extract.sh` | Add gh pr review suggestion with parsed PR number | Modify |
+| `.claude/hooks/suggest-compact.sh` | Atomic file ops, counter clamping | Modify |
+| `.claude/settings.json` | Register new hooks, add profile metadata to existing hooks | Modify |
+| `.claude/commands/harness-audit.md` | Deterministic template health scoring | Create |
+| `.claude/commands/model-route.md` | Model tier recommendation command | Create |
+| `.claude/commands/save-session.md` | Save session state explicitly | Create |
+| `.claude/commands/resume-session.md` | Resume from saved session state | Create |
+| `.claude/skills/agentic-engineering/SKILL.md` | Eval-first loops, model routing, cost discipline | Create |
+| `.claude/skills/autonomous-loops/SKILL.md` | Sequential pipeline, de-sloppify, continuous PR patterns | Create |
+| `.claude/skills/eval-metrics/SKILL.md` | pass@k and pass^k frameworks | Create |
+| `.claude/skills/ai-regression-testing/SKILL.md` | AI blind spot patterns, regression testing strategy | Create |
+| `.claude/rules/reasoning-patterns.md` | Add research quality rules, Adopt/Extend/Compose/Build matrix | Modify |
+| `.claude/hooks/protect-sensitive-files.sh` | Add linter/formatter config tamper guard | Modify |
+| `scripts/harness-audit.js` | Deterministic scoring engine (7 categories) | Create |
+| `scripts/lib/hook-flags.js` | Hook enable/disable logic by profile and env var | Create |
+| `scripts/lib/project-detect.js` | Language/framework detection from marker files | Create |
+| `.claude/rules/security-hardening.md` | Deny lists, reverse injection guardrails, audit checklist | Create |
+| `.gitignore` | Add `.insaits_audit_session.jsonl` | Modify |
+| `CLAUDE.md` | Add security deny list section, hook profile docs | Modify |
+| `docs/SECURITY.md` | Add AgentShield CI setup, agentic security patterns | Modify |
+
+## Dependency Graph
+
+### Foundation Layer (no dependencies)
+- **Hook profile system** (`lib/hook-profiles.js`, `lib/hook-flags.js`): Runtime hook enable/disable logic. Every new hook depends on this. Must be built first.
+- **Project auto-detection** (`lib/project-detect.js`): Language/framework detection from marker files. Used by quality gate and session-init.
+
+### Infrastructure Layer (Phase 1)
+- **Quality gate hook** (`quality-gate.js`): Depends on [Hook profile system, Project auto-detection, resolve-formatter lib]. Consolidated quality checks after edits.
+- **File size guard hook** (`file-size-guard.js`): Depends on [Hook profile system]. Blocks files >800 lines.
+- **Cost tracker hook** (`cost-tracker.js`): Depends on [Hook profile system]. Token/cost telemetry per session.
+- **Settings.json update**: Depends on [Hook profile system, Quality gate, File size guard, Cost tracker]. Registers all new hooks with profile metadata.
+- **Existing hook migration**: Depends on [Hook profile system]. Add profile gates to all 18 existing hooks.
+- **Security hardening rule**: Depends on [nothing — standalone rule]. Deny lists, guardrails, audit patterns.
+
+### Commands Layer (Phase 2)
+- **Harness audit command + scoring engine**: Depends on [Hook profile system, Settings.json update]. Deterministic 7-category scoring.
+- **Model route command**: Depends on [nothing — standalone command]. Model tier recommendation.
+- **Save/resume session commands**: Depends on [nothing — standalone commands]. Formalize session persistence.
+
+### Skills Layer (Phase 2)
+- **Agentic engineering skill**: Depends on [nothing — standalone skill]. Eval-first loops, cost discipline.
+- **Autonomous loops skill**: Depends on [nothing — standalone skill]. Sequential pipeline, de-sloppify patterns.
+- **Eval metrics skill**: Depends on [nothing — standalone skill]. pass@k / pass^k frameworks.
+- **AI regression testing skill**: Depends on [nothing — standalone skill]. AI blind spot patterns, test-where-bugs-were-found strategy.
+- **Research quality rules update**: Depends on [nothing — rule update]. Source attribution discipline, Adopt/Extend/Compose/Build matrix.
+- **Config tamper guard**: Depends on [nothing — hook update]. Block linter config edits during development.
+
+### Existing Hook Improvements Layer (Phase 2 — independent, parallelizable)
+- **Auto-tmux dev servers**: Depends on [nothing]. Rewrite dev-server-blocker from block to transform.
+- **Session-end transcript reading**: Depends on [nothing]. Richer session data capture.
+- **Observer improvements** (secret scrubbing, throttling, auto-purge, PID validation): Depends on [nothing]. Four sub-improvements to observe.sh.
+- **TypeScript multi-path matching**: Depends on [nothing]. Correctness fix for typescript-check.sh.
+- **Console-log audit exclusions**: Depends on [nothing]. Skip test/config files.
+- **Doc-file-blocker paths**: Depends on [nothing]. Allow MEMORY.md, *.plan.md.
+- **PR URL review suggestion**: Depends on [nothing]. Add gh pr review hint.
+- **Suggest-compact atomic counter**: Depends on [nothing]. Atomic file ops.
+
+### Integration Layer (Phase 3)
+- **Session-init.sh update**: Depends on [Project auto-detection, Hook profile system]. Display detected stack and active profile.
+- **Legacy hook delegation**: Depends on [Quality gate hook]. Modify post-edit-format, console-log-audit, typescript-check to delegate to quality-gate.js when available.
+- **Security docs update**: Depends on [Security hardening rule]. AgentShield CI setup, agentic security patterns.
+- **CLAUDE.md update**: Depends on [Hook profile system, Security hardening rule]. Document hook profiles, security deny lists.
+
+## Requirements
+
+### 1. Hook Profile System
+Runtime hook toggling without editing settings.json.
+
+- 1.1: Create `lib/hook-profiles.js` that exports `isHookEnabled(hookId, { profiles })` function
+- 1.2: Support three profiles: `minimal` (lifecycle + safety only), `standard` (balanced quality + safety), `strict` (all hooks enabled)
+- 1.3: Read profile from `TEMPLATE_HOOK_PROFILE` env var (default: `standard`)
+- 1.4: Support `TEMPLATE_DISABLED_HOOKS` env var for comma-separated hook IDs to disable
+- 1.5: Each existing hook must declare which profiles it belongs to (metadata in settings.json comments or separate manifest)
+- 1.6: Profile `minimal` enables: session-init, project-index, pre-commit-check, protect-sensitive-files, pre-compact, session-end, pattern-extraction
+- 1.7: Profile `standard` adds: post-edit-format, console-log-audit, suggest-compact, build-analysis, pr-url-extract, observe (all current hooks)
+- 1.8: Profile `strict` adds: file-size-guard, quality-gate (full), cost-tracker, typescript-check, doc-file-blocker, dev-server-blocker, long-running-tmux-hint
+- 1.9: Create wrapper script that existing bash hooks can source to check profile before executing
+
+### 2. Quality Gate Consolidation
+Merge format, typecheck, and console-log-audit into one smart hook.
+
+- 2.1: Create `quality-gate.js` as PostToolUse hook matching `Edit|Write`
+- 2.2: Auto-detect project formatter: Biome (check biome.json), Prettier (check .prettierrc), ruff (check pyproject.toml/ruff.toml), gofmt (check go.mod)
+- 2.3: For JS/TS files with Biome: run `biome check --write`, skip separate format step
+- 2.4: For JS/TS files with Prettier: run `prettier --write`
+- 2.5: For Python files: run `ruff check --fix` + `ruff format`
+- 2.6: For Go files: run `gofmt -w`
+- 2.7: Check for debug statements (console.log, print(), breakpoint()) in edited file
+- 2.8: Run tsc --noEmit for .ts/.tsx files when tsconfig.json exists
+- 2.9: Support `TEMPLATE_QUALITY_GATE_FIX=true` env var for auto-fix mode
+- 2.10: Existing bash hooks (post-edit-format, console-log-audit, typescript-check) remain as fallbacks when Node.js is unavailable
+
+### 3. File Size Enforcement Hook
+Block creation of oversized files.
+
+- 3.1: Create `file-size-guard.js` as PreToolUse hook matching `Write`
+- 3.2: Count lines in `tool_input.content`; block with exit 2 if >800 lines
+- 3.3: Provide actionable feedback: "File exceeds 800 lines (N lines). Split into smaller, focused modules."
+- 3.4: Exempt known large files: package-lock.json, yarn.lock, generated files
+- 3.5: Only active in `strict` profile
+
+### 4. Cost Tracker Hook
+Lightweight token/cost telemetry per session.
+
+- 4.1: Create `cost-tracker.js` as async Stop hook (non-blocking, 10s timeout)
+- 4.2: Read `tool_name` and approximate token usage from hook input
+- 4.3: Append cost entry to `.claude/sessions/cost-log.jsonl`
+- 4.4: Track: timestamp, tool_name, estimated_tokens, session_id
+- 4.5: Active in all profiles (minimal overhead — async, append-only)
+
+### 5. Harness Audit Command
+Deterministic template health scoring.
+
+- 5.1: Create `scripts/harness-audit.js` with 7-category scoring (0-10 each, 70 max)
+- 5.2: Categories: Tool Coverage, Context Efficiency, Quality Gates, Memory Persistence, Eval Coverage, Security Guardrails, Cost Efficiency
+- 5.3: Scores derived from explicit file/rule checks (reproducible for same commit)
+- 5.4: Output: overall_score, category scores, failed checks with file paths, top 3 actions
+- 5.5: Create `/harness-audit` command that runs the script and presents results
+- 5.6: Support `--format text|json` for human and machine-readable output
+- 5.7: Support scoped audits: `repo` (default), `hooks`, `skills`, `commands`, `agents`
+
+### 6. Model Route Command
+Model tier recommendation by task complexity.
+
+- 6.1: Create `/model-route` command with task description input
+- 6.2: Routing heuristic: haiku (deterministic, low-risk), sonnet (implementation, refactors), opus (architecture, deep review, ambiguous)
+- 6.3: Output: recommended model, confidence level, rationale, fallback model
+- 6.4: Support `--budget low|med|high` flag
+
+### 7. Session Save/Resume Commands
+Explicit session state management.
+
+- 7.1: Create `/save-session` command that captures: current task, branch, uncommitted changes, key decisions, next steps
+- 7.2: Save to `.claude/sessions/saved-<timestamp>.md`
+- 7.3: Create `/resume-session` command that lists saved sessions and loads selected one
+- 7.4: Integrate with existing handoff doc pattern (`.claude/sessions/handoff-*.md`)
+
+### 8. Agentic Engineering Skill
+Eval-first development patterns.
+
+- 8.1: Create `.claude/skills/agentic-engineering/SKILL.md`
+- 8.2: Cover: eval-first loop (define criteria → baseline → implement → re-eval → compare)
+- 8.3: Cover: 15-minute task decomposition rule (independently verifiable, single risk, clear done condition)
+- 8.4: Cover: model routing by tier (haiku/sonnet/opus) with escalation rules
+- 8.5: Cover: cost discipline (track per-task: model, tokens, retries, wall-clock, success/failure)
+- 8.6: Cover: session strategy (continue for coupled units, fresh after phase transitions, compact after milestones)
+
+### 9. Autonomous Loops Skill
+Patterns for non-interactive agent work.
+
+- 9.1: Create `.claude/skills/autonomous-loops/SKILL.md`
+- 9.2: Cover: sequential pipeline (`claude -p` chains with `set -e`)
+- 9.3: Cover: de-sloppify pattern (cleanup pass after implementation — remove defensive checks, test-the-language tests)
+- 9.4: Cover: continuous PR loop (multi-day iterative projects with CI gates)
+- 9.5: Cover: model routing in loops (research with Opus, implement with Sonnet, review with Opus)
+- 9.6: Cover: safety defaults (verify tests pass before first iteration, explicit stop condition, hook profile not disabled)
+
+### 10. Eval Metrics Integration
+pass@k and pass^k frameworks.
+
+- 10.1: Create `.claude/skills/eval-metrics/SKILL.md`
+- 10.2: Define pass@k: at least ONE of k attempts succeeds. Use for development iteration.
+- 10.3: Define pass^k: ALL k attempts must succeed. Use for production consistency verification.
+- 10.4: Provide concrete thresholds: pass@1=70%, pass@3=91%, pass@5=97% (development). pass^1=70%, pass^3=34%, pass^5=17% (production).
+- 10.5: Integration with existing eval-harness skill (extend, don't replace)
+
+### 11. Project Auto-Detection
+Detect language and framework at session start.
+
+- 11.1: Create `scripts/lib/project-detect.js` that detects languages from marker files (package.json, pyproject.toml, go.mod, Cargo.toml, etc.)
+- 11.2: Detect frameworks (Next.js, Django, FastAPI, Spring Boot, etc.) from config files and dependencies
+- 11.3: Output JSON with detected languages, frameworks, package manager, test runner
+- 11.4: Integrate into `session-init.sh` — inject detected stack into session context
+- 11.5: Used by quality gate hook to select correct formatter/linter
+
+### 12. Security Hardening
+Deny lists, guardrails, AgentShield CI.
+
+- 12.1: Create `.claude/rules/security-hardening.md` with deny list recommendations
+- 12.2: Document deny patterns for: `~/.ssh/*`, `~/.aws/*`, `~/.env`, `**/credentials*`, `**/.env*`
+- 12.3: Document reverse prompt injection guardrail pattern (HTML comment block after external links in skills)
+- 12.4: Document AgentShield GitHub Action setup for PRs touching `.claude/**` or `CLAUDE.md`
+- 12.5: Add `npx ecc-agentshield scan` to `/security-audit` command
+- 12.6: Update `docs/SECURITY.md` with agentic security section (OWASP Agentic Top 10 mapping)
+- 12.7: Add PR audit checklist: check for broadened allowedTools, modified hooks, external links in skills, new MCP servers
+
+### 13. Existing Hook Improvements (from ECC deep comparison)
+Targeted improvements to existing hooks based on feature-by-feature comparison with ECC v1.8.0. Each addresses a specific gap where ECC's implementation is demonstrably better.
+
+- 13.1: **Auto-tmux for dev servers** — Rewrite `dev-server-blocker.sh` to TRANSFORM dev server commands into named tmux sessions instead of blocking them. Detect npm/pnpm/yarn/bun/flask/uvicorn/cargo-watch dev commands, create a project-name-based tmux session, kill existing sessions with the same name, report how to view logs. Keep our broader server detection list (flask, uvicorn, hugo, jekyll, cargo watch) that ECC lacks. Depends on [nothing].
+- 13.2: **Session-end transcript reading** — Update `session-end.sh` to read the session transcript from `transcript_path` in the Stop hook stdin JSON. Parse JSONL to extract user messages, tools used (with counts), and files modified. Use idempotent SUMMARY_START/SUMMARY_END markers to prevent duplicate content on repeated Stop events. Add "Notes for Next Session" and "Context to Load" placeholder sections. Depends on [nothing].
+- 13.3: **Observer secret scrubbing** — Update `observe.sh` to scrub API keys, tokens, passwords, and authorization headers from observation data BEFORE persisting to `observations.jsonl`. Use regex patterns: `/[A-Za-z0-9_-]{20,}/ for generic tokens, /Bearer\s+\S+/ for auth headers, /password['":\s]*\S+/i for passwords`. Depends on [nothing].
+- 13.4: **Observer SIGUSR1 throttling** — Update `observe.sh` to only signal the observer daemon every N observations (default 20) instead of every observation. Prevents rapid-fire signaling from creating runaway parallel analysis processes. Depends on [nothing].
+- 13.5: **Observer auto-purge** — Update `observe.sh` to delete observation archive files older than 30 days. Run purge check once per session (guard with a timestamp file). Depends on [nothing].
+- 13.6: **Observer stale PID validation** — Update `observe.sh` to validate PID is a positive integer >1 before sending SIGUSR1. Remove stale PID files when the PID doesn't correspond to a running process. Depends on [nothing].
+- 13.7: **TypeScript multi-path matching** — Update `typescript-check.sh` to match tsc errors using relative path, absolute path, AND original file path. Prevents false positives from basename collisions (e.g., `src/utils.ts` vs `tests/utils.ts`). Add explicit 30-second timeout. Depends on [nothing].
+- 13.8: **Console-log audit exclusion patterns** — Update `console-log-audit.sh` to skip test files (`*.test.*`, `*.spec.*`, `__tests__/`, `__mocks__/`), config files, and `scripts/` directories where debug statements are intentional. Depends on [nothing].
+- 13.9: **Doc-file-blocker allowed paths** — Update `doc-file-blocker.sh` to allow `MEMORY.md`, `*.plan.md`, and `.claude/plans/` as legitimate documentation paths. Keep blocking behavior (exit 2). Depends on [nothing].
+- 13.10: **PR URL gh-review suggestion** — Update `pr-url-extract.sh` to parse repo name and PR number from detected URLs and suggest `gh pr review <number>` command. Depends on [nothing].
+- 13.11: **Suggest-compact atomic counter** — Update `suggest-compact.sh` to use atomic file operations (flock or lockfile) for the tool-call counter. Add counter value clamping (max 1,000,000) to prevent corrupted files from causing issues. Depends on [nothing].
+
+### 14. Quality Gate Sub-Requirements (from ECC deep comparison)
+Additional requirements for the quality gate hook based on ECC's superior JS/TS handling.
+
+- 14.1: For JS/TS projects, detect Biome vs Prettier by checking for `biome.json`/`biome.jsonc` (Biome) vs `.prettierrc`/`.prettierrc.json`/`prettier.config.js` (Prettier). Biome takes precedence if both exist.
+- 14.2: Prefer local `node_modules/.bin` binaries over global `npx` commands for formatter execution — saves 200-500ms per invocation.
+- 14.3: Cache project root, formatter type, and binary resolution per session (invalidate on `package.json` or formatter config change).
+- 14.4: When Biome is detected for JS/TS, use `biome check --write` which combines format + lint in a single pass. Skip separate lint step.
+- 14.5: For TypeScript checking within the quality gate, use multi-path matching (relative + absolute + original path) to filter tsc errors to the edited file. This prevents false positives from basename collisions.
+
+### 15. AI Regression Testing Patterns
+Address AI-specific blind spots where the same model writes and reviews code.
+
+- 15.1: Create `.claude/skills/ai-regression-testing/SKILL.md` documenting the 4 concrete AI regression patterns: (1) sandbox/production path mismatch — #1 AI regression, Claude assumes dev paths work in prod; (2) SELECT clause omission — when adding columns to a model, AI forgets to update SELECT queries that enumerate columns; (3) error state leakage — AI generates happy-path code that exposes internal error details to users; (4) optimistic update without rollback — AI implements optimistic state changes without compensating rollback on failure
+- 15.2: Document the "test where bugs were found" strategy — target known AI failure modes rather than aiming for blanket 100% coverage
+- 15.3: Include guidance on blind-spot mitigation: use different models for write vs review when possible, use Superpowers' two-stage review (spec compliance catches scope issues, but add explicit AI regression checklist to code quality review)
+- 15.4: Cross-reference with existing TDD skill and Superpowers test-driven-development
+
+### 16. Blueprint Cold-Start Step Briefs
+Formalize multi-session planning with self-contained execution steps.
+
+- 16.1: Update `/save-session` command (Requirement 7) to generate cold-start step briefs — each remaining step must include: objective, file paths, context needed, verification command, exit criteria, and model tier recommendation
+- 16.2: Each step should be independently executable by a fresh session with zero prior context — no references to "what we discussed earlier"
+- 16.3: Include dependency ordering between steps (which steps can be parallelized, which must be sequential)
+- 16.4: Add adversarial review concept: before finalizing a multi-step plan, suggest dispatching an Opus subagent to review for anti-patterns (missing dependencies, over-scoped steps, unclear exit criteria)
+
+### 17. Research Quality Rules
+Enforce source attribution discipline in research workflows.
+
+- 17.1: Update `reasoning-patterns.md` Research section with: "Every factual claim needs a source citation", "If only one source says it, flag as unverified", "Separate fact from inference explicitly", "Cross-reference across multiple sources for critical claims"
+- 17.2: Update `/research` command to include quality rules in its output template
+- 17.3: Add the Adopt/Extend/Compose/Build decision matrix to research workflow: before implementing custom solutions, evaluate whether existing packages/tools/MCP servers already solve the problem
+
+### 18. Config Tamper Guard
+Prevent Claude from modifying linter/formatter configs to make code pass.
+
+- 18.1: Update `protect-sensitive-files.sh` to block edits to linter and formatter configuration files during active development: `.ruff.toml`, `ruff.toml`, `.eslintrc*`, `eslint.config.*`, `.prettierrc*`, `prettier.config.*`, `biome.json*`, `tsconfig.json`, `pyproject.toml` (the `[tool.ruff]` section specifically), `.flake8`
+- 18.2: Allow explicit override: if user says "I need to modify the linter config", provide instructions to temporarily disable the guard
+- 18.3: The guard should warn (exit 0 with stderr message) not block (exit 2) for tsconfig.json and pyproject.toml since these are legitimately modified during development. Hard-block only dedicated linter config files (.ruff.toml, .eslintrc*, biome.json*).
+
+## Success Criteria
+
+- Hook profile system works: `TEMPLATE_HOOK_PROFILE=minimal` disables non-essential hooks, `strict` enables all
+- Quality gate hook correctly detects and runs Biome, Prettier, ruff, or gofmt based on project type
+- File size guard blocks Write operations >800 lines with actionable feedback
+- `/harness-audit` produces reproducible scores for the same commit
+- `/model-route` provides reasonable model recommendations for different task types
+- All 3 new skills load correctly via Skill tool and provide actionable guidance
+- Security hardening rule loads at session start and deny list patterns are documented
+- All existing hooks continue to function unchanged when `TEMPLATE_HOOK_PROFILE=standard`
+- Dev server commands auto-launch in named tmux sessions instead of being blocked
+- Session-end captures user messages and tools used from transcript (not just git history)
+- Observer does not persist API keys, tokens, or passwords in observations.jsonl
+- Observer signals daemon at most once per 20 observations (not per-observation)
+- TypeScript check correctly filters errors when multiple files share the same basename
+- Console-log audit does not warn about debug statements in test files
+- AI regression testing skill documents all 4 patterns with concrete test examples
+- `/save-session` generates cold-start step briefs that a fresh session can execute without prior context
+- Research outputs include source citations for every factual claim
+- `protect-sensitive-files.sh` blocks edits to `.ruff.toml` and `.eslintrc*` during active development
+- No regression in session startup time (< 2s total for all SessionStart hooks)
+
+## Out of Scope
+
+### Confirmed not applicable (deep-dived and rejected with evidence)
+- **NanoClaw REPL** — A `spawnSync('claude', ['-p'])` wrapper. "Branching" is a file copy. "Search" is substring scan. Downgrade from Claude Code's native session.
+- **DevFleet** — ECC component is just API docs for an external MCP server. The actual orchestration (worktree-isolated parallel agents) lives in a separate project.
+- **Prompt Optimizer** — Routes vague prompts to ECC's 50+ commands. Our proactive-steering.md already does this for our smaller ecosystem. Would need complete rewrite of routing tables.
+- **InsAIts Security** — Value depends on unproven third-party `insa-its` pip package. 200-500ms per-tool-call overhead. Behavioral anomaly detection is novel but unvalidated.
+- **Documentation Lookup skill** — Duplicates our tiered lookup in reasoning-patterns.md with less nuance (no WebFetch/llms.txt tiers).
+- **Continuous Agent Loop** — 40-line routing index. Only the failure modes section has value (captured in autonomous-loops skill).
+- **Domain-specific skills** — logistics, investor materials, visa translation, energy procurement, etc. Industry-specific, not general-purpose.
+- **chief-of-staff agent** — Multi-channel comms triage. Not a development template concern.
+
+### Deferred (valuable but lower priority than Wave 1-3)
+- **Language-specific agents** (Kotlin, Rust, Java, C++) — Contain genuine deep expertise. Worth porting when users need those languages. Also suggests our go-reviewer and python-reviewer should be deepened.
+- **SQLite state store** — More robust than file-based. Defer until we hit state corruption issues.
+- **Selective install manifests** — Not needed at our scale. Revisit if we grow past 50+ skills.
+- **Full Node.js rewrite of existing bash hooks** — Only new hooks use Node.js. Migrate existing hooks opportunistically.
+- **PM2 orchestration** — Enterprise long-running agent pattern. Not needed yet.
+- **Search-first Adopt/Extend/Compose/Build matrix** — Partially captured in Research Quality Rules (Req 17.3). Full skill deferred.
+- **Plankton model-tiered violation routing** — Haiku for style, Sonnet for logic, Opus for types. Clever but adds significant complexity. Monitor the Plankton project.
+- **i18n / translations** — Community concern, not template concern.
+
+## Security Considerations
+
+- New Node.js hooks must validate all stdin input (cap at 1MB, handle malformed JSON)
+- Hook profile env vars must not be settable via tool injection (hooks read from process.env at startup, not from tool input)
+- `harness-audit.js` must not execute arbitrary code — scoring is file-existence checks and pattern matching only
+- AgentShield scanning should run in CI, not in hooks (too slow for per-tool-call execution)
+- Deny lists in security-hardening.md are DOCUMENTATION, not hook enforcement — users must configure in their own settings.json
+
+## Performance Requirements
+
+- Quality gate hook must complete within 5s per file edit (formatter + lint + typecheck)
+- Cost tracker hook is async with 10s timeout — must not block Claude's next response
+- File size guard is synchronous but fast (line count only, no file I/O for existing files)
+- Hook profile check adds <10ms overhead per hook (simple env var read + string comparison)
+- Session-init with project auto-detection must complete within 3s total
+- Harness audit script must complete within 15s for full repo scope

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # observe.sh - Continuous Learning v2 observation hook
 # Adapted from ECC (affaan-m/everything-claude-code) continuous-learning-v2
 #

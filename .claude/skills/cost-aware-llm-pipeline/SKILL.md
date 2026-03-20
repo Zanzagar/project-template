@@ -1,6 +1,7 @@
 ---
 name: cost-aware-llm-pipeline
 description: Cost optimization patterns for LLM API usage — model routing by task complexity, budget tracking, retry logic, and prompt caching.
+origin: ECC
 ---
 
 # Cost-Aware LLM Pipeline
@@ -21,7 +22,7 @@ Patterns for controlling LLM API costs while maintaining quality. Combines model
 Automatically select cheaper models for simple tasks, reserving expensive models for complex ones.
 
 ```python
-MODEL_SONNET = "claude-sonnet-4-5-20250929"
+MODEL_SONNET = "claude-sonnet-4-6"
 MODEL_HAIKU = "claude-haiku-4-5-20251001"
 
 _SONNET_TEXT_THRESHOLD = 10_000  # chars
@@ -155,7 +156,7 @@ def process(text: str, config: Config, tracker: CostTracker) -> tuple[Result, Co
 | Model | Input ($/1M tokens) | Output ($/1M tokens) | Relative Cost |
 |-------|---------------------|----------------------|---------------|
 | Haiku 4.5 | $0.80 | $4.00 | 1x |
-| Sonnet 4.5 | $3.00 | $15.00 | ~4x |
+| Sonnet 4.6 | $3.00 | $15.00 | ~4x |
 | Opus 4.5 | $15.00 | $75.00 | ~19x |
 
 ## Best Practices
@@ -164,7 +165,7 @@ def process(text: str, config: Config, tracker: CostTracker) -> tuple[Result, Co
 - **Set explicit budget limits** before processing batches — fail early rather than overspend
 - **Log model selection decisions** so you can tune thresholds based on real data
 - **Use prompt caching** for system prompts over 1024 tokens — saves both cost and latency
-- **Never retry on authentication or validation errors** — only transient failures
+- **Never retry on authentication or validation errors** — only transient failures (network, rate limit, server error)
 
 ## Anti-Patterns to Avoid
 
@@ -173,3 +174,10 @@ def process(text: str, config: Config, tracker: CostTracker) -> tuple[Result, Co
 - Mutating cost tracking state (makes debugging and auditing difficult)
 - Hardcoding model names throughout the codebase (use constants or config)
 - Ignoring prompt caching for repetitive system prompts
+
+## When to Use
+
+- Any application calling Claude, OpenAI, or similar LLM APIs
+- Batch processing pipelines where cost adds up quickly
+- Multi-model architectures that need intelligent routing
+- Production systems that need budget guardrails

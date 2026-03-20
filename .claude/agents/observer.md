@@ -2,6 +2,7 @@
 name: observer
 description: Background agent that analyzes session observations to detect patterns and create instincts. Uses Haiku for cost-efficiency.
 model: haiku
+tools: [Read, Write, Edit, Bash, Grep, Glob]
 ---
 
 # Observer Agent

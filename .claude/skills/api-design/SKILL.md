@@ -1,45 +1,358 @@
 ---
 name: api-design
-description: REST API design, versioning, pagination, error handling, OpenAPI, rate limiting
+description: REST API design patterns including resource naming, status codes, pagination, filtering, error responses, versioning, and rate limiting for production APIs.
+origin: ECC
 ---
 
 # API Design Patterns
 
-## RESTful Resource Design
+Conventions and best practices for designing consistent, developer-friendly REST APIs.
+
+## When to Activate
+
+- Designing new API endpoints
+- Reviewing existing API contracts
+- Adding pagination, filtering, or sorting
+- Implementing error handling for APIs
+- Planning API versioning strategy
+- Building public or partner-facing APIs
+
+## Resource Design
 
 ### URL Structure
 
 ```
-GET    /api/v1/users              # List users
-POST   /api/v1/users              # Create user
-GET    /api/v1/users/{id}         # Get user
-PUT    /api/v1/users/{id}         # Replace user
-PATCH  /api/v1/users/{id}         # Partial update
-DELETE /api/v1/users/{id}         # Delete user
+# Resources are nouns, plural, lowercase, kebab-case
+GET    /api/v1/users
+GET    /api/v1/users/:id
+POST   /api/v1/users
+PUT    /api/v1/users/:id
+PATCH  /api/v1/users/:id
+DELETE /api/v1/users/:id
 
-# Nested resources (one level deep max)
-GET    /api/v1/users/{id}/orders  # User's orders
+# Sub-resources for relationships
+GET    /api/v1/users/:id/orders
+POST   /api/v1/users/:id/orders
 
-# Actions (when CRUD doesn't fit)
-POST   /api/v1/users/{id}/activate
-POST   /api/v1/orders/{id}/cancel
+# Actions that don't map to CRUD (use verbs sparingly)
+POST   /api/v1/orders/:id/cancel
+POST   /api/v1/auth/login
+POST   /api/v1/auth/refresh
 ```
 
-**Conventions:**
-- Plural nouns for resources (`/users` not `/user`)
-- Maximum one level of nesting
-- Use query params for filtering: `/users?status=active&role=admin`
-- Use hyphens, not underscores: `/user-profiles` not `/user_profiles`
+### Naming Rules
 
-### HTTP Methods & Status Codes
+```
+# GOOD
+/api/v1/team-members          # kebab-case for multi-word resources
+/api/v1/orders?status=active  # query params for filtering
+/api/v1/users/123/orders      # nested resources for ownership
 
-| Method | Success | Failure | Idempotent |
-|--------|---------|---------|------------|
-| GET | 200 | 404 | Yes |
-| POST | 201 + Location header | 400/409 | No |
-| PUT | 200 | 400/404 | Yes |
-| PATCH | 200 | 400/404 | No |
-| DELETE | 204 (no body) | 404 | Yes |
+# BAD
+/api/v1/getUsers              # verb in URL
+/api/v1/user                  # singular (use plural)
+/api/v1/team_members          # snake_case in URLs
+/api/v1/users/123/getOrders   # verb in nested resource
+```
+
+## HTTP Methods and Status Codes
+
+### Method Semantics
+
+| Method | Idempotent | Safe | Use For |
+|--------|-----------|------|---------|
+| GET | Yes | Yes | Retrieve resources |
+| POST | No | No | Create resources, trigger actions |
+| PUT | Yes | No | Full replacement of a resource |
+| PATCH | No* | No | Partial update of a resource |
+| DELETE | Yes | No | Remove a resource |
+
+*PATCH can be made idempotent with proper implementation
+
+### Status Code Reference
+
+```
+# Success
+200 OK                    — GET, PUT, PATCH (with response body)
+201 Created               — POST (include Location header)
+204 No Content            — DELETE, PUT (no response body)
+
+# Client Errors
+400 Bad Request           — Validation failure, malformed JSON
+401 Unauthorized          — Missing or invalid authentication
+403 Forbidden             — Authenticated but not authorized
+404 Not Found             — Resource doesn't exist
+409 Conflict              — Duplicate entry, state conflict
+422 Unprocessable Entity  — Semantically invalid (valid JSON, bad data)
+429 Too Many Requests     — Rate limit exceeded
+
+# Server Errors
+500 Internal Server Error — Unexpected failure (never expose details)
+502 Bad Gateway           — Upstream service failed
+503 Service Unavailable   — Temporary overload, include Retry-After
+```
+
+### Common Mistakes
+
+```
+# BAD: 200 for everything
+{ "status": 200, "success": false, "error": "Not found" }
+
+# GOOD: Use HTTP status codes semantically
+HTTP/1.1 404 Not Found
+{ "error": { "code": "not_found", "message": "User not found" } }
+
+# BAD: 500 for validation errors
+# GOOD: 400 or 422 with field-level details
+
+# BAD: 200 for created resources
+# GOOD: 201 with Location header
+HTTP/1.1 201 Created
+Location: /api/v1/users/abc-123
+```
+
+## Response Format
+
+### Success Response
+
+```json
+{
+  "data": {
+    "id": "abc-123",
+    "email": "alice@example.com",
+    "name": "Alice",
+    "created_at": "2025-01-15T10:30:00Z"
+  }
+}
+```
+
+### Collection Response (with Pagination)
+
+```json
+{
+  "data": [
+    { "id": "abc-123", "name": "Alice" },
+    { "id": "def-456", "name": "Bob" }
+  ],
+  "meta": {
+    "total": 142,
+    "page": 1,
+    "per_page": 20,
+    "total_pages": 8
+  },
+  "links": {
+    "self": "/api/v1/users?page=1&per_page=20",
+    "next": "/api/v1/users?page=2&per_page=20",
+    "last": "/api/v1/users?page=8&per_page=20"
+  }
+}
+```
+
+### Error Response
+
+```json
+{
+  "error": {
+    "code": "validation_error",
+    "message": "Request validation failed",
+    "details": [
+      {
+        "field": "email",
+        "message": "Must be a valid email address",
+        "code": "invalid_format"
+      },
+      {
+        "field": "age",
+        "message": "Must be between 0 and 150",
+        "code": "out_of_range"
+      }
+    ]
+  }
+}
+```
+
+### Response Envelope Variants
+
+```typescript
+// Option A: Envelope with data wrapper (recommended for public APIs)
+interface ApiResponse<T> {
+  data: T;
+  meta?: PaginationMeta;
+  links?: PaginationLinks;
+}
+
+interface ApiError {
+  error: {
+    code: string;
+    message: string;
+    details?: FieldError[];
+  };
+}
+
+// Option B: Flat response (simpler, common for internal APIs)
+// Success: just return the resource directly
+// Error: return error object
+// Distinguish by HTTP status code
+```
+
+## Pagination
+
+### Offset-Based (Simple)
+
+```
+GET /api/v1/users?page=2&per_page=20
+
+# Implementation
+SELECT * FROM users
+ORDER BY created_at DESC
+LIMIT 20 OFFSET 20;
+```
+
+**Pros:** Easy to implement, supports "jump to page N"
+**Cons:** Slow on large offsets (OFFSET 100000), inconsistent with concurrent inserts
+
+### Cursor-Based (Scalable)
+
+```
+GET /api/v1/users?cursor=eyJpZCI6MTIzfQ&limit=20
+
+# Implementation
+SELECT * FROM users
+WHERE id > :cursor_id
+ORDER BY id ASC
+LIMIT 21;  -- fetch one extra to determine has_next
+```
+
+```json
+{
+  "data": [...],
+  "meta": {
+    "has_next": true,
+    "next_cursor": "eyJpZCI6MTQzfQ"
+  }
+}
+```
+
+**Pros:** Consistent performance regardless of position, stable with concurrent inserts
+**Cons:** Cannot jump to arbitrary page, cursor is opaque
+
+### When to Use Which
+
+| Use Case | Pagination Type |
+|----------|----------------|
+| Admin dashboards, small datasets (<10K) | Offset |
+| Infinite scroll, feeds, large datasets | Cursor |
+| Public APIs | Cursor (default) with offset (optional) |
+| Search results | Offset (users expect page numbers) |
+
+## Filtering, Sorting, and Search
+
+### Filtering
+
+```
+# Simple equality
+GET /api/v1/orders?status=active&customer_id=abc-123
+
+# Comparison operators (use bracket notation)
+GET /api/v1/products?price[gte]=10&price[lte]=100
+GET /api/v1/orders?created_at[after]=2025-01-01
+
+# Multiple values (comma-separated)
+GET /api/v1/products?category=electronics,clothing
+
+# Nested fields (dot notation)
+GET /api/v1/orders?customer.country=US
+```
+
+### Sorting
+
+```
+# Single field (prefix - for descending)
+GET /api/v1/products?sort=-created_at
+
+# Multiple fields (comma-separated)
+GET /api/v1/products?sort=-featured,price,-created_at
+```
+
+### Full-Text Search
+
+```
+# Search query parameter
+GET /api/v1/products?q=wireless+headphones
+
+# Field-specific search
+GET /api/v1/users?email=alice
+```
+
+### Sparse Fieldsets
+
+```
+# Return only specified fields (reduces payload)
+GET /api/v1/users?fields=id,name,email
+GET /api/v1/orders?fields=id,total,status&include=customer.name
+```
+
+## Authentication and Authorization
+
+### Token-Based Auth
+
+```
+# Bearer token in Authorization header
+GET /api/v1/users
+Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+
+# API key (for server-to-server)
+GET /api/v1/data
+X-API-Key: sk_live_abc123
+```
+
+### Authorization Patterns
+
+```typescript
+// Resource-level: check ownership
+app.get("/api/v1/orders/:id", async (req, res) => {
+  const order = await Order.findById(req.params.id);
+  if (!order) return res.status(404).json({ error: { code: "not_found" } });
+  if (order.userId !== req.user.id) return res.status(403).json({ error: { code: "forbidden" } });
+  return res.json({ data: order });
+});
+
+// Role-based: check permissions
+app.delete("/api/v1/users/:id", requireRole("admin"), async (req, res) => {
+  await User.delete(req.params.id);
+  return res.status(204).send();
+});
+```
+
+## Rate Limiting
+
+### Headers
+
+```
+HTTP/1.1 200 OK
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1640000000
+
+# When exceeded
+HTTP/1.1 429 Too Many Requests
+Retry-After: 60
+{
+  "error": {
+    "code": "rate_limit_exceeded",
+    "message": "Rate limit exceeded. Try again in 60 seconds."
+  }
+}
+```
+
+### Rate Limit Tiers
+
+| Tier | Limit | Window | Use Case |
+|------|-------|--------|----------|
+| Anonymous | 30/min | Per IP | Public endpoints |
+| Authenticated | 100/min | Per user | Standard API access |
+| Premium | 1000/min | Per API key | Paid API plans |
+| Internal | 10000/min | Per service | Service-to-service |
 
 ## Versioning
 
@@ -50,195 +363,161 @@ POST   /api/v1/orders/{id}/cancel
 /api/v2/users
 ```
 
-**When to bump version:**
-- Breaking changes to response shape
-- Removing fields or endpoints
-- Changing field types
+**Pros:** Explicit, easy to route, cacheable
+**Cons:** URL changes between versions
 
-**When NOT to bump:**
-- Adding new optional fields
-- Adding new endpoints
-- Bug fixes
+### Header Versioning
 
-### Deprecation Strategy
-
-```http
-Sunset: Sat, 01 Jan 2027 00:00:00 GMT
-Deprecation: true
-Link: </api/v2/users>; rel="successor-version"
+```
+GET /api/users
+Accept: application/vnd.myapp.v2+json
 ```
 
-Return deprecation headers for 6+ months before removing.
+**Pros:** Clean URLs
+**Cons:** Harder to test, easy to forget
 
-## Pagination
+### Versioning Strategy
 
-### Cursor-Based (Recommended for Large Datasets)
+```
+1. Start with /api/v1/ — don't version until you need to
+2. Maintain at most 2 active versions (current + previous)
+3. Deprecation timeline:
+   - Announce deprecation (6 months notice for public APIs)
+   - Add Sunset header: Sunset: Sat, 01 Jan 2026 00:00:00 GMT
+   - Return 410 Gone after sunset date
+4. Non-breaking changes don't need a new version:
+   - Adding new fields to responses
+   - Adding new optional query parameters
+   - Adding new endpoints
+5. Breaking changes require a new version:
+   - Removing or renaming fields
+   - Changing field types
+   - Changing URL structure
+   - Changing authentication method
+```
 
-```json
-GET /api/v1/users?limit=20&cursor=eyJpZCI6MTAwfQ
+## Implementation Patterns
 
-{
-  "data": [...],
-  "pagination": {
-    "next_cursor": "eyJpZCI6MTIwfQ",
-    "has_more": true
+### TypeScript (Next.js API Route)
+
+```typescript
+import { z } from "zod";
+import { NextRequest, NextResponse } from "next/server";
+
+const createUserSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(1).max(100),
+});
+
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  const parsed = createUserSchema.safeParse(body);
+
+  if (!parsed.success) {
+    return NextResponse.json({
+      error: {
+        code: "validation_error",
+        message: "Request validation failed",
+        details: parsed.error.issues.map(i => ({
+          field: i.path.join("."),
+          message: i.message,
+          code: i.code,
+        })),
+      },
+    }, { status: 422 });
   }
+
+  const user = await createUser(parsed.data);
+
+  return NextResponse.json(
+    { data: user },
+    {
+      status: 201,
+      headers: { Location: `/api/v1/users/${user.id}` },
+    },
+  );
 }
 ```
 
-**Why cursor over offset:** Offset pagination breaks when items are inserted/deleted between pages. Cursor is stable.
+### Python (Django REST Framework)
 
-### Offset-Based (Simple, for Small Datasets)
+```python
+from rest_framework import serializers, viewsets, status
+from rest_framework.response import Response
 
-```json
-GET /api/v1/users?page=2&per_page=20
+class CreateUserSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    name = serializers.CharField(max_length=100)
 
-{
-  "data": [...],
-  "pagination": {
-    "page": 2,
-    "per_page": 20,
-    "total": 150,
-    "total_pages": 8
-  }
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "email", "name", "created_at"]
+
+class UserViewSet(viewsets.ModelViewSet):
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return CreateUserSerializer
+        return UserSerializer
+
+    def create(self, request):
+        serializer = CreateUserSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = UserService.create(**serializer.validated_data)
+        return Response(
+            {"data": UserSerializer(user).data},
+            status=status.HTTP_201_CREATED,
+            headers={"Location": f"/api/v1/users/{user.id}"},
+        )
+```
+
+### Go (net/http)
+
+```go
+func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
+    var req CreateUserRequest
+    if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+        writeError(w, http.StatusBadRequest, "invalid_json", "Invalid request body")
+        return
+    }
+
+    if err := req.Validate(); err != nil {
+        writeError(w, http.StatusUnprocessableEntity, "validation_error", err.Error())
+        return
+    }
+
+    user, err := h.service.Create(r.Context(), req)
+    if err != nil {
+        switch {
+        case errors.Is(err, domain.ErrEmailTaken):
+            writeError(w, http.StatusConflict, "email_taken", "Email already registered")
+        default:
+            writeError(w, http.StatusInternalServerError, "internal_error", "Internal error")
+        }
+        return
+    }
+
+    w.Header().Set("Location", fmt.Sprintf("/api/v1/users/%s", user.ID))
+    writeJSON(w, http.StatusCreated, map[string]any{"data": user})
 }
 ```
 
-## Error Handling
+## API Design Checklist
 
-### Standard Error Response
+Before shipping a new endpoint:
 
-```json
-{
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Request validation failed",
-    "details": [
-      {
-        "field": "email",
-        "message": "Must be a valid email address",
-        "code": "invalid_format"
-      }
-    ],
-    "request_id": "req_abc123"
-  }
-}
-```
-
-### Error Code Conventions
-
-| HTTP Status | When to Use |
-|------------|-------------|
-| 400 | Malformed request, validation errors |
-| 401 | Missing or invalid authentication |
-| 403 | Authenticated but not authorized |
-| 404 | Resource not found |
-| 409 | Conflict (duplicate, state conflict) |
-| 422 | Semantically invalid (valid JSON, bad values) |
-| 429 | Rate limited |
-| 500 | Unexpected server error |
-
-**Never return 200 with an error body.** Use proper HTTP status codes.
-
-## Rate Limiting
-
-### Response Headers
-
-```http
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 67
-X-RateLimit-Reset: 1640000000
-Retry-After: 30
-```
-
-### Implementation Strategies
-
-| Strategy | Use Case | Complexity |
-|----------|----------|------------|
-| Fixed window | Simple APIs | Low |
-| Sliding window | Smooth traffic | Medium |
-| Token bucket | Burst-friendly | Medium |
-| Per-user + per-IP | Public APIs | High |
-
-## Authentication Patterns
-
-### Bearer Token (JWT)
-
-```http
-Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
-```
-
-**JWT Best Practices:**
-- Short expiry (15 min access, 7 day refresh)
-- Store refresh token server-side (not in JWT)
-- Include only essential claims (user_id, roles)
-- Use RS256 for multi-service, HS256 for single-service
-
-### API Key
-
-```http
-X-API-Key: sk_live_abc123...
-```
-
-Use for server-to-server. Never expose in client-side code.
-
-## Request/Response Conventions
-
-### Filtering & Sorting
-
-```
-GET /api/v1/users?status=active&sort=-created_at,name
-```
-
-- Prefix with `-` for descending
-- Comma-separated for multiple sort fields
-- Use query params, not request body for GET
-
-### Field Selection (Sparse Fieldsets)
-
-```
-GET /api/v1/users?fields=id,name,email
-```
-
-Reduces payload size. Useful for mobile clients.
-
-### Bulk Operations
-
-```json
-POST /api/v1/users/bulk
-{
-  "operations": [
-    {"method": "create", "data": {"name": "Alice"}},
-    {"method": "create", "data": {"name": "Bob"}}
-  ]
-}
-
-// Response: 207 Multi-Status
-{
-  "results": [
-    {"status": 201, "data": {"id": 1, "name": "Alice"}},
-    {"status": 201, "data": {"id": 2, "name": "Bob"}}
-  ]
-}
-```
-
-## OpenAPI / Documentation
-
-### Minimum Viable Spec
-
-Every API should have:
-1. OpenAPI 3.1 spec (auto-generated or hand-written)
-2. Authentication instructions
-3. Error response examples
-4. Rate limit documentation
-5. Changelog for breaking changes
-
-### Framework Integration
-
-| Framework | Auto-Gen Tool |
-|-----------|---------------|
-| FastAPI | Built-in (`/docs`, `/openapi.json`) |
-| Django REST | drf-spectacular |
-| Express | swagger-jsdoc |
-| Spring Boot | springdoc-openapi |
-| Go | swaggo/swag |
+- [ ] Resource URL follows naming conventions (plural, kebab-case, no verbs)
+- [ ] Correct HTTP method used (GET for reads, POST for creates, etc.)
+- [ ] Appropriate status codes returned (not 200 for everything)
+- [ ] Input validated with schema (Zod, Pydantic, Bean Validation)
+- [ ] Error responses follow standard format with codes and messages
+- [ ] Pagination implemented for list endpoints (cursor or offset)
+- [ ] Authentication required (or explicitly marked as public)
+- [ ] Authorization checked (user can only access their own resources)
+- [ ] Rate limiting configured
+- [ ] Response does not leak internal details (stack traces, SQL errors)
+- [ ] Consistent naming with existing endpoints (camelCase vs snake_case)
+- [ ] Documented (OpenAPI/Swagger spec updated)

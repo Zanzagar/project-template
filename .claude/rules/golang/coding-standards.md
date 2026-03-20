@@ -79,9 +79,9 @@ func NewServer(cfg Config) *Server {
 }
 ```
 
-### Keep Interfaces Small
+### Keep Interfaces Small (1-3 Methods)
 ```go
-// GOOD: Single-method interfaces are powerful
+// GOOD: Small interfaces (1-3 methods) are powerful and composable
 type Validator interface {
     Validate() error
 }

@@ -1,11 +1,13 @@
 ---
-paths: ["**/*.ts", "**/*.tsx"]
+paths: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"]
 ---
 <!-- template-version: 2.0.0 -->
 <!-- template-file: .claude/rules/typescript/coding-standards.md -->
 # TypeScript Coding Standards
 
-Auto-loaded for `.ts` and `.tsx` files. These conventions ensure type safety and consistency.
+Auto-loaded for `.ts`, `.tsx`, `.js`, and `.jsx` files. These conventions ensure type safety and consistency.
+
+> **For `.js`/`.jsx` files**: Use JSDoc type annotations when TypeScript is not available. Prefer `@param`, `@returns`, and `@typedef` for documenting function signatures. Use `// @ts-check` at the top of JS files to enable TypeScript checking via JSDoc.
 
 ## Strict Mode
 
@@ -54,6 +56,27 @@ function handle(result: Result<User>) {
   if (result.success) {
     console.log(result.data.name); // TypeScript knows data exists
   }
+}
+```
+
+### Standard API Response Envelope
+
+```typescript
+// Use a consistent response wrapper for API endpoints
+interface ApiResponse<T> {
+  data: T;
+  error?: string;
+  meta?: {
+    page?: number;
+    total?: number;
+    timestamp: string;
+  };
+}
+
+// Usage
+async function getUsers(): Promise<ApiResponse<User[]>> {
+  const users = await db.users.findMany();
+  return { data: users, meta: { timestamp: new Date().toISOString() } };
 }
 ```
 
@@ -123,7 +146,9 @@ interface UserCardProps {
   variant?: "compact" | "full";
 }
 
-// Functional component — avoid React.FC (it adds implicit children)
+// Functional component — avoid React.FC
+// React.FC implicitly accepts `children` even when your component doesn't use them,
+// hides prop types from hover, and doesn't support generics cleanly.
 function UserCard({ user, onEdit, variant = "full" }: UserCardProps) {
   return <div>...</div>;
 }

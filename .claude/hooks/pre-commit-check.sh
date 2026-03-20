@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # pre-commit-check.sh - Validate code before committing
 # Hook type: PreToolUse (matcher: "Bash")
 # Triggers when: Claude runs git commit commands
@@ -105,6 +105,11 @@ STAGED_FILES=$(cd "$PROJECT_DIR" && git diff --cached --name-only 2>/dev/null ||
 for file in $STAGED_FILES; do
     filepath="$PROJECT_DIR/$file"
     [ -f "$filepath" ] || continue
+
+    # Skip hook/meta files that reference debug patterns as search targets
+    case "$file" in
+        .claude/hooks/*) continue ;;
+    esac
 
     # Check for debug statements
     if grep -q "import pdb\|breakpoint()\|console\.log\|debugger" "$filepath" 2>/dev/null; then

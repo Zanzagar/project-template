@@ -93,6 +93,51 @@ Before committing:
 - Run the linter if configured
 - Ensure no obvious errors or warnings
 
+## Immutability Principle
+
+**ALWAYS create new objects, NEVER mutate existing ones:**
+
+```
+WRONG:  modify(original, field, value) → changes original in-place
+CORRECT: update(original, field, value) → returns new copy with change
+```
+
+Immutable data prevents hidden side effects, simplifies debugging, and enables safe concurrency. Apply in all languages — use spread operators, `copy()`, `with` methods, or equivalent.
+
+## Pre-Completion Quality Checklist
+
+Before marking any task complete, verify:
+- [ ] Code is readable with well-named variables and functions
+- [ ] Functions are small (<50 lines)
+- [ ] Files are focused (<800 lines)
+- [ ] No deep nesting (>4 levels)
+- [ ] Proper error handling at every level
+- [ ] No hardcoded values (use constants or config)
+- [ ] Immutable patterns used (no mutation)
+
+## Security Guardrails
+
+### Pre-Commit Security Checklist
+
+Before ANY commit that touches application code:
+- [ ] No hardcoded secrets (API keys, passwords, tokens)
+- [ ] All user inputs validated
+- [ ] SQL injection prevention (parameterized queries)
+- [ ] XSS prevention (sanitized HTML output)
+- [ ] CSRF protection enabled
+- [ ] Authentication/authorization verified
+- [ ] Rate limiting on public endpoints
+- [ ] Error messages don't leak sensitive data (stack traces, paths, versions)
+
+### Security Response Protocol
+
+If a security issue is found during development:
+1. **STOP** immediately — do not continue coding
+2. Use the **security-reviewer** agent to assess severity
+3. Fix CRITICAL issues before any other work
+4. Rotate any potentially exposed secrets
+5. Review the broader codebase for similar vulnerabilities
+
 ## Communication Style
 
 - Be concise but informative

@@ -177,6 +177,7 @@ Available commands for common tasks:
 | `/pr [title]` | Create GitHub Pull Request |
 | `/rollback [commit]` | Guided rollback with session context |
 | `/changelog [version]` | Generate changelog from git history |
+| `/check-upstream [flags]` | Check upstream repos for changes (`--manifest` for per-file) |
 | `/prd` | Show/parse PRD documents |
 | `/prd-generate <concept>` | Deep research PRD generation with architecture diagrams |
 | `/generate-tests <file>` | Generate tests for a file |

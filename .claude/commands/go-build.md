@@ -1,18 +1,146 @@
-Fix Go build errors, `go vet` warnings, and linter issues incrementally.
+---
+description: Fix Go build errors, go vet warnings, and linter issues incrementally. Invokes the go-build-resolver agent for minimal, surgical fixes.
+---
 
-Usage: `/go-build`
+# Go Build and Fix
 
-Arguments: $ARGUMENTS
+This command invokes the **go-build-resolver** agent to incrementally fix Go build errors with minimal changes.
 
-## Diagnostic Commands
+## What This Command Does
+
+1. **Run Diagnostics**: Execute `go build`, `go vet`, `staticcheck`
+2. **Parse Errors**: Group by file and sort by severity
+3. **Fix Incrementally**: One error at a time
+4. **Verify Each Fix**: Re-run build after each change
+5. **Report Summary**: Show what was fixed and what remains
+
+## When to Use
+
+Use `/go-build` when:
+- `go build ./...` fails with errors
+- `go vet ./...` reports issues
+- `golangci-lint run` shows warnings
+- Module dependencies are broken
+- After pulling changes that break the build
+
+## Diagnostic Commands Run
 
 ```bash
-go build ./...           # Primary build check
-go vet ./...             # Static analysis
-staticcheck ./...        # Extended linting
-golangci-lint run        # Comprehensive linting
-go mod verify            # Module integrity
-go mod tidy -v           # Dependency cleanup
+# Primary build check
+go build ./...
+
+# Static analysis
+go vet ./...
+
+# Extended linting (if available)
+staticcheck ./...
+golangci-lint run
+
+# Module issues
+go mod verify
+go mod tidy -v
+```
+
+## Example Session
+
+```text
+User: /go-build
+
+Agent:
+# Go Build Resolution
+
+## Initial Diagnostics
+
+```bash
+$ go build ./...
+internal/service/user.go:25:15: undefined: UserRepository
+internal/handler/api.go:42:9: cannot use x (type string) as type int
+internal/handler/api.go:58:2: missing return at end of function
+```
+
+Errors found: 3
+
+## Fix 1: Undefined Identifier
+
+File: internal/service/user.go:25
+Error: undefined: UserRepository
+Cause: Missing import
+
+```go
+// Added import
+import "project/internal/repository"
+
+// Changed
+var repo UserRepository
+// To
+var repo repository.UserRepository
+```
+
+```bash
+$ go build ./...
+# 2 errors remaining
+```
+
+## Fix 2: Type Mismatch
+
+File: internal/handler/api.go:42
+Error: cannot use x (type string) as type int
+
+```go
+// Changed
+count := params.Get("count")
+// To
+countStr := params.Get("count")
+count, _ := strconv.Atoi(countStr)
+```
+
+```bash
+$ go build ./...
+# 1 error remaining
+```
+
+## Fix 3: Missing Return
+
+File: internal/handler/api.go:58
+Error: missing return at end of function
+
+```go
+func GetUser(id string) (*User, error) {
+    if id == "" {
+        return nil, ErrInvalidID
+    }
+    user := findUser(id)
+    // Added missing return
+    return user, nil
+}
+```
+
+```bash
+$ go build ./...
+# Build successful!
+```
+
+## Final Verification
+
+```bash
+$ go vet ./...
+# No issues
+
+$ go test ./...
+ok      project/internal/service   0.015s
+ok      project/internal/handler   0.023s
+```
+
+## Summary
+
+| Metric | Count |
+|--------|-------|
+| Build errors fixed | 3 |
+| Vet warnings fixed | 0 |
+| Files modified | 2 |
+| Remaining issues | 0 |
+
+Build Status: SUCCESS
 ```
 
 ## Common Errors Fixed

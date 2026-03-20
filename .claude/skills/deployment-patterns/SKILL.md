@@ -1,228 +1,430 @@
 ---
 name: deployment-patterns
-description: CI/CD pipelines, blue-green deployments, canary releases, rollback strategies, infrastructure as code
+description: Deployment workflows, CI/CD pipeline patterns, Docker containerization, health checks, rollback strategies, and production readiness checklists for web applications.
+origin: ECC
 ---
 
 # Deployment Patterns
 
-## CI/CD Pipeline Design
+Production deployment workflows and CI/CD best practices.
 
-### Standard Pipeline Stages
+## When to Activate
+
+- Setting up CI/CD pipelines
+- Dockerizing an application
+- Planning deployment strategy (blue-green, canary, rolling)
+- Implementing health checks and readiness probes
+- Preparing for a production release
+- Configuring environment-specific settings
+
+## Deployment Strategies
+
+### Rolling Deployment (Default)
+
+Replace instances gradually — old and new versions run simultaneously during rollout.
 
 ```
-┌──────┐   ┌──────┐   ┌───────┐   ┌────────┐   ┌────────┐
-│ Lint │──▶│ Test │──▶│ Build │──▶│ Deploy │──▶│ Verify │
-└──────┘   └──────┘   └───────┘   │Staging │   └────────┘
-                                  └───┬────┘
-                                      │ manual gate
-                                  ┌───▼────┐
-                                  │ Deploy │
-                                  │  Prod  │
-                                  └────────┘
+Instance 1: v1 → v2  (update first)
+Instance 2: v1        (still running v1)
+Instance 3: v1        (still running v1)
+
+Instance 1: v2
+Instance 2: v1 → v2  (update second)
+Instance 3: v1
+
+Instance 1: v2
+Instance 2: v2
+Instance 3: v1 → v2  (update last)
 ```
 
-**Principles:**
-- Fail fast: lint and unit tests first (cheapest stages)
-- Immutable artifacts: build once, deploy everywhere
-- Environment parity: staging mirrors production
-- Manual gate before production (for most teams)
+**Pros:** Zero downtime, gradual rollout
+**Cons:** Two versions run simultaneously — requires backward-compatible changes
+**Use when:** Standard deployments, backward-compatible changes
 
-### GitHub Actions Example
+### Blue-Green Deployment
+
+Run two identical environments. Switch traffic atomically.
+
+```
+Blue  (v1) ← traffic
+Green (v2)   idle, running new version
+
+# After verification:
+Blue  (v1)   idle (becomes standby)
+Green (v2) ← traffic
+```
+
+**Pros:** Instant rollback (switch back to blue), clean cutover
+**Cons:** Requires 2x infrastructure during deployment
+**Use when:** Critical services, zero-tolerance for issues
+
+### Canary Deployment
+
+Route a small percentage of traffic to the new version first.
+
+```
+v1: 95% of traffic
+v2:  5% of traffic  (canary)
+
+# If metrics look good:
+v1: 50% of traffic
+v2: 50% of traffic
+
+# Final:
+v2: 100% of traffic
+```
+
+**Pros:** Catches issues with real traffic before full rollout
+**Cons:** Requires traffic splitting infrastructure, monitoring
+**Use when:** High-traffic services, risky changes, feature flags
+
+## Docker
+
+### Multi-Stage Dockerfile (Node.js)
+
+```dockerfile
+# Stage 1: Install dependencies
+FROM node:22-alpine AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --production=false
+
+# Stage 2: Build
+FROM node:22-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npm run build
+RUN npm prune --production
+
+# Stage 3: Production image
+FROM node:22-alpine AS runner
+WORKDIR /app
+
+RUN addgroup -g 1001 -S appgroup && adduser -S appuser -u 1001
+USER appuser
+
+COPY --from=builder --chown=appuser:appgroup /app/node_modules ./node_modules
+COPY --from=builder --chown=appuser:appgroup /app/dist ./dist
+COPY --from=builder --chown=appuser:appgroup /app/package.json ./
+
+ENV NODE_ENV=production
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+
+CMD ["node", "dist/server.js"]
+```
+
+### Multi-Stage Dockerfile (Go)
+
+```dockerfile
+FROM golang:1.22-alpine AS builder
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /server ./cmd/server
+
+FROM alpine:3.19 AS runner
+RUN apk --no-cache add ca-certificates
+RUN adduser -D -u 1001 appuser
+USER appuser
+
+COPY --from=builder /server /server
+
+EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=3s CMD wget -qO- http://localhost:8080/health || exit 1
+CMD ["/server"]
+```
+
+### Multi-Stage Dockerfile (Python/Django)
+
+```dockerfile
+FROM python:3.12-slim AS builder
+WORKDIR /app
+RUN pip install --no-cache-dir uv
+COPY requirements.txt .
+RUN uv pip install --system --no-cache -r requirements.txt
+
+FROM python:3.12-slim AS runner
+WORKDIR /app
+
+RUN useradd -r -u 1001 appuser
+USER appuser
+
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+COPY . .
+
+ENV PYTHONUNBUFFERED=1
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=3s CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/')" || exit 1
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "4"]
+```
+
+### Docker Best Practices
+
+```
+# GOOD practices
+- Use specific version tags (node:22-alpine, not node:latest)
+- Multi-stage builds to minimize image size
+- Run as non-root user
+- Copy dependency files first (layer caching)
+- Use .dockerignore to exclude node_modules, .git, tests
+- Add HEALTHCHECK instruction
+- Set resource limits in docker-compose or k8s
+
+# BAD practices
+- Running as root
+- Using :latest tags
+- Copying entire repo in one COPY layer
+- Installing dev dependencies in production image
+- Storing secrets in image (use env vars or secrets manager)
+```
+
+## CI/CD Pipeline
+
+### GitHub Actions (Standard Pipeline)
 
 ```yaml
 name: CI/CD
+
 on:
   push:
     branches: [main]
   pull_request:
+    branches: [main]
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: ruff check .
-
   test:
     runs-on: ubuntu-latest
-    needs: lint
     steps:
       - uses: actions/checkout@v4
-      - run: pytest --cov
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test -- --coverage
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage/
 
   build:
-    runs-on: ubuntu-latest
     needs: test
+    runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
-      - run: docker build -t myapp:${{ github.sha }} .
-      - run: docker push myapp:${{ github.sha }}
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: ghcr.io/${{ github.repository }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-  deploy-staging:
+  deploy:
     needs: build
-    environment: staging
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment: production
     steps:
-      - run: deploy --env staging --image myapp:${{ github.sha }}
-
-  deploy-prod:
-    needs: deploy-staging
-    environment: production  # Requires manual approval
-    runs-on: ubuntu-latest
-    steps:
-      - run: deploy --env production --image myapp:${{ github.sha }}
+      - name: Deploy to production
+        run: |
+          # Platform-specific deployment command
+          # Railway: railway up
+          # Vercel: vercel --prod
+          # K8s: kubectl set image deployment/app app=ghcr.io/${{ github.repository }}:${{ github.sha }}
+          echo "Deploying ${{ github.sha }}"
 ```
 
-## Deployment Strategies
-
-### Blue-Green Deployment
+### Pipeline Stages
 
 ```
-                   ┌─────────────────┐
-                   │  Load Balancer  │
-                   └────────┬────────┘
-                            │
-              ┌─────────────┼─────────────┐
-              ▼                           ▼
-        ┌───────────┐              ┌───────────┐
-        │  Blue     │              │  Green    │
-        │ (current) │              │  (new)    │
-        │  v1.2.0   │              │  v1.3.0   │
-        └───────────┘              └───────────┘
+PR opened:
+  lint → typecheck → unit tests → integration tests → preview deploy
+
+Merged to main:
+  lint → typecheck → unit tests → integration tests → build image → deploy staging → smoke tests → deploy production
 ```
 
-**Process:**
-1. Deploy new version to inactive environment (Green)
-2. Run smoke tests against Green
-3. Switch load balancer to Green
-4. Keep Blue running for instant rollback
-5. After confidence period, decommission Blue
+## Health Checks
 
-**Rollback:** Switch load balancer back to Blue (seconds).
+### Health Check Endpoint
 
-### Canary Release
+```typescript
+// Simple health check
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
 
-```
-Traffic split:
-  ├── 95% ──▶ v1.2.0 (stable)
-  └──  5% ──▶ v1.3.0 (canary)
+// Detailed health check (for internal monitoring)
+app.get("/health/detailed", async (req, res) => {
+  const checks = {
+    database: await checkDatabase(),
+    redis: await checkRedis(),
+    externalApi: await checkExternalApi(),
+  };
 
-Monitor error rates, latency, business metrics.
-If healthy after 30 min, increase to 25%, then 50%, then 100%.
-```
+  const allHealthy = Object.values(checks).every(c => c.status === "ok");
 
-**Best for:**
-- High-traffic services where full cutover is risky
-- When you need to validate with real traffic
-- Services with complex failure modes
+  res.status(allHealthy ? 200 : 503).json({
+    status: allHealthy ? "ok" : "degraded",
+    timestamp: new Date().toISOString(),
+    version: process.env.APP_VERSION || "unknown",
+    uptime: process.uptime(),
+    checks,
+  });
+});
 
-### Rolling Update
-
-```
-Pod 1: v1.2.0 ──▶ v1.3.0  (replace first)
-Pod 2: v1.2.0              (still serving)
-Pod 3: v1.2.0              (still serving)
-
-Pod 1: v1.3.0              (healthy)
-Pod 2: v1.2.0 ──▶ v1.3.0  (replace second)
-Pod 3: v1.2.0              (still serving)
-...
-```
-
-**Default for Kubernetes.** Set `maxUnavailable: 1` and `maxSurge: 1`.
-
-## Rollback Strategies
-
-### Immediate Rollback Checklist
-
-1. **Detect**: Monitoring alerts or manual observation
-2. **Decide**: Is rollback faster than fixing forward?
-3. **Execute**: Redeploy previous version
-4. **Verify**: Confirm metrics return to normal
-5. **Investigate**: Root cause analysis post-rollback
-
-### Version Pinning
-
-```bash
-# Tag every deployment
-docker tag myapp:$SHA myapp:release-2024-01-15
-
-# Rollback to specific version
-deploy --image myapp:release-2024-01-14
+async function checkDatabase(): Promise<HealthCheck> {
+  try {
+    await db.query("SELECT 1");
+    return { status: "ok", latency_ms: 2 };
+  } catch (err) {
+    return { status: "error", message: "Database unreachable" };
+  }
+}
 ```
 
-**Never deploy `latest` to production.** Always use immutable tags (SHA or semver).
+### Kubernetes Probes
+
+```yaml
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 3000
+  initialDelaySeconds: 10
+  periodSeconds: 30
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 3000
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  failureThreshold: 2
+
+startupProbe:
+  httpGet:
+    path: /health
+    port: 3000
+  initialDelaySeconds: 0
+  periodSeconds: 5
+  failureThreshold: 30    # 30 * 5s = 150s max startup time
+```
 
 ## Environment Configuration
 
-### 12-Factor App Principles
+### Twelve-Factor App Pattern
 
-```
-Config via environment variables, not files:
-
-DATABASE_URL=postgresql://...
-REDIS_URL=redis://...
-SECRET_KEY=...
+```bash
+# All config via environment variables — never in code
+DATABASE_URL=postgres://user:pass@host:5432/db
+REDIS_URL=redis://host:6379/0
+API_KEY=${API_KEY}           # injected by secrets manager
 LOG_LEVEL=info
-FEATURE_FLAG_NEW_UI=true
+PORT=3000
+
+# Environment-specific behavior
+NODE_ENV=production          # or staging, development
+APP_ENV=production           # explicit app environment
 ```
 
-### Secret Management
+### Configuration Validation
 
-| Tool | Best For |
-|------|----------|
-| AWS Secrets Manager | AWS-native apps |
-| HashiCorp Vault | Multi-cloud, on-prem |
-| SOPS | Git-encrypted secrets |
-| Doppler | Team-friendly SaaS |
+```typescript
+import { z } from "zod";
 
-**Never store secrets in:**
-- Git repositories (even private)
-- Docker images (baked into layers)
-- CI/CD logs (mask all secrets)
+const envSchema = z.object({
+  NODE_ENV: z.enum(["development", "staging", "production"]),
+  PORT: z.coerce.number().default(3000),
+  DATABASE_URL: z.string().url(),
+  REDIS_URL: z.string().url(),
+  JWT_SECRET: z.string().min(32),
+  LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
+});
 
-## Health Checks & Readiness
-
-### Probe Types
-
-```python
-# Liveness: "Is the process alive?"
-@app.get("/healthz")
-def liveness():
-    return {"status": "ok"}
-
-# Readiness: "Can it handle traffic?"
-@app.get("/readyz")
-def readiness():
-    try:
-        db.execute("SELECT 1")
-        return {"status": "ready"}
-    except Exception:
-        raise HTTPException(503, "Not ready")
-
-# Startup: "Has initialization completed?"
-@app.get("/startupz")
-def startup():
-    if not app.state.initialized:
-        raise HTTPException(503, "Starting up")
-    return {"status": "started"}
+// Validate at startup — fail fast if config is wrong
+export const env = envSchema.parse(process.env);
 ```
 
-### Graceful Shutdown
+## Rollback Strategy
 
-```python
-import signal
+### Instant Rollback
 
-def shutdown_handler(signum, frame):
-    # 1. Stop accepting new requests
-    # 2. Finish in-flight requests (30s timeout)
-    # 3. Close database connections
-    # 4. Exit cleanly
-    server.shutdown(timeout=30)
+```bash
+# Docker/Kubernetes: point to previous image
+kubectl rollout undo deployment/app
 
-signal.signal(signal.SIGTERM, shutdown_handler)
+# Vercel: promote previous deployment
+vercel rollback
+
+# Railway: redeploy previous commit
+railway up --commit <previous-sha>
+
+# Database: rollback migration (if reversible)
+npx prisma migrate resolve --rolled-back <migration-name>
 ```
+
+### Rollback Checklist
+
+- [ ] Previous image/artifact is available and tagged
+- [ ] Database migrations are backward-compatible (no destructive changes)
+- [ ] Feature flags can disable new features without deploy
+- [ ] Monitoring alerts configured for error rate spikes
+- [ ] Rollback tested in staging before production release
+
+## Production Readiness Checklist
+
+Before any production deployment:
+
+### Application
+- [ ] All tests pass (unit, integration, E2E)
+- [ ] No hardcoded secrets in code or config files
+- [ ] Error handling covers all edge cases
+- [ ] Logging is structured (JSON) and does not contain PII
+- [ ] Health check endpoint returns meaningful status
+
+### Infrastructure
+- [ ] Docker image builds reproducibly (pinned versions)
+- [ ] Environment variables documented and validated at startup
+- [ ] Resource limits set (CPU, memory)
+- [ ] Horizontal scaling configured (min/max instances)
+- [ ] SSL/TLS enabled on all endpoints
+
+### Monitoring
+- [ ] Application metrics exported (request rate, latency, errors)
+- [ ] Alerts configured for error rate > threshold
+- [ ] Log aggregation set up (structured logs, searchable)
+- [ ] Uptime monitoring on health endpoint
+
+### Security
+- [ ] Dependencies scanned for CVEs
+- [ ] CORS configured for allowed origins only
+- [ ] Rate limiting enabled on public endpoints
+- [ ] Authentication and authorization verified
+- [ ] Security headers set (CSP, HSTS, X-Frame-Options)
+
+### Operations
+- [ ] Rollback plan documented and tested
+- [ ] Database migration tested against production-sized data
+- [ ] Runbook for common failure scenarios
+- [ ] On-call rotation and escalation path defined
 
 ## Monitoring & Observability
 
@@ -248,15 +450,3 @@ signal.signal(signal.SIGTERM, shutdown_handler)
 curl -X POST "https://grafana/api/annotations" \
   -d '{"text": "Deploy v1.3.0", "tags": ["deploy"]}'
 ```
-
-## Common Anti-Patterns
-
-| Anti-Pattern | Fix |
-|-------------|-----|
-| Deploy on Friday | Deploy early in the week |
-| No rollback plan | Always have one-click rollback |
-| Skipping staging | Never deploy to prod without staging |
-| Manual deploys | Automate with CI/CD |
-| Deploying `latest` | Use immutable version tags |
-| No health checks | Add liveness + readiness probes |
-| Big-bang releases | Small, frequent deployments |

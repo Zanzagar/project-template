@@ -1,0 +1,690 @@
+{
+  "_comment": "Tracks provenance of files adopted from upstream repos (ECC, Superpowers). Used by scripts/check-upstream.sh to detect upstream changes.",
+  "_schema": {
+    "source": "GitHub repo (owner/name)",
+    "sourcePath": "Path in source repo",
+    "adaptedFromSha": "Commit SHA we adapted from",
+    "adaptedDate": "ISO date of adaptation",
+    "adaptations": "List of changes made during adaptation",
+    "verdict": "Adopt | Adapt (from audit)"
+  },
+  "_stats": {
+    "lastAudit": "2026-03-20",
+    "eccHeadAtAdoption": "1b21e08",
+    "totalAdopted": 44,
+    "totalAdapted": 38,
+    "byCategory": {
+      "hookLibs": { "adopted": 8, "adapted": 1 },
+      "hookScripts": { "adopted": 2, "adapted": 8 },
+      "skills": { "adopted": 13, "adapted": 9 },
+      "commands": { "adopted": 13, "adapted": 3 },
+      "agents": { "adopted": 4, "adapted": 9 },
+      "rules": { "adopted": 0, "adapted": 6 },
+      "scripts": { "adopted": 4, "adapted": 2 }
+    }
+  },
+  "files": {
+    ".claude/hooks/lib/hook-flags.js": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/lib/hook-flags.js",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["ECC_HOOK_PROFILE → TEMPLATE_HOOK_PROFILE", "ECC_DISABLED_HOOKS → TEMPLATE_DISABLED_HOOKS"],
+      "verdict": "Adopt"
+    },
+    ".claude/hooks/lib/run-with-flags.js": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/hooks/run-with-flags.js",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["CLAUDE_PLUGIN_ROOT → CLAUDE_PROJECT_DIR", "Path resolution adjusted for .claude/hooks/lib/ depth"],
+      "verdict": "Adopt"
+    },
+    ".claude/hooks/lib/run-with-flags-shell.sh": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/hooks/run-with-flags-shell.sh",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["set -euo pipefail → set +e", "Added extra arg passthrough", "CLAUDE_PLUGIN_ROOT → CLAUDE_PROJECT_DIR"],
+      "verdict": "Adapt"
+    },
+    ".claude/hooks/lib/check-hook-enabled.js": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/hooks/check-hook-enabled.js",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Import path adjusted for local lib/ layout"],
+      "verdict": "Adopt"
+    },
+    ".claude/hooks/lib/utils.js": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/lib/utils.js",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Project-local .claude/ option for sessions dir"],
+      "verdict": "Adopt"
+    },
+    ".claude/hooks/lib/resolve-formatter.js": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/lib/resolve-formatter.js",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Formatter auto-detection with caching"],
+      "verdict": "Adopt"
+    },
+    ".claude/hooks/lib/package-manager.js": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/lib/package-manager.js",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["npm/pnpm/yarn/bun detection"],
+      "verdict": "Adopt"
+    },
+    ".claude/hooks/lib/project-detect.js": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/lib/project-detect.js",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["12-language framework detection"],
+      "verdict": "Adopt"
+    },
+    ".claude/hooks/lib/shell-split.js": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/lib/shell-split.js",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Shell command parser, no changes"],
+      "verdict": "Adopt"
+    },
+    ".claude/hooks/session-end.js": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/hooks/session-end.js",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Added Taskmaster query", "Project-local sessions dir"],
+      "verdict": "Adopt"
+    },
+    ".claude/hooks/typescript-check.js": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/hooks/post-edit-typecheck.js",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Renamed for clarity", "Correct path filtering"],
+      "verdict": "Adopt"
+    },
+    ".claude/hooks/auto-tmux-dev.js": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/hooks/auto-tmux-dev.js",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Adapted for template hook architecture"],
+      "verdict": "Adapt"
+    },
+    ".claude/hooks/dev-server-blocker.js": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/hooks/pre-bash-dev-server-block.js",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Merged with auto-tmux patterns", "Polyglot dev server detection"],
+      "verdict": "Adapt"
+    },
+    ".claude/hooks/post-edit-format.js": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/hooks/post-edit-format.js",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Merged rustfmt/shfmt coverage from resolve-formatter"],
+      "verdict": "Adapt"
+    },
+    ".claude/hooks/session-init.sh": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/hooks/session-start.js",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Bash implementation (was Node.js)", "Added stdout session injection", "Added language detection"],
+      "verdict": "Adapt"
+    },
+    ".claude/hooks/check-console-log.js": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/hooks/check-console-log.js",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Adapted for Stop event usage"],
+      "verdict": "Adapt"
+    },
+    ".claude/hooks/console-log-audit.js": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/hooks/post-edit-console-warn.js",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Polyglot debug statement patterns", "Two-hook architecture"],
+      "verdict": "Adapt"
+    },
+    ".claude/hooks/pr-url-extract.sh": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/hooks/post-bash-pr-created.js",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Bash implementation", "Added gh pr create trigger"],
+      "verdict": "Adapt"
+    },
+    ".claude/hooks/suggest-compact.js": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/hooks/suggest-compact.js",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Atomic counter write", "Kept /learn reminder"],
+      "verdict": "Adapt"
+    },
+    ".claude/skills/api-design/SKILL.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "skills/api-design/SKILL.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["~/.claude/ → .claude/ paths"],
+      "verdict": "Adopt"
+    },
+    ".claude/skills/cpp-coding-standards/SKILL.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "skills/cpp-coding-standards/SKILL.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["~/.claude/ → .claude/ paths"],
+      "verdict": "Adopt"
+    },
+    ".claude/skills/django-patterns/SKILL.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "skills/django-patterns/SKILL.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["~/.claude/ → .claude/ paths"],
+      "verdict": "Adopt"
+    },
+    ".claude/skills/django-security/SKILL.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "skills/django-security/SKILL.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["~/.claude/ → .claude/ paths"],
+      "verdict": "Adopt"
+    },
+    ".claude/skills/docker-patterns/SKILL.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "skills/docker-patterns/SKILL.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["~/.claude/ → .claude/ paths"],
+      "verdict": "Adopt"
+    },
+    ".claude/skills/e2e-testing/SKILL.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "skills/e2e-testing/SKILL.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["~/.claude/ → .claude/ paths"],
+      "verdict": "Adopt"
+    },
+    ".claude/skills/regex-vs-llm-structured-text/SKILL.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "skills/regex-vs-llm-structured-text/SKILL.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["~/.claude/ → .claude/ paths"],
+      "verdict": "Adopt"
+    },
+    ".claude/skills/springboot-verification/SKILL.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "skills/springboot-verification/SKILL.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["~/.claude/ → .claude/ paths"],
+      "verdict": "Adopt"
+    },
+    ".claude/skills/ai-regression-testing/SKILL.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "skills/ai-regression-testing/SKILL.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["~/.claude/ → .claude/ paths"],
+      "verdict": "Adopt"
+    },
+    ".claude/skills/blueprint/SKILL.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "skills/blueprint/SKILL.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["~/.claude/ → .claude/ paths"],
+      "verdict": "Adopt"
+    },
+    ".claude/skills/claude-api/SKILL.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "skills/claude-api/SKILL.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["~/.claude/ → .claude/ paths"],
+      "verdict": "Adopt"
+    },
+    ".claude/skills/search-first/SKILL.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "skills/search-first/SKILL.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["~/.claude/ → .claude/ paths"],
+      "verdict": "Adopt"
+    },
+    ".claude/skills/skill-stocktake/SKILL.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "skills/skill-stocktake/SKILL.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["~/.claude/ → .claude/ paths"],
+      "verdict": "Adopt"
+    },
+    ".claude/skills/continuous-learning-v2/SKILL.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "skills/continuous-learning-v2/SKILL.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Preserved template integration sections", "Preserved confidence dynamics"],
+      "verdict": "Adapt"
+    },
+    ".claude/skills/cost-aware-llm-pipeline/SKILL.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "skills/cost-aware-llm-pipeline/SKILL.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Updated model ID constants"],
+      "verdict": "Adapt"
+    },
+    ".claude/skills/cpp-testing/SKILL.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "skills/cpp-testing/SKILL.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Preserved Catch2 BDD sections", "Preserved benchmarks"],
+      "verdict": "Adapt"
+    },
+    ".claude/skills/database-migrations/SKILL.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "skills/database-migrations/SKILL.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Preserved Online Schema Change tools table"],
+      "verdict": "Adapt"
+    },
+    ".claude/skills/deployment-patterns/SKILL.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "skills/deployment-patterns/SKILL.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Preserved monitoring section"],
+      "verdict": "Adapt"
+    },
+    ".claude/skills/django-tdd/SKILL.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "skills/django-tdd/SKILL.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Appended TestCase hierarchy table"],
+      "verdict": "Adapt"
+    },
+    ".claude/skills/golang-patterns/SKILL.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "skills/golang-patterns/SKILL.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Preserved template-unique content"],
+      "verdict": "Adapt"
+    },
+    ".claude/skills/golang-testing/SKILL.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "skills/golang-testing/SKILL.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Preserved Testify sections", "Preserved build tags"],
+      "verdict": "Adapt"
+    },
+    ".claude/skills/python-testing/SKILL.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "skills/python-testing/SKILL.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Preserved factory fixture section", "Preserved DI preference"],
+      "verdict": "Adapt"
+    },
+    ".claude/commands/aside.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "commands/aside.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["~/.claude/ → .claude/ paths"],
+      "verdict": "Adopt"
+    },
+    ".claude/commands/learn-eval.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "commands/learn-eval.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["~/.claude/ → .claude/ paths"],
+      "verdict": "Adopt"
+    },
+    ".claude/commands/quality-gate.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "commands/quality-gate.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["~/.claude/ → .claude/ paths"],
+      "verdict": "Adopt"
+    },
+    ".claude/commands/resume-session.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "commands/resume-session.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Adapted for handoff-*.md files", "Project-local sessions path"],
+      "verdict": "Adapt"
+    },
+    ".claude/commands/save-session.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "commands/save-session.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Project-local sessions path labels"],
+      "verdict": "Adapt"
+    },
+    ".claude/commands/e2e.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "commands/e2e.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Removed PMX-specific section", "~/.claude/ → .claude/ paths"],
+      "verdict": "Adopt"
+    },
+    ".claude/commands/evolve.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "commands/evolve.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Added concrete examples", "Added file formats", "Uses .claude/instincts/evolved/"],
+      "verdict": "Adopt"
+    },
+    ".claude/commands/go-build.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "commands/go-build.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Added worked example", "~/.claude/ → .claude/ paths"],
+      "verdict": "Adopt"
+    },
+    ".claude/commands/go-review.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "commands/go-review.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Added worked example", "Added govulncheck", "~/.claude/ → .claude/ paths"],
+      "verdict": "Adopt"
+    },
+    ".claude/commands/go-test.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "commands/go-test.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Added worked TDD session", "~/.claude/ → .claude/ paths"],
+      "verdict": "Adopt"
+    },
+    ".claude/commands/instinct-export.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "commands/instinct-export.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Added YAML output format", "Added scope logic", "~/.claude/ → .claude/ paths"],
+      "verdict": "Adopt"
+    },
+    ".claude/commands/instinct-import.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "commands/instinct-import.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Added conflict detection", "Added merge behavior", "Added source tracking"],
+      "verdict": "Adopt"
+    },
+    ".claude/commands/instinct-status.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "commands/instinct-status.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Adopted output format", "Kept script path", "Kept thresholds"],
+      "verdict": "Adapt"
+    },
+    ".claude/commands/plan.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "commands/plan.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Added /orchestrate review integration", "~/.claude/ → .claude/ paths"],
+      "verdict": "Adopt"
+    },
+    ".claude/commands/python-review.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "commands/python-review.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Added worked example", "Added Common Fixes + Flask", "~/.claude/ → .claude/ paths"],
+      "verdict": "Adopt"
+    },
+    ".claude/commands/tdd.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "commands/tdd.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Added Superpowers enforcement section", "~/.claude/ → .claude/ paths"],
+      "verdict": "Adopt"
+    },
+    ".claude/agents/code-reviewer.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "agents/code-reviewer.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Added Bash to tools", "Added CLAUDE.md/5-step process"],
+      "verdict": "Adopt"
+    },
+    ".claude/agents/go-reviewer.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "agents/go-reviewer.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Added Bash to tools", "Kept interface design section"],
+      "verdict": "Adopt"
+    },
+    ".claude/agents/planner.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "agents/planner.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Added Task Master integration note", "Replaced Stripe example"],
+      "verdict": "Adopt"
+    },
+    ".claude/agents/security-reviewer.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "agents/security-reviewer.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Added Write/Edit to tools", "Replaced JS tools with polyglot equivalents"],
+      "verdict": "Adopt"
+    },
+    ".claude/agents/architect.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "agents/architect.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Added checklist + anti-patterns", "Added worked ADR", "Kept planner distinction"],
+      "verdict": "Adapt"
+    },
+    ".claude/agents/database-reviewer.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "agents/database-reviewer.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Added anti-patterns table + RLS", "Kept migration safety", "Added Write/Edit"],
+      "verdict": "Adapt"
+    },
+    ".claude/agents/doc-updater.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "agents/doc-updater.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Added codemap format spec", "Added when-to-update table", "Removed ECC TypeScript toolchain"],
+      "verdict": "Adapt"
+    },
+    ".claude/agents/e2e-runner.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "agents/e2e-runner.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Added Write/Edit", "Added flaky quarantine", "Removed Agent Browser"],
+      "verdict": "Adapt"
+    },
+    ".claude/agents/go-build-resolver.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "agents/go-build-resolver.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Adopted workflow structure + stop conditions", "Kept CGO section"],
+      "verdict": "Adapt"
+    },
+    ".claude/agents/python-reviewer.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "agents/python-reviewer.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Added Bash + security CRITICAL + approval criteria", "Kept internals sections"],
+      "verdict": "Adapt"
+    },
+    ".claude/agents/refactor-cleaner.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "agents/refactor-cleaner.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Added risk classification", "Added when-NOT-to-use", "Kept safety process"],
+      "verdict": "Adapt"
+    },
+    ".claude/agents/tdd-guide.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "agents/tdd-guide.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Added Bash + edge cases + anti-patterns", "Kept Superpowers constraint"],
+      "verdict": "Adapt"
+    },
+    ".claude/agents/build-resolver.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "agents/build-resolver.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["Adopted workflow structure + priority levels", "Made polyglot"],
+      "verdict": "Adapt"
+    },
+    ".claude/rules/proactive-steering.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "rules/common/agents.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-20",
+      "adaptations": ["Content merge: parallel execution mandate with GOOD/BAD examples", "Content merge: multi-perspective sub-agent roles"],
+      "verdict": "Adapt",
+      "mergeType": "contentMerge"
+    },
+    ".claude/rules/claude-behavior.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "rules/common/coding-style.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-20",
+      "adaptations": ["Content merge: immutability principle", "Content merge: pre-completion checklist", "Content merge: security guardrails (from security.md)"],
+      "verdict": "Adapt",
+      "mergeType": "contentMerge"
+    },
+    ".claude/rules/workflow-enforcement.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "rules/common/development-workflow.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-20",
+      "adaptations": ["Content merge: Research Before Implementation section", "Content merge: fix-impl-not-tests (from testing.md)"],
+      "verdict": "Adapt",
+      "mergeType": "contentMerge"
+    },
+    ".claude/rules/workflow-guide.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "rules/common/development-workflow.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-20",
+      "adaptations": ["Content merge: Research & Reuse cross-reference in Building phase"],
+      "verdict": "Adapt",
+      "mergeType": "contentMerge"
+    },
+    ".claude/rules/golang/coding-standards.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "rules/golang/coding-style.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-20",
+      "adaptations": ["Content merge: interface size tightened to 1-3 methods"],
+      "verdict": "Adapt",
+      "mergeType": "contentMerge"
+    },
+    ".claude/rules/typescript/coding-standards.md": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "rules/typescript/coding-style.md",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-20",
+      "adaptations": ["Added .js/.jsx to paths", "Added JSDoc fallback", "Added ApiResponse<T>", "Strengthened React.FC rationale"],
+      "verdict": "Adapt",
+      "mergeType": "contentMerge"
+    },
+    "scripts/ci/validate-agents.js": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/ci/validate-agents.js",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["AGENTS_DIR → ../../.claude/agents"],
+      "verdict": "Adopt"
+    },
+    "scripts/ci/validate-skills.js": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/ci/validate-skills.js",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["SKILLS_DIR → ../../.claude/skills"],
+      "verdict": "Adopt"
+    },
+    "scripts/ci/validate-rules.js": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/ci/validate-rules.js",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["RULES_DIR → ../../.claude/rules"],
+      "verdict": "Adopt"
+    },
+    "scripts/ci/validate-commands.js": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/ci/validate-commands.js",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-19",
+      "adaptations": ["3 dir paths → .claude/ prefix"],
+      "verdict": "Adopt"
+    },
+    "scripts/ci/validate-hooks.js": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/ci/validate-hooks.js",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-20",
+      "adaptations": ["Reads .claude/settings.json instead of hooks.json", "Removed Ajv dependency", "Added script path existence checking"],
+      "verdict": "Adapt"
+    },
+    "scripts/ci/validate-no-personal-paths.js": {
+      "source": "affaan-m/everything-claude-code",
+      "sourcePath": "scripts/ci/validate-no-personal-paths.js",
+      "adaptedFromSha": "1b21e08",
+      "adaptedDate": "2026-03-20",
+      "adaptations": ["Auto-detect username from env/git", "Updated target dirs to .claude/", "Added ECC author path block"],
+      "verdict": "Adapt"
+    }
+  }
+}
