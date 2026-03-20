@@ -36,11 +36,19 @@ d0ba5ce docs: Complete Phase 4 scripts/infra and Superpowers integration audit
 - **No uncommitted changes** (aside from task state files)
 - **All audit phases complete** — execution phase ready
 
-## Next Steps (ordered)
+## Next Steps (ordered — REORDERED from original task numbering)
+
+### 0. FIRST: Task 12.2 — Adopt CI Validators (safety net)
+Create `scripts/ci/` with 4 CI validators (validate-agents.js, validate-skills.js, validate-rules.js, validate-commands.js). These validate structural integrity of Claude Code artifacts. **Do this BEFORE Tasks 10-11** so every subsequent adoption can be verified automatically.
+- Fetch from `gh api repos/affaan-m/everything-claude-code/contents/scripts/ci/<file>`
+- Change directory paths from ECC layout to `.claude/` prefix
+- Reference: `docs/audit/scripts-decisions.md` Part 1 for per-validator details
+- After adoption, run: `node scripts/ci/validate-agents.js && node scripts/ci/validate-skills.js && node scripts/ci/validate-rules.js && node scripts/ci/validate-commands.js`
 
 ### 1. Task 10: Execute Adopt Verdicts (Hooks)
 Start with 10.1 (library dependencies — prerequisite for Node.js hooks), then 10.2-10.5.
 - **Critical pattern**: Fetch actual ECC source via `gh api`, copy to our location, apply ONLY documented adaptations, record in upstream-manifest.json
+- **After each subtask**: Run CI validators to catch path errors, run smoke-test.sh
 - Reference: `docs/audit/hooks-decisions.md` for per-hook adaptation details
 - Pre-commit hook bug still active: use `SKIP_LINT=1 SKIP_TESTS=1 SKIP_TASK_CHECK=1` env vars
 
@@ -48,13 +56,36 @@ Start with 10.1 (library dependencies — prerequisite for Node.js hooks), then 
 - 11.1: 22 skills (17 adopt + 5 add) — bulk fetch from ECC
 - 11.2: 16 commands (10 adopt + 1 adapt + 5 add)
 - 11.3: 13 agents (4 adopt + 9 adapt)
+- **After each subtask**: Run CI validators + smoke-test.sh
 - Reference: `docs/audit/skills-decisions.md`, `commands-decisions.md`, `agents-decisions.md`
 
-### 3. Task 12: Execute Adopt Verdicts (Rules, Scripts)
+### 3. Task 12.1 + 12.3: Remaining Rules and Scripts
 - 12.1: Merge ECC content into 3 existing rules (proactive-steering, workflow-enforcement, reasoning-patterns)
-- 12.2: Create `scripts/ci/` with 4 CI validators
 - 12.3: Adapt hooks validator and personal-paths validator
 - Reference: `docs/audit/rules-decisions.md`, `scripts-decisions.md`
+
+## Diff Review Protocol (MANDATORY per subtask)
+
+After each adoption commit, the user will verify:
+```bash
+# 1. Fetch raw ECC source for spot-check
+gh api repos/affaan-m/everything-claude-code/contents/<path> \
+  -H 'Accept: application/vnd.github.raw' > /tmp/ecc-original
+
+# 2. Diff against adopted version — ONLY documented changes should appear
+diff --color /tmp/ecc-original <our-adopted-file>
+
+# 3. Grep for leftover ECC-isms
+grep -r "ECC_" .claude/hooks/ scripts/ci/
+
+# 4. Run structural validators
+node scripts/ci/validate-agents.js 2>/dev/null; node scripts/ci/validate-skills.js 2>/dev/null
+node scripts/ci/validate-rules.js 2>/dev/null; node scripts/ci/validate-commands.js 2>/dev/null
+
+# 5. Run smoke test
+./scripts/smoke-test.sh
+```
+Spot-check 3-5 files per batch. Every diff line must map to a documented adaptation.
 
 ### 4. Tasks 13-18: Manifest, Sync, Summary
 - Task 13: Build upstream-manifest.json from all adoption commits
