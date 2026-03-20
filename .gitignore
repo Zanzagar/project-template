@@ -77,7 +77,15 @@ node_modules/
 .claude/instincts/observations.jsonl
 .claude/instincts/observations.archive/
 .claude/instincts/.observer.pid
+.claude/instincts/.signal_counter
+.claude/instincts/.last_purge
 .claude/instincts/observer.log
+
+# Session artifacts (generated at runtime)
+.claude/sessions/cost-log.jsonl
+
+# InsAIts audit artifacts
+.insaits_audit_session.jsonl
 
 # AgentShield scan marker
 .claude/agentshield-last-run
