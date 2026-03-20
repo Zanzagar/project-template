@@ -1,8 +1,19 @@
-Comprehensive Go code review for idiomatic patterns, concurrency safety, and security.
+---
+description: Comprehensive Go code review for idiomatic patterns, concurrency safety, error handling, and security. Invokes the go-reviewer agent.
+---
 
-Usage: `/go-review [scope]`
+# Go Code Review
 
-Arguments: $ARGUMENTS
+This command invokes the **go-reviewer** agent for comprehensive Go-specific code review.
+
+## What This Command Does
+
+1. **Identify Go Changes**: Find modified `.go` files via `git diff`
+2. **Run Static Analysis**: Execute `go vet`, `staticcheck`, and `golangci-lint`
+3. **Security Scan**: Check for SQL injection, command injection, race conditions
+4. **Concurrency Review**: Analyze goroutine safety, channel usage, mutex patterns
+5. **Idiomatic Go Check**: Verify code follows Go conventions and best practices
+6. **Generate Report**: Categorize issues by severity
 
 ## Scope Options
 
@@ -11,6 +22,15 @@ Arguments: $ARGUMENTS
 | (default) | All uncommitted `.go` file changes |
 | `staged` | Only staged `.go` changes |
 | `<path>` | Specific file or directory |
+
+## When to Use
+
+Use `/go-review` when:
+- After writing or modifying Go code
+- Before committing Go changes
+- Reviewing pull requests with Go code
+- Onboarding to a new Go codebase
+- Learning idiomatic Go patterns
 
 ## Review Categories
 
@@ -37,14 +57,82 @@ Arguments: $ARGUMENTS
 - Slice not preallocated when size is known
 - Table-driven tests not used
 
-## Automated Checks
+## Automated Checks Run
 
 ```bash
-go vet ./...                   # Static analysis
-staticcheck ./...              # Advanced checks
-golangci-lint run              # Comprehensive linting
-go build -race ./...           # Race detection
-govulncheck ./...              # Known vulnerabilities
+# Static analysis
+go vet ./...
+
+# Advanced checks (if installed)
+staticcheck ./...
+golangci-lint run
+
+# Race detection
+go build -race ./...
+
+# Security vulnerabilities
+govulncheck ./...
+```
+
+## Example Usage
+
+```text
+User: /go-review
+
+Agent:
+# Go Code Review Report
+
+## Files Reviewed
+- internal/handler/user.go (modified)
+- internal/service/auth.go (modified)
+
+## Static Analysis Results
+✓ go vet: No issues
+✓ staticcheck: No issues
+
+## Issues Found
+
+[CRITICAL] Race Condition
+File: internal/service/auth.go:45
+Issue: Shared map accessed without synchronization
+```go
+var cache = map[string]*Session{}  // Concurrent access!
+
+func GetSession(id string) *Session {
+    return cache[id]  // Race condition
+}
+```
+Fix: Use sync.RWMutex or sync.Map
+```go
+var (
+    cache   = map[string]*Session{}
+    cacheMu sync.RWMutex
+)
+
+func GetSession(id string) *Session {
+    cacheMu.RLock()
+    defer cacheMu.RUnlock()
+    return cache[id]
+}
+```
+
+[HIGH] Missing Error Context
+File: internal/handler/user.go:28
+Issue: Error returned without context
+```go
+return err  // No context
+```
+Fix: Wrap with context
+```go
+return fmt.Errorf("get user %s: %w", userID, err)
+```
+
+## Summary
+- CRITICAL: 1
+- HIGH: 1
+- MEDIUM: 0
+
+Recommendation: Block merge until CRITICAL issue is fixed
 ```
 
 ## Approval Criteria

@@ -1,6 +1,6 @@
 Analyze instincts for clustering opportunities and suggest new skills.
 
-Usage: `/evolve`
+Usage: `/evolve` or `/evolve --generate`
 
 ## Instructions
 
@@ -18,10 +18,10 @@ python3 scripts/instinct-cli.py evolve --generate
 
 ### What Evolution Does
 
-1. Groups instincts by domain
-2. Finds clusters of 2+ related instincts (similar triggers)
-3. Proposes new skills, commands, or agents from clusters
-4. On `--generate`: writes evolved structures to `.claude/instincts/evolved/`
+Analyzes instincts and clusters related ones into higher-level structures:
+- **Commands**: When instincts describe user-invoked actions
+- **Skills**: When instincts describe auto-triggered behaviors
+- **Agents**: When instincts describe complex, multi-step processes
 
 ### Evolution Targets
 
@@ -30,6 +30,53 @@ python3 scripts/instinct-cli.py evolve --generate
 | 2+ related instincts | Skill | Similar triggers, any confidence |
 | Workflow instinct (>=70%) | Command | High-confidence workflow patterns |
 | 3+ instincts (>=75% avg) | Agent | Complex multi-step patterns |
+
+### Evolution Rules
+
+**Command (User-Invoked):** When instincts describe actions a user would explicitly request:
+- Multiple instincts about "when user asks to..."
+- Instincts with triggers like "when creating a new X"
+- Instincts that follow a repeatable sequence
+
+**Skill (Auto-Triggered):** When instincts describe behaviors that should happen automatically:
+- Pattern-matching triggers
+- Error handling responses
+- Code style enforcement
+
+**Agent (Needs Depth/Isolation):** When instincts describe complex, multi-step processes:
+- Debugging workflows
+- Refactoring sequences
+- Research tasks
+
+### Generated Files
+
+On `--generate`, evolved structures are written to `.claude/instincts/evolved/`
+
+### Example Output Format
+
+```
+============================================================
+  EVOLVE ANALYSIS - 12 instincts
+============================================================
+
+High confidence instincts (>=80%): 5
+
+## SKILL CANDIDATES
+1. Cluster: "adding tests"
+   Instincts: 3
+   Avg confidence: 82%
+   Domains: testing
+
+## COMMAND CANDIDATES (2)
+  /adding-tests
+    From: test-first-workflow
+    Confidence: 84%
+
+## AGENT CANDIDATES (1)
+  adding-tests-agent
+    Covers 3 instincts
+    Avg confidence: 82%
+```
 
 ### If Not Enough Instincts
 
