@@ -50,6 +50,37 @@ for pattern in "${PROTECTED_FILES[@]}"; do
     fi
 done
 
+# Config tamper guard — prevent Claude from weakening linter/formatter settings
+# Override with: TEMPLATE_ALLOW_CONFIG_EDIT=1
+if [[ "${TEMPLATE_ALLOW_CONFIG_EDIT:-0}" != "1" ]]; then
+    LINTER_CONFIGS_BLOCK=(
+        ".ruff.toml" "ruff.toml"
+        ".eslintrc" ".eslintrc.js" ".eslintrc.json" ".eslintrc.yaml"
+        "eslint.config.js" "eslint.config.mjs"
+        ".prettierrc" ".prettierrc.json"
+        "prettier.config.js" "prettier.config.mjs"
+        "biome.json" "biome.jsonc"
+        ".flake8" ".golangci.yml" ".golangci.yaml"
+    )
+
+    for pattern in "${LINTER_CONFIGS_BLOCK[@]}"; do
+        if [[ "$FILENAME" == "$pattern" ]]; then
+            echo "BLOCKED: Cannot modify linter/formatter config: $FILENAME" >&2
+            echo "This protects code quality standards from being weakened." >&2
+            echo "To override: export TEMPLATE_ALLOW_CONFIG_EDIT=1" >&2
+            exit 2
+        fi
+    done
+
+    # Warn-only for multi-purpose configs (contain more than just lint rules)
+    LINTER_CONFIGS_WARN=("tsconfig.json" "pyproject.toml")
+    for pattern in "${LINTER_CONFIGS_WARN[@]}"; do
+        if [[ "$FILENAME" == "$pattern" ]]; then
+            echo "WARNING: Modifying $FILENAME — ensure lint/format rules are not weakened" >&2
+        fi
+    done
+fi
+
 # Check protected directories
 for dir in "${PROTECTED_DIRS[@]}"; do
     if [[ "$FILE_PATH" == *"/$dir/"* ]] || [[ "$DIRNAME" == *"$dir" ]]; then

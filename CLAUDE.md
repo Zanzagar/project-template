@@ -290,7 +290,7 @@ See `docs/MCP_SETUP.md` for configuration by project type.
 
 ## Hooks (Enabled by Default)
 
-All 18 hooks are enabled by default via the tracked `.claude/settings.json`. Use presets to slim down:
+All 21 hooks are enabled by default via the tracked `.claude/settings.json`. Use presets to slim down:
 
 ```bash
 # Slim down with a preset (writes to settings.local.json, overrides tracked config)
@@ -301,7 +301,44 @@ All 18 hooks are enabled by default via the tracked `.claude/settings.json`. Use
 
 See `.claude/hooks/README.md` for details.
 
-Available hooks:
+### Hook Profiles
+
+Control which hooks run via environment variables (no config file changes needed):
+
+| Profile | Hooks Enabled | Use Case |
+|---------|--------------|----------|
+| `minimal` | ~7 lifecycle + safety hooks | Fast sessions, debugging |
+| `standard` | ~17 hooks (default) | Normal development |
+| `strict` | All 21 hooks | Pre-commit, CI, thorough review |
+
+```bash
+# Set profile for session
+export TEMPLATE_HOOK_PROFILE=minimal
+
+# Disable specific hooks by ID
+export TEMPLATE_DISABLED_HOOKS=console-log-audit,typescript-check
+```
+
+### Security Deny Lists
+
+Recommended deny patterns for your Claude Code settings:
+
+```json
+{
+  "permissions": {
+    "deny": [
+      "Read(~/.ssh/*)", "Read(~/.aws/*)", "Read(~/.env)",
+      "Read(**/credentials*)", "Read(**/.env*)",
+      "Read(**/*.pem)", "Read(**/*.key)",
+      "Write(~/.ssh/*)", "Write(~/.aws/*)", "Write(**/.env*)"
+    ]
+  }
+}
+```
+
+See `docs/SECURITY.md` for full security guidance and `.claude/rules/security-hardening.md` for behavioral rules.
+
+### Available Hooks
 - **session-init.sh** - Detects project phase, loads context, reloads session summaries
 - **session-end.sh** - Generates detailed session summary for cross-session continuity
 - **pre-compact.sh** - Saves working state before context compaction
@@ -320,6 +357,9 @@ Available hooks:
 - **pr-url-extract.sh** - Extracts PR creation URL from git push output, suggests review commands
 - **long-running-tmux-hint.sh** - Advisory tmux reminder for long-running commands (npm, pytest, cargo, docker)
 - **observe.sh** - Captures tool usage patterns to observations.jsonl for continuous learning v2
+- **quality-gate.js** - Consolidated formatting, debug check, and TypeScript verification (strict)
+- **file-size-guard.js** - Blocks creation of files exceeding 800 lines
+- **cost-tracker.js** - Session token/cost telemetry to cost-log.jsonl
 
 See `docs/HOOKS.md` for full documentation.
 

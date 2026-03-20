@@ -40,6 +40,9 @@ const MAX_STDIN = 1024 * 1024; // 1MB limit
  * @returns {string} The original input (pass-through)
  */
 function run(rawInput) {
+  // Delegate to quality-gate.js when available (consolidates formatting + linting + TS check)
+  try { require.resolve('./quality-gate'); return rawInput; } catch { /* fall through */ }
+
   try {
     const input = JSON.parse(rawInput);
     const filePath = input.tool_input?.file_path;

@@ -129,3 +129,45 @@ Reserve for:
 
 ### Why This Matters
 Context7 queries inject 5-20k tokens into your context each time. Multiple queries compound quickly, eating into your working context. Use the lightest option that works.
+
+## Research Quality Rules
+
+**Enforce source attribution discipline in all research outputs.**
+
+1. **Every factual claim needs a source citation**
+   - Link to documentation, commit, or authoritative source
+   - "According to the [Django docs](...)" not "Django does X"
+   - If citing from memory, mark as "[from knowledge, not verified]"
+
+2. **Flag single-source claims**
+   - If only one source says it, mark as "[unverified]"
+   - Cross-reference critical claims (security, performance, compatibility)
+
+3. **Separate fact from inference**
+   - Fact: "The API rate limit is 100/min" (documented)
+   - Inference: "This suggests we need caching" (my conclusion)
+   - Always label which is which
+
+4. **Cross-reference critical claims**
+   - Security recommendations: verify in multiple sources
+   - Performance claims: benchmark or cite benchmarks
+   - Compatibility claims: test or cite test results
+
+## Adopt/Extend/Compose/Build Matrix
+
+**Before implementing custom solutions, evaluate existing options.**
+
+| Option | When | Example |
+|--------|------|---------|
+| **Adopt** | Existing solution fits 100% | Use library directly |
+| **Extend** | Fits 80%, need customization | Extend base class, wrap API |
+| **Compose** | Multiple tools solve parts | Combine libraries for full solution |
+| **Build** | Nothing fits, unique requirement | Custom implementation |
+
+**Default to Adopt.** Building is the last resort — every line of custom code is a maintenance burden. The threshold for "Build" should be high: no existing tool covers even 50% of the need, AND the requirement is genuinely unique.
+
+**Apply when:**
+- Choosing libraries or frameworks
+- Deciding whether to write utility code
+- Evaluating upstream implementations (ECC, Superpowers) for adoption
+- Any "should I write this from scratch?" decision

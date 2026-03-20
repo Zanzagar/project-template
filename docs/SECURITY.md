@@ -154,3 +154,61 @@ The `protect-sensitive-files.sh` hook blocks edits to sensitive files:
 - `*.pem`, `*.key` — Private keys and certificates
 
 Enable via `/settings safe` or add to `.claude/settings.local.json`. See `docs/HOOKS.md` for configuration.
+
+## Agentic Security Patterns
+
+Modern AI coding assistants introduce security considerations beyond traditional application security. The agent has filesystem access, can execute shell commands, and processes external content — all of which create unique attack surfaces.
+
+### OWASP Agentic Top 10 Mapping
+
+| Risk | Description | Template Mitigation |
+|------|-------------|---------------------|
+| A01: Excessive Agency | Agent has more permissions than needed | Hook profile system limits scope; `allowedTools` in settings |
+| A02: Data Leakage | Sensitive data exposed through agent actions | Secret scrubbing in `observe.sh`; `protect-sensitive-files.sh` |
+| A03: Tool Misuse | Agent tools used for unintended purposes | `protect-sensitive-files.sh` blocking; `file-size-guard.js` |
+| A04: Prompt Injection | External content manipulates agent behavior | Guardrails in `security-hardening.md` rule |
+| A05: Insecure Output | Agent generates unsafe outputs | `/code-review` and `/security-audit` commands |
+| A06: Autonomy Abuse | Agent runs unchecked for too long | SIGUSR1 throttling; `cost-tracker.js`; `suggest-compact.js` |
+| A07: System Prompt Leak | Agent instructions exposed | N/A (Claude Code runs locally, no API exposure) |
+| A08: Data Integrity | Configuration files tampered with | Config tamper guard in `protect-sensitive-files.sh` |
+| A09: Insecure Plugin | Third-party plugins introduce risk | MCP audit (`manage-mcps.sh audit`); 10/80 rule |
+| A10: Supply Chain | Upstream dependencies compromised | AgentShield CI; upstream manifest tracking |
+
+### PR Audit Checklist for Agent Config
+
+For any PR touching `.claude/` or `CLAUDE.md`, verify:
+
+- [ ] No broadened `allowedTools` scope without justification
+- [ ] No hooks modified without security review
+- [ ] No external links added to skills or rules (transitive injection vectors)
+- [ ] No new MCP servers added without explicit approval
+- [ ] No secrets or API keys hardcoded
+- [ ] No `--dangerously-skip-permissions` added without documented reason
+- [ ] AgentShield scan passes: `npx ecc-agentshield scan`
+
+### Deny List Recommendations
+
+Add these to your Claude Code settings `permissions.deny`:
+
+```json
+{
+  "permissions": {
+    "deny": [
+      "Read(~/.ssh/*)",
+      "Read(~/.aws/*)",
+      "Read(~/.env)",
+      "Read(**/credentials*)",
+      "Read(**/.env*)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Write(~/.ssh/*)",
+      "Write(~/.aws/*)",
+      "Write(**/.env*)"
+    ]
+  }
+}
+```
+
+These complement the `protect-sensitive-files.sh` hook (runtime enforcement) and `security-hardening.md` rule (behavioral guidance).
+
+See `.claude/rules/security-hardening.md` for the full set of hardening recommendations.
