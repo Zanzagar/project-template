@@ -28,20 +28,7 @@ Prefer adopting or porting a proven approach over writing net-new code when it m
 
 **MANDATORY for multi-task work.** Single-task features may use a simplified flow.
 
-```
-brainstorm → PRD → parse-prd → analyze-complexity → expand → TDD per task
-```
-
-| Step | Command | Required? |
-|------|---------|-----------|
-| Brainstorm | `superpowers:brainstorming` | Yes, for non-trivial features |
-| PRD | Write to `.taskmaster/docs/prd_<slug>.txt` | Yes |
-| Parse | `task-master parse-prd --input=<file> --num-tasks=0` | Yes |
-| Analyze | `task-master analyze-complexity` | Yes |
-| Expand | `task-master expand --id=<id>` (guided by report) | For tasks scoring >= 5 |
-| Implement | `superpowers:test-driven-development` per task | Yes |
-
-See `superpowers-integration.md` for full pipeline details and the brainstorming exit override.
+Full 9-step pipeline (brainstorm → validate → PRD → parse → analyze → expand → TDD → review → ship) is defined in `superpowers-integration.md`. That is the authoritative source for pipeline sequence and the brainstorming exit override.
 
 **Single well-defined task:** Skip brainstorm/PRD. Use TDD directly, optionally with `writing-plans` for micro-planning steps.
 
@@ -194,25 +181,31 @@ If a handoff doc exists and is recent (< 24h), it takes absolute priority — it
 - **Document tag purpose** when creating: include the feature/phase name so future sessions understand the context.
 - **Clean up completed tags**: After all tasks in a tag are done and merged, the tag can be archived or ignored.
 
-## Enforcement Note
+## Enforcement Tiers
 
-| Term | Meaning |
-|------|---------|
-| **Normative** | Defines correct behavior. This document. |
-| **Enforcement** | Prevents violations. Hooks (`pre-commit-check.sh`, `pre-compact.sh`). |
+Not all rules carry equal weight. Enforcement effectiveness depends on the mechanism, not just the documentation.
 
-Not all normative rules have hard enforcement. Some rely on Claude following the rules faithfully. When a violation is noticed (by Claude or the user), it should be corrected — even if no hook caught it.
+| Tier | Mechanism | Reliability | Examples |
+|------|-----------|-------------|----------|
+| **Hard** | Hooks + plugins | ~100% | Commit format, branch protection, TDD, file safety, file size |
+| **High-influence** | Rules text | ~60-70% | Commit frequency, function size limits, project structure |
+| **Medium-influence** | Rules text | ~40-50% | Read-before-modify, code organization, research before implementing |
+| **Aspirational** | Rules text | ~5-20% | Phase checkpoints, scope assessment, tag discipline, MCP vs CLI |
 
-**Enforced by hooks:**
+**Hard enforcement (hooks/plugins — always works):**
 - Conventional commit format (pre-commit-check.sh)
 - Main branch protection (pre-commit-check.sh)
+- TDD — tests before production code (Superpowers plugin)
+- Sensitive file protection (protect-sensitive-files.sh + settings.json deny)
+- File size limits (file-size-guard.js)
 - Pre-compaction state preservation (pre-compact.sh)
 
-**Normative only (no hook enforcement):**
+**Aspirational (rules only — inconsistently followed):**
 - Feature workflow pipeline (brainstorm → PRD → tasks → TDD)
 - Branch completion sequence (review → PR → merge → cleanup)
-- Bug fix size thresholds
-- Refactoring scope thresholds
+- Phase commitment checkpoints
 - One task in-progress at a time
 - Tag management discipline
 - Session resume priority order
+
+Aspirational rules document the correct workflow but rely on Claude's discipline. When a violation is noticed (by Claude or the user), it should be corrected — even if no hook caught it. This gap is consistent across the Claude Code ecosystem; no project has achieved reliable soft enforcement of judgment-based behaviors.

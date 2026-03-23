@@ -59,11 +59,12 @@ Claude Code's ~200k context window is NOT all available for work:
 | Component | Tokens | Notes |
 |-----------|--------|-------|
 | MCP tool definitions | ~25-30k | Loaded at startup |
-| Auto-loaded rules | ~5k | From `.claude/rules/` |
+| Auto-loaded rules (11 core) | ~19k | From `.claude/rules/` (always loaded) |
+| Language-specific rules | ~1-3k | From `.claude/rules/<lang>/` (loaded per file type) |
 | Superpowers plugin | ~3-5k | Required for TDD |
-| CLAUDE.md + base | ~5-10k | Project context |
-| **Startup overhead** | **~40-50k** | Before any work |
-| **Working context** | **~125-150k** | What's actually available |
+| CLAUDE.md | ~1-2k | Project context |
+| **Startup overhead** | **~50-60k** | Before any work |
+| **Working context** | **~140-150k** | What's actually available |
 
 ### When Quality Degrades
 
@@ -238,7 +239,8 @@ Sub-agents (via Task tool) get fresh context windows. Use them for:
 | Source | Approximate Tokens | Notes |
 |--------|-------------------|-------|
 | MCP tool definitions | ~25-30k total | Loaded at session start |
-| Auto-loaded rules | ~3-5k | From `.claude/rules/` |
+| Auto-loaded rules (11 core) | ~19k | From `.claude/rules/` |
+| Language-specific rules | ~1-3k | From `.claude/rules/<lang>/` (per file type) |
 | Superpowers plugin | ~3-5k | Required for TDD |
 | CLAUDE.md | ~1-2k | Project instructions |
 | Conversation history | Varies | Grows with each exchange |

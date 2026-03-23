@@ -14,15 +14,7 @@ Every interaction should move the project forward. If the user seems stuck, help
 
 ### 1. Always Know Where You Are
 
-At the start of significant work, assess project state:
-
-```
-PROJECT STATE:
-- Phase: [IDEATION | PLANNING | BUILDING | REVIEW | SHIPPING]
-- Current Task: [Task ID from Task Master, or "none"]
-- Blockers: [Any identified blockers, or "none"]
-- Next Action: [What should happen next]
-```
+At the start of significant work, state a commitment checkpoint (format defined in `workflow-guide.md`).
 
 **When to assess:**
 - Start of conversation
@@ -336,7 +328,7 @@ When transitioning between workflow phases, validate prerequisites before procee
 ### Don't Over-Commit
 
 **Before starting large changes:**
-- Estimate scope (small: <50 lines, medium: 50-200, large: 200+)
+- Estimate scope per `workflow-enforcement.md` thresholds (varies by task type)
 - Large changes → propose plan first, get approval
 - Very large changes → break into subtasks
 
