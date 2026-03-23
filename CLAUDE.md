@@ -76,15 +76,18 @@ mypy src/
 
 ## Task Master
 
-AI task management via CLI. Key rules: **PRD first** (never `add-task` from scratch), **new tag per phase**, **complexity-first expansion** (analyze before expand).
+AI task management via CLI. These rules are **mandatory**:
 
-- CLI vs MCP decisions: `.claude/rules/taskmaster-usage.md`
-- Full pipeline (brainstorm → validate → PRD → tasks → TDD): `.claude/rules/superpowers-integration.md`
-- Workflow thresholds by task type: `.claude/rules/workflow-enforcement.md`
+- ALWAYS create a PRD before generating tasks — never use `add-task` to build from scratch
+- Each workflow phase gets its own tag — never pollute `master` with phase-specific work
+- ALWAYS run `analyze-complexity` before expanding — expand only tasks scoring >= 5
+- AI ops (parse-prd, expand, analyze) MUST use CLI, not MCP
+
+Full details: `.claude/rules/taskmaster-usage.md` (CLI vs MCP), `.claude/rules/superpowers-integration.md` (pipeline), `.claude/rules/workflow-enforcement.md` (thresholds).
 
 ## Superpowers (Required)
 
-TDD enforcement plugin — deletes production code written without failing tests. Install after template setup:
+TDD enforcement plugin — **will delete production code written without failing tests first**. This is intentional. Install after template setup:
 
 ```bash
 /plugin marketplace add obra/superpowers-marketplace
@@ -110,7 +113,7 @@ See `docs/HOOKS.md` for full hook inventory and `.claude/hooks/README.md` for de
 
 ## MCP Discipline
 
-Max 10 MCP servers, 80 tools. Audit: `./scripts/manage-mcps.sh audit`. Configure: `docs/MCP_SETUP.md`.
+Follow the 10/80 rule: max 10 MCP servers, 80 tools. Never exceed this. Audit: `./scripts/manage-mcps.sh audit`. Configure: `docs/MCP_SETUP.md`.
 
 ## Security
 
