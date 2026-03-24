@@ -485,7 +485,7 @@ With the template:
 
 **The result isn't just a better pipeline — it's a better researcher.** The template's enforced workflows become muscle memory. Students who use it for a semester internalize TDD, version control discipline, reproducibility practices, and code review habits that distinguish reliable research from one-off scripts.
 
-Beyond enforcement, the template provides **domain expertise on demand.** Need to configure a PostgreSQL spatial database? The `postgresql-patterns` skill knows about GiST indexing for geometry columns, PostGIS query optimization, and migration safety. Need Python testing patterns? The `python-testing` skill provides pytest fixtures, parametrization, and mocking strategies. The 48 skills act as an always-available senior engineer across every domain the student might encounter — without requiring the student to know the right questions to ask.
+Beyond enforcement, the template provides **domain expertise on demand.** Need to configure a PostgreSQL spatial database? The `postgresql-patterns` skill knows about GiST indexing for geometry columns, PostGIS query optimization, and migration safety. Need Python testing patterns? The `python-testing` skill provides pytest fixtures, parametrization, and mocking strategies. The 153 skills (managed by profiles to load only what's relevant) act as an always-available senior engineer across every domain the student might encounter — without requiring the student to know the right questions to ask.
 
 Critically, **quality scales with the project.** A thesis codebase that grows to 10,000+ lines maintains the same quality standards as the first 100 lines, because the template's enforcement doesn't fatigue. The TDD guide is just as strict on line 10,000 as on line 1. The security reviewer doesn't get tired of scanning. This is where AI-assisted development fundamentally differs from manual discipline — the template never has a bad day.
 
@@ -745,7 +745,7 @@ The template's development followed a deliberate research-first methodology: stu
 
 **Key implementation decisions:**
 - **Language-specific rules use `paths:` frontmatter** so they load only when matching files are edited. A Python developer never pays the token cost for Go rules. This was our innovation — ECC loads all language rules at startup.
-- **Skills are on-demand** (loaded when Claude detects relevance), not startup-loaded. This means 48 skills contribute exactly 0 tokens to startup overhead.
+- **Skills use a profile system** (`manage-skill-profiles.sh`) — 153 skills organized into 22 categories, loaded via symlinks from `skills-available/`. The `minimal` profile loads 31 skills (~3K tokens), while `all` loads everything (~28K). Skill metadata IS always loaded for active skills, so profiles control real context cost.
 - **The instinct system uses confidence scoring** (0.0-1.0) with automatic decay. Unused patterns lose 0.05 confidence per week and are removed when they reach 0. This prevents knowledge rot — outdated patterns fade naturally instead of persisting forever.
 
 **Delivery:** 50 tasks, 250 subtasks total across both phases. All implemented through Claude Code itself — the template was built using the template's own workflow enforcement, which served as both a development tool and a stress test.
@@ -933,4 +933,4 @@ Any student using this template starts their project with the workflow enforceme
 ---
 
 *Built with Claude Code (Anthropic) | Informed by Everything Claude Code (45K+ stars)*
-*Template v2.5.0 | 14 agents, 48 skills, 56 commands, 17 rules, 22 hooks | 70/70 harness score*
+*Template v2.6.0 | 40 agents, 153 skills, 88 commands, 68 rules, 22 hooks, 15 profiles | 70/70 harness score*

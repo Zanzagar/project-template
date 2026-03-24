@@ -16,9 +16,10 @@ tests/            # Test files
 docs/             # Documentation
 scripts/          # Harness audit, observer, multi-model, CLI tools
 .claude/rules/    # Auto-loaded behavior rules (synced from template)
-.claude/commands/  # 56 slash commands (run /help to list)
-.claude/skills/   # 48 domain skills (loaded on relevance)
-.claude/agents/   # 14 sub-agents (run /agents to list)
+.claude/commands/  # 88 slash commands (run /help to list)
+.claude/skills/   # 153 skills via profiles (./scripts/manage-skill-profiles.sh list)
+.claude/skills-available/  # All skills (symlinked into skills/ by profile)
+.claude/agents/   # 40 sub-agents (run /agents to list)
 .claude/hooks/    # 22 event-driven hooks
 ```
 
@@ -127,7 +128,9 @@ When needed, consult:
 
 | Topic | Location |
 |-------|----------|
-| Behavior rules (11 core + 6 language) | `.claude/rules/` (auto-loaded) |
+| Onboarding & setup guide | `docs/ONBOARDING.md` |
+| Skill profiles (153 skills, 22 categories) | `./scripts/manage-skill-profiles.sh list` |
+| Behavior rules (11 core + 12 language dirs) | `.claude/rules/` (auto-loaded) |
 | Workflow pipeline | `.claude/rules/superpowers-integration.md` |
 | Task Master CLI vs MCP | `.claude/rules/taskmaster-usage.md` |
 | Workflow thresholds | `.claude/rules/workflow-enforcement.md` |
