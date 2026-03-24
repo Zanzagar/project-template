@@ -41,9 +41,11 @@ CATEGORIES[java]="java-springboot jpa-patterns spring-boot-tdd spring-boot-secur
 CATEGORIES[go]="golang-patterns golang-testing"
 CATEGORIES[typescript]="typescript-patterns"
 CATEGORIES[cpp]="cpp-testing cpp-coding-standards"
-CATEGORIES[frontend]="frontend-design frontend-patterns e2e-testing"
+CATEGORIES[frontend]="frontend-design frontend-patterns e2e-testing webapp-testing web-artifacts-builder"
 CATEGORIES[database]="database-patterns database-migrations postgresql-patterns"
 CATEGORIES[infra]="docker-patterns deployment-patterns"
+CATEGORIES[creative]="algorithmic-art canvas-design theme-factory"
+CATEGORIES[authoring]="doc-coauthoring mcp-builder skill-creator"
 
 # ─── Named Profile Definitions ───────────────────────────────────────────────
 
@@ -56,7 +58,7 @@ PROFILES[typescript]="universal typescript frontend"
 PROFILES[cpp]="universal cpp"
 PROFILES[fullstack]="universal python typescript frontend database infra"
 PROFILES[web]="universal python typescript frontend database infra"
-PROFILES[all]="universal python java go typescript cpp frontend database infra"
+PROFILES[all]="universal python java go typescript cpp frontend database infra creative authoring"
 
 # ─── Functions ────────────────────────────────────────────────────────────────
 
@@ -201,7 +203,7 @@ cmd_categories() {
     printf "${BOLD}Skill Categories${NC}\n"
     printf "════════════════════════════════════════════\n\n"
 
-    for cat in universal python java go typescript cpp frontend database infra; do
+    for cat in universal python java go typescript cpp frontend database infra creative authoring; do
         local skills="${CATEGORIES[$cat]}"
         local count
         count=$(echo "$skills" | wc -w)
