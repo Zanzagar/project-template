@@ -56,6 +56,7 @@ CATEGORIES[frontend]="frontend-design frontend-patterns e2e-testing webapp-testi
 CATEGORIES[mobile]="android-clean-architecture compose-multiplatform-patterns flutter-dart-code-review foundation-models-on-device"
 CATEGORIES[database]="database-patterns database-migrations postgresql-patterns clickhouse-io"
 CATEGORIES[infra]="docker-patterns deployment-patterns dmux-workflows"
+CATEGORIES[ops]="incident-runbook-templates on-call-handoff-patterns postmortem-writing distributed-tracing grafana-dashboards prometheus-configuration slo-implementation gitops-workflow helm-chart-scaffolding k8s-manifest-generator k8s-security-policies screen-reader-testing wcag-audit-patterns"
 CATEGORIES[creative]="algorithmic-art canvas-design theme-factory video-editing"
 CATEGORIES[authoring]="doc-coauthoring mcp-builder skill-creator architecture-decision-records"
 CATEGORIES[ai-ops]="agent-eval agent-harness-construction ai-first-engineering canary-watch continuous-agent-loop enterprise-agent-ops mcp-server-patterns prompt-optimizer santa-method plankton-code-quality content-hash-cache-pattern"
@@ -81,7 +82,8 @@ PROFILES[fullstack]="universal python typescript frontend database infra"
 PROFILES[web]="universal python typescript frontend database infra"
 PROFILES[mobile-dev]="universal kotlin swift mobile"
 PROFILES[ai-engineer]="universal python ai-ops research"
-PROFILES[all]="universal python java go typescript cpp kotlin rust swift perl laravel frontend mobile database infra creative authoring ai-ops media research industry meta"
+PROFILES[ops]="universal ops infra"
+PROFILES[all]="universal python java go typescript cpp kotlin rust swift perl laravel frontend mobile database infra ops creative authoring ai-ops media research industry meta"
 
 # ─── Functions ────────────────────────────────────────────────────────────────
 
@@ -226,7 +228,7 @@ cmd_categories() {
     printf "${BOLD}Skill Categories${NC}\n"
     printf "════════════════════════════════════════════\n\n"
 
-    for cat in universal python java go typescript cpp kotlin rust swift perl laravel frontend mobile database infra creative authoring ai-ops media research industry meta; do
+    for cat in universal python java go typescript cpp kotlin rust swift perl laravel frontend mobile database infra ops creative authoring ai-ops media research industry meta; do
         local skills="${CATEGORIES[$cat]}"
         local count
         count=$(echo "$skills" | wc -w)
