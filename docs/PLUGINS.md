@@ -1,6 +1,9 @@
 # Claude Code Plugins
 
-This project template supports plugins from the [wshobson/agents](https://github.com/wshobson/agents) repository, which provides 65+ specialized agents, commands, and skills for various development domains.
+This project template supports plugins from multiple sources:
+
+- **[wshobson/agents](https://github.com/wshobson/agents)** — 65+ specialized agents, commands, and skills for development domains
+- **[anthropics/skills](https://github.com/anthropics/skills)** — Official Anthropic skills including document processing (PDF, DOCX, PPTX, XLSX)
 
 ## Why Plugins?
 
@@ -213,6 +216,68 @@ To add new plugins or presets to this template:
 3. Include token estimates (check source repo)
 4. Test with `./scripts/manage-plugins.sh install <plugin>`
 
+## Anthropic Document Skills (Optional)
+
+[Anthropic's official document processing skills](https://github.com/anthropics/skills) provide production-grade PDF, Word, PowerPoint, and Excel capabilities.
+
+### What's Included
+
+| Skill | Capabilities | Key Dependencies |
+|-------|-------------|-----------------|
+| **pdf** | Read, extract tables, fill forms, merge/split, OCR | pypdf, pdfplumber, reportlab, pdftotext |
+| **docx** | Create & edit Word docs, tracked changes, comments | docx (npm), LibreOffice |
+| **pptx** | Slide decks, layouts, charts, speaker notes | pptxgenjs (npm), LibreOffice |
+| **xlsx** | Formulas, analysis, charts via plain English | openpyxl, pandas, LibreOffice |
+
+### Installation
+
+```bash
+# Step 1: Add the Anthropic skills marketplace
+/plugin marketplace add anthropics/skills
+
+# Step 2: Install the document-skills package (all 4 skills)
+/plugin install document-skills@anthropic-agent-skills
+
+# Step 3: Check system dependencies
+./scripts/check-doc-deps.sh --install
+```
+
+### System Dependencies
+
+These skills require system-level software beyond Python/Node packages:
+
+**LibreOffice** (required by DOCX, PPTX, XLSX):
+```bash
+# Ubuntu/Debian
+sudo apt install -y libreoffice-calc libreoffice-writer libreoffice-impress
+
+# macOS
+brew install --cask libreoffice
+```
+
+**PDF tools** (required by PDF skill):
+```bash
+# Ubuntu/Debian
+sudo apt install -y poppler-utils qpdf
+
+# macOS
+brew install poppler qpdf
+```
+
+Run `./scripts/check-doc-deps.sh --install` for a complete dependency report with install commands tailored to your system.
+
+### Token Overhead
+
+~800-1600 tokens (4 skills × ~200-400 tokens metadata each). Skills load on-demand — zero overhead when not triggered.
+
+### License
+
+These skills are **proprietary** (source-available reference implementations). Use is governed by Anthropic's Terms of Service. Do not copy skill files into other repositories — install via the official plugin mechanism only.
+
+### Conflict Note
+
+The `anthropic-agent-skills` marketplace also offers a `claude-api` plugin. This template already includes a `claude-api` skill (from ECC). Install only `document-skills`, not `claude-api@anthropic-agent-skills`, to avoid conflicts.
+
 ## Superpowers Plugin (Required)
 
 [Superpowers](https://github.com/obra/superpowers) is a required component of this template. It provides workflow enforcement that complements Task Master.
@@ -292,5 +357,6 @@ Without Superpowers, the template's workflow guidance becomes suggestions rather
 ## Resources
 
 - [wshobson/agents Repository](https://github.com/wshobson/agents)
+- [anthropics/skills Repository](https://github.com/anthropics/skills)
 - [Superpowers Repository](https://github.com/obra/superpowers)
 - [Claude Code Plugin Documentation](https://docs.anthropic.com/claude-code/plugins)
