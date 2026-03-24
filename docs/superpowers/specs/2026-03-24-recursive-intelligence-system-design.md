@@ -146,6 +146,9 @@ Temporal tracking: suggestions have lifecycles (new → investigated → acted-o
 │
 ├── Meta/
 │   ├── system-config.md           ← agent behavior, analysis priorities
+│   ├── directives/                ← human-written orchestrator instructions
+│   │   ├── active/                (orchestrator reads these BEFORE spawning agents)
+│   │   └── completed/             (moved here when directive is satisfied)
 │   ├── temporal-trust.yaml        ← trust classes, decay rates, verify commands
 │   ├── suggestion-lifecycle.md    ← tracks all suggestions across history
 │   ├── feedback-patterns.md       ← what types of suggestions user acts on
@@ -403,7 +406,106 @@ Briefing:
 
 This connects overnight code analysis to the dissertation reading list. A suggestion about code becomes a reading assignment grounded in your own collected literature.
 
-#### 3.3.7 Decision Records
+#### 3.3.7 Directives (Human → Orchestrator Instructions)
+
+Journal entries are reflections — the agents read them as context. **Directives** are operational instructions that change what the agents DO. They live in `Meta/directives/active/` and the orchestrator reads them BEFORE spawning agents.
+
+**Example directive** (`Meta/directives/active/audit-persistent-homology.md`):
+
+```markdown
+---
+target: persistent-homology
+priority: HIGH
+mode: exhaustive-audit
+created: 2026-03-24
+expires: 2026-04-07
+investigation_budget: 10
+---
+
+# Directive: Full gap audit of persistent-homology
+
+Audit the persistent-homology project for ALL of the following:
+
+## Implementation Gaps
+- Are there modules or functions that are incomplete, stubbed, or vaguely implemented?
+- Is any code potentially hallucinated (claims to implement X but doesn't match the math)?
+- Are there edge cases that aren't handled (empty inputs, large inputs, degenerate cases)?
+
+## Literature Gaps
+- Cross-reference every algorithm in src/ against Literature/ — which implementations lack cited sources?
+- Search for papers I DON'T have that are directly relevant to the implemented methods
+- Are there newer/better algorithms published since the cited papers?
+
+## Mathematical Correctness
+- Does compute_cubical_ph correctly implement cubical persistent homology as defined in Edelsbrunner & Harer?
+- Does the stability verification in stability.py match the formal stability theorem bounds?
+- Are the distance metrics (bottleneck, Wasserstein) mathematically correct for the general case, or only for restricted inputs?
+
+## Alternative Approaches
+- Are there fundamentally better approaches to any module's core algorithm?
+- What would a senior TDA researcher critique about the current architecture?
+- Are there performance-critical paths that could use different data structures?
+
+## Design Limitations
+- What are the scaling limits of the current architecture?
+- Where will this break when applied to real reservoir data (not synthetic)?
+- What would need to change to support 3D data, time-varying fields, or multi-parameter persistence?
+```
+
+**How the orchestrator uses directives:**
+
+1. Before spawning agents, orchestrator reads all `Meta/directives/active/*.md`
+2. Directives modify agent behavior for the targeted project:
+
+| Directive field | Effect on agents |
+|----------------|-----------------|
+| `target: persistent-homology` | Project agent for PH receives the directive as additional system prompt context |
+| `priority: HIGH` | Orchestrator allocates more investigation budget to this project (overrides default) |
+| `mode: exhaustive-audit` | Project agent switches from standard analysis (surface-level) to exhaustive mode (every file, every function) |
+| `investigation_budget: 10` | Up to 10 investigation agents can run for this directive (overrides the default max 3) |
+| `expires: 2026-04-07` | Directive auto-moves to `completed/` after this date |
+
+3. The project agent includes the directive's specific questions in its analysis dimensions
+4. The meta-agent treats directive-sourced findings as HIGH priority regardless of confidence scoring
+5. Investigation agents spawned for directive findings have expanded scope (web search, literature search, mathematical verification)
+
+**Directive modes:**
+
+| Mode | Agent behavior |
+|------|---------------|
+| `standard` | Normal analysis dimensions (default when no directive) |
+| `exhaustive-audit` | Every file, every function. No sampling. Investigation budget increased. |
+| `literature-review` | Focus on Research/ and Literature/ connections. Search for missing papers. |
+| `alternative-search` | For each major implementation, research whether better approaches exist. |
+| `correctness-check` | Verify implementations match cited papers and mathematical definitions. |
+| `design-review` | Architecture-level: scaling limits, coupling, extensibility, technical debt. |
+
+Modes are composable — a directive can specify `mode: [exhaustive-audit, literature-review, correctness-check]` to combine multiple analysis strategies.
+
+**Directive lifecycle:**
+
+```
+ACTIVE → {COMPLETED | EXPIRED | SUPERSEDED}
+```
+
+- **ACTIVE**: Orchestrator reads it every night until completed or expired
+- **COMPLETED**: All questions answered to satisfaction (user moves to completed/)
+- **EXPIRED**: Past `expires:` date, auto-moved to completed/ with partial results
+- **SUPERSEDED**: Replaced by a newer directive targeting the same project
+
+**Why directives are separate from journal:**
+
+| | Journal | Directive |
+|-|---------|-----------|
+| **Purpose** | Reflection, thinking, ideas | Operational instruction |
+| **Read by** | Meta-agent (as context) | Orchestrator (as configuration) |
+| **Effect** | Adjusts confidence scoring | Changes analysis strategy |
+| **Persistence** | Permanent (never deleted) | Lifecycle (active → completed) |
+| **Format** | Freeform prose | Structured frontmatter + specific questions |
+
+A journal entry can INSPIRE a directive. Writing "I'm worried persistent-homology's math might be wrong" in your journal would boost confidence on correctness-related suggestions. Writing a directive with `mode: correctness-check` would make the agents actively verify the math.
+
+#### 3.3.8 Decision Records
 
 A hybrid of auto-generated (from commit messages and session summaries) and manually written entries. Stored per-project. These are the highest-value data for the meta-agent — understanding WHY decisions were made enables challenging those decisions when new information emerges.
 
@@ -1294,6 +1396,7 @@ Weekly and monthly agents are standalone — they read accumulated vault state, 
 | **Feedback processor** | Script that reads frontmatter ratings and updates feedback-patterns.md | 1 script, ~100 lines |
 | **Suggestion lifecycle tracker** | Script that manages suggestion state transitions and auto-detection of implementations | 1 script, ~150 lines |
 | **Session-init integration** | Hook extension that surfaces relevant suggestions when starting work on a project | Extend existing session-init.sh, ~50 lines |
+| **Directive processor** | Reads Meta/directives/active/, modifies agent spawning (budget override, mode selection, prompt injection). Handles lifecycle (expiry, completion). | Orchestrator extension, ~100 lines |
 | **Temporal trust module** | Trust class definitions, decay calculation, verify_command runner. Standalone — usable by any template project. | 1 YAML config + 1 loader script, ~150 lines |
 | **Weekly/monthly synthesis prompts** | Agent prompts for periodic synthesis | 2 markdown files |
 
