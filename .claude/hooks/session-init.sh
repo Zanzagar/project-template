@@ -502,6 +502,24 @@ case $SCENARIO in
         ;;
 esac
 
+# Auto-initialize skill profile (symlinks from skills-available/ to skills/)
+SKILL_PROFILE_SCRIPT="$PROJECT_DIR/scripts/manage-skill-profiles.sh"
+SKILLS_AVAILABLE="$PROJECT_DIR/.claude/skills-available"
+SKILLS_ACTIVE="$PROJECT_DIR/.claude/skills"
+
+if [ -x "$SKILL_PROFILE_SCRIPT" ] && [ -d "$SKILLS_AVAILABLE" ]; then
+    # Check if skills directory is empty or missing symlinks
+    SYMLINK_COUNT=$(find "$SKILLS_ACTIVE" -maxdepth 1 -type l 2>/dev/null | wc -l)
+    if [ "$SYMLINK_COUNT" -eq 0 ]; then
+        # Determine profile from env var or default to 'all'
+        PROFILE="${TEMPLATE_SKILL_PROFILE:-all}"
+        bash "$SKILL_PROFILE_SCRIPT" set "$PROFILE" >/dev/null 2>&1
+        echo ""
+        echo "Skills initialized (profile: $PROFILE, $(find "$SKILLS_ACTIVE" -maxdepth 1 -type l | wc -l) skills)"
+        echo "Change with: ./scripts/manage-skill-profiles.sh set <profile>"
+    fi
+fi
+
 # Auto-start observer daemon for continuous learning
 OBSERVER_SCRIPT="$PROJECT_DIR/scripts/start-observer.sh"
 OBSERVER_CONFIG="$PROJECT_DIR/.claude/instincts/config.json"

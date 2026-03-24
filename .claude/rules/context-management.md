@@ -59,12 +59,28 @@ Claude Code's ~200k context window is NOT all available for work:
 | Component | Tokens | Notes |
 |-----------|--------|-------|
 | MCP tool definitions | ~25-30k | Loaded at startup |
+| Skill metadata | ~3-16k | Name + description for every installed skill (see below) |
 | Auto-loaded rules (11 core) | ~19k | From `.claude/rules/` (always loaded) |
 | Language-specific rules | ~1-3k | From `.claude/rules/<lang>/` (loaded per file type) |
-| Superpowers plugin | ~3-5k | Required for TDD |
+| Superpowers plugin | ~3-5k | Skill metadata included in count above |
 | CLAUDE.md | ~1-2k | Project context |
-| **Startup overhead** | **~50-60k** | Before any work |
-| **Working context** | **~140-150k** | What's actually available |
+| **Startup overhead** | **~55-75k** | Depends on skill profile (see below) |
+| **Working context** | **~125-145k** | What's actually available |
+
+### Skill Metadata Cost
+
+Every installed skill's name and description is loaded into context at session start — even if the skill never triggers. The full SKILL.md body only loads when triggered, but metadata is always present.
+
+| Skill Profile | Skills | Metadata Tokens | Working Context |
+|---------------|--------|----------------|-----------------|
+| `minimal` | ~23 universal | ~3k | ~145k |
+| `python` | ~34 (universal + Python + DB) | ~10k | ~138k |
+| `java` | ~31 (universal + Java + DB) | ~7k | ~141k |
+| `go` | ~25 (universal + Go) | ~7k | ~141k |
+| `fullstack` | ~40 (universal + Py + TS + FE + DB) | ~11k | ~137k |
+| `all` (default) | ~48 | ~16k | ~132k |
+
+Use `TEMPLATE_SKILL_PROFILE` or `./scripts/manage-skill-profiles.sh set <profile>` to switch. Plugins (Superpowers ~5k, Anthropic doc-skills ~2.4k) add on top of the template skill count.
 
 ### When Quality Degrades
 
@@ -239,9 +255,10 @@ Sub-agents (via Task tool) get fresh context windows. Use them for:
 | Source | Approximate Tokens | Notes |
 |--------|-------------------|-------|
 | MCP tool definitions | ~25-30k total | Loaded at session start |
+| Skill metadata | ~3-16k | Depends on profile (`minimal` → `all`) |
 | Auto-loaded rules (11 core) | ~19k | From `.claude/rules/` |
 | Language-specific rules | ~1-3k | From `.claude/rules/<lang>/` (per file type) |
-| Superpowers plugin | ~3-5k | Required for TDD |
+| Superpowers plugin | ~5k | Included in skill metadata count |
 | CLAUDE.md | ~1-2k | Project instructions |
 | Conversation history | Varies | Grows with each exchange |
 | File reads | Varies | ~1 token per 4 characters |

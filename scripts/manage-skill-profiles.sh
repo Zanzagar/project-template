@@ -1,0 +1,243 @@
+#!/usr/bin/env bash
+# manage-skill-profiles.sh — Manage skill loading profiles to control context overhead
+#
+# Skills consume ~300 tokens each in metadata (always loaded). Language-specific
+# skills (Django, Spring Boot, Go, etc.) are wasted context for projects that
+# don't use those languages. Profiles load only relevant skills.
+#
+# Usage:
+#   ./scripts/manage-skill-profiles.sh set <profile|categories>
+#   ./scripts/manage-skill-profiles.sh list
+#   ./scripts/manage-skill-profiles.sh current
+#   ./scripts/manage-skill-profiles.sh categories
+#
+# Examples:
+#   ./scripts/manage-skill-profiles.sh set python       # Universal + Python + DB
+#   ./scripts/manage-skill-profiles.sh set minimal       # Universal only
+#   ./scripts/manage-skill-profiles.sh set all           # Everything
+#   ./scripts/manage-skill-profiles.sh set python,frontend  # Custom combo
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+SKILLS_AVAILABLE="$PROJECT_DIR/.claude/skills-available"
+SKILLS_ACTIVE="$PROJECT_DIR/.claude/skills"
+
+# Colors
+if [ -t 1 ]; then
+    GREEN='\033[0;32m'; RED='\033[0;31m'; YELLOW='\033[1;33m'
+    BLUE='\033[0;34m'; BOLD='\033[1m'; NC='\033[0m'
+else
+    GREEN=''; RED=''; YELLOW=''; BLUE=''; BOLD=''; NC=''
+fi
+
+# ─── Skill Category Definitions ──────────────────────────────────────────────
+
+declare -A CATEGORIES
+CATEGORIES[universal]="agentic-engineering ai-regression-testing api-design autonomous-loops backend-patterns blueprint claude-api code-review continuous-learning-v2 cost-aware-llm-pipeline debugging eval-harness eval-metrics git-recovery iterative-retrieval regex-vs-llm-structured-text search-first security-scan skill-stocktake strategic-compact tdd-workflow verification-loop"
+CATEGORIES[python]="python-patterns python-testing python-data-science python-django django-patterns django-security django-tdd django-verification"
+CATEGORIES[java]="java-springboot jpa-patterns spring-boot-tdd spring-boot-security springboot-verification"
+CATEGORIES[go]="golang-patterns golang-testing"
+CATEGORIES[typescript]="typescript-patterns"
+CATEGORIES[cpp]="cpp-testing cpp-coding-standards"
+CATEGORIES[frontend]="frontend-design frontend-patterns e2e-testing"
+CATEGORIES[database]="database-patterns database-migrations postgresql-patterns"
+CATEGORIES[infra]="docker-patterns deployment-patterns"
+
+# ─── Named Profile Definitions ───────────────────────────────────────────────
+
+declare -A PROFILES
+PROFILES[minimal]="universal"
+PROFILES[python]="universal python database"
+PROFILES[java]="universal java database"
+PROFILES[go]="universal go"
+PROFILES[typescript]="universal typescript frontend"
+PROFILES[cpp]="universal cpp"
+PROFILES[fullstack]="universal python typescript frontend database infra"
+PROFILES[web]="universal python typescript frontend database infra"
+PROFILES[all]="universal python java go typescript cpp frontend database infra"
+
+# ─── Functions ────────────────────────────────────────────────────────────────
+
+get_skills_for_categories() {
+    local cats="$1"
+    local skills=""
+    for cat in $cats; do
+        if [ -n "${CATEGORIES[$cat]:-}" ]; then
+            skills="$skills ${CATEGORIES[$cat]}"
+        fi
+    done
+    echo "$skills" | tr ' ' '\n' | sort -u | tr '\n' ' '
+}
+
+count_tokens() {
+    local total=0
+    for skill_dir in "$SKILLS_AVAILABLE"/*/; do
+        name=$(basename "$skill_dir")
+        if echo " $1 " | grep -q " $name "; then
+            desc=$(sed -n '/^description:/,/^[a-z]*:/{ /^description:/p; /^  /p }' "$skill_dir/SKILL.md" 2>/dev/null)
+            total=$((total + ${#desc} / 4))
+        fi
+    done
+    echo "$total"
+}
+
+activate_skills() {
+    local skills="$1"
+    local profile_name="$2"
+
+    # Create active directory if needed
+    mkdir -p "$SKILLS_ACTIVE"
+
+    # Remove existing symlinks (only symlinks, preserve any real files)
+    find "$SKILLS_ACTIVE" -maxdepth 1 -type l -delete 2>/dev/null
+
+    # Create symlinks for active skills
+    local count=0
+    for skill in $skills; do
+        if [ -d "$SKILLS_AVAILABLE/$skill" ]; then
+            ln -sf "../skills-available/$skill" "$SKILLS_ACTIVE/$skill"
+            count=$((count + 1))
+        fi
+    done
+
+    # Save profile name
+    echo "$profile_name" > "$SKILLS_ACTIVE/.profile"
+
+    local tokens
+    tokens=$(count_tokens "$skills")
+    printf "${GREEN}✓${NC} Activated ${BOLD}%d${NC} skills (profile: ${BOLD}%s${NC}, ~%d metadata tokens)\n" "$count" "$profile_name" "$tokens"
+}
+
+cmd_set() {
+    local input="${1:-}"
+    if [ -z "$input" ]; then
+        printf "${RED}Error:${NC} specify a profile or categories\n"
+        printf "Usage: $0 set <profile|cat1,cat2,...>\n"
+        printf "Run '$0 list' to see available profiles\n"
+        exit 1
+    fi
+
+    # Check if it's a named profile
+    if [ -n "${PROFILES[$input]:-}" ]; then
+        local cats="${PROFILES[$input]}"
+        local skills
+        skills=$(get_skills_for_categories "$cats")
+        activate_skills "$skills" "$input"
+        return
+    fi
+
+    # Otherwise treat as comma-separated categories
+    local cats
+    cats=$(echo "$input" | tr ',' ' ')
+
+    # Always include universal
+    if ! echo " $cats " | grep -q " universal "; then
+        cats="universal $cats"
+    fi
+
+    # Validate categories
+    for cat in $cats; do
+        if [ -z "${CATEGORIES[$cat]:-}" ]; then
+            printf "${RED}Error:${NC} unknown category '$cat'\n"
+            printf "Run '$0 categories' to see available categories\n"
+            exit 1
+        fi
+    done
+
+    local skills
+    skills=$(get_skills_for_categories "$cats")
+    activate_skills "$skills" "custom:$input"
+}
+
+cmd_list() {
+    printf "${BOLD}Available Skill Profiles${NC}\n"
+    printf "════════════════════════════════════════════\n\n"
+
+    local current
+    current=$(cat "$SKILLS_ACTIVE/.profile" 2>/dev/null || echo "unknown")
+
+    for profile in minimal python java go typescript cpp fullstack all; do
+        local cats="${PROFILES[$profile]}"
+        local skills
+        skills=$(get_skills_for_categories "$cats")
+        local count
+        count=$(echo "$skills" | wc -w)
+        local tokens
+        tokens=$(count_tokens "$skills")
+
+        local marker=""
+        if [ "$profile" = "$current" ]; then
+            marker=" ${GREEN}← active${NC}"
+        fi
+
+        printf "  ${BOLD}%-12s${NC} %2d skills  ~%5d tokens  (%s)%b\n" \
+            "$profile" "$count" "$tokens" "$cats" "$marker"
+    done
+
+    printf "\n${YELLOW}Custom:${NC} $0 set python,frontend,database\n"
+    printf "(always includes 'universal' automatically)\n"
+}
+
+cmd_current() {
+    local profile
+    profile=$(cat "$SKILLS_ACTIVE/.profile" 2>/dev/null || echo "none")
+    local count
+    count=$(find "$SKILLS_ACTIVE" -maxdepth 1 -type l 2>/dev/null | wc -l)
+
+    printf "Profile: ${BOLD}%s${NC}\n" "$profile"
+    printf "Active skills: %d\n" "$count"
+
+    if [ "$count" -gt 0 ]; then
+        printf "\nActive:\n"
+        for link in "$SKILLS_ACTIVE"/*/; do
+            [ -L "${link%/}" ] && printf "  %s\n" "$(basename "$link")"
+        done
+    fi
+}
+
+cmd_categories() {
+    printf "${BOLD}Skill Categories${NC}\n"
+    printf "════════════════════════════════════════════\n\n"
+
+    for cat in universal python java go typescript cpp frontend database infra; do
+        local skills="${CATEGORIES[$cat]}"
+        local count
+        count=$(echo "$skills" | wc -w)
+        local tokens
+        tokens=$(count_tokens "$skills")
+        printf "  ${BLUE}%-12s${NC} %2d skills  ~%5d tokens\n" "$cat" "$count" "$tokens"
+        for skill in $skills; do
+            printf "    %s\n" "$skill"
+        done
+        printf "\n"
+    done
+}
+
+# ─── Main ─────────────────────────────────────────────────────────────────────
+
+if [ ! -d "$SKILLS_AVAILABLE" ]; then
+    printf "${RED}Error:${NC} %s not found. Are you in the project root?\n" "$SKILLS_AVAILABLE"
+    exit 1
+fi
+
+case "${1:-help}" in
+    set)      cmd_set "${2:-}" ;;
+    list)     cmd_list ;;
+    current)  cmd_current ;;
+    categories) cmd_categories ;;
+    help|--help|-h)
+        printf "Usage: $0 <command> [args]\n\n"
+        printf "Commands:\n"
+        printf "  set <profile|cats>  Activate a skill profile (minimal/python/java/go/fullstack/all)\n"
+        printf "  list                Show available profiles with token costs\n"
+        printf "  current             Show currently active profile\n"
+        printf "  categories          Show all skill categories and their skills\n"
+        ;;
+    *)
+        printf "${RED}Unknown command:${NC} $1\n"
+        printf "Run '$0 help' for usage\n"
+        exit 1
+        ;;
+esac

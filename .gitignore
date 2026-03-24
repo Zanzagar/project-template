@@ -61,6 +61,10 @@ node_modules/
 *.sw?
 # OS specific
 
+# Skills — active skills are symlinks managed by manage-skill-profiles.sh
+# Real skill files live in .claude/skills-available/ (tracked in git)
+.claude/skills/
+
 # Plugins - installed plugins are user-specific
 .claude/plugins/installed/
 .claude/plugins/installed.json

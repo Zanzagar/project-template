@@ -42,7 +42,7 @@ set -e
 
 # Directories to initialize (order doesn't matter)
 # rules/ is included because standalone projects need them (no parent inheritance)
-TARGET_DIRS=("rules" "commands" "skills" "agents" "contexts" "hooks")
+TARGET_DIRS=("rules" "commands" "skills-available" "agents" "contexts" "hooks")
 
 # Minimum command count to identify a directory as a template
 MIN_TEMPLATE_COMMANDS=10
@@ -588,9 +588,18 @@ if [ "$CREATED" -gt 0 ] && [ "$DRY_RUN" = false ]; then
     [ -f "$PROJECT_DIR/.taskmaster/config.json" ] && echo "  • .taskmaster/config.json (claude-code provider, tuned settings)"
     [ -d "$PROJECT_DIR/.template" ] && echo "  • .template/ tracking (version management)"
     echo ""
+    # Initialize skill profile if skills-available exists
+    SKILL_PROFILE_SCRIPT="$PROJECT_DIR/scripts/manage-skill-profiles.sh"
+    if [ -x "$SKILL_PROFILE_SCRIPT" ] && [ -d "$PROJECT_DIR/.claude/skills-available" ]; then
+        PROFILE="${TEMPLATE_SKILL_PROFILE:-all}"
+        bash "$SKILL_PROFILE_SCRIPT" set "$PROFILE"
+        echo ""
+    fi
+
     echo "Next steps:"
     echo "  1. Customize CLAUDE.md with your project details"
-    echo "  2. Start a new Claude Code session to pick up hooks and rules"
+    echo "  2. Set skill profile for your language: ./scripts/manage-skill-profiles.sh set <python|java|go|fullstack|all>"
+    echo "  3. Start a new Claude Code session to pick up hooks and rules"
     echo ""
     echo -e "${YELLOW}Note:${NC} If you later run 'task-master init', re-run this script"
     echo "to restore the template's Task Master config."
