@@ -1312,34 +1312,146 @@ Weekly and monthly agents are standalone — they read accumulated vault state, 
 
 ## 6. Operational Model
 
-### 6.1 Daily Cycle
+### 6.0 Where You Work
 
-| Time | What happens | Human involvement |
-|------|-------------|-------------------|
-| Throughout day | Session-end hooks write summaries to vault | None (automatic) |
-| Throughout day | Manual research notes added to Research/ | Optional |
-| 5:30 AM | Orchestrator starts overnight analysis | None (cron) |
-| 5:30-7:00 AM | Recursive analysis loop runs (3-5 cycles) | None |
-| 7:00 AM | Briefing written to vault | None |
-| Morning | Open Obsidian, read briefing, rate suggestions | ~5-10 minutes |
-| Work session start | session-init surfaces relevant suggestions for current project | None (automatic) |
-| Work session end | session-end writes summary to vault | None (automatic) |
+Three interfaces, three purposes:
 
-### 6.2 Weekly Cycle
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  OBSIDIAN (GUI)                                                  │
+│  ~/vault/                                                        │
+│                                                                  │
+│  You use this for:                                               │
+│  ├── Reading morning briefings        Briefings/daily/           │
+│  ├── Rating suggestions (👍/👎)        edit frontmatter inline    │
+│  ├── Writing journal entries          Journal/YYYY-MM-DD.md      │
+│  ├── Writing research notes           Research/topic/            │
+│  ├── Browsing literature library      Literature/@citekey.md     │
+│  ├── Reviewing weekly/monthly         Briefings/weekly|monthly/  │
+│  ├── Exploring the knowledge graph    Obsidian graph view        │
+│  └── Quick-capturing ideas            Inbox/                     │
+│                                                                  │
+│  You NEVER use this for: coding, git, running tests              │
+│  Agents NEVER need Obsidian open to work                         │
+└─────────────────────────────────────────────────────────────────┘
 
-| When | What happens |
-|------|-------------|
-| Sunday 6 AM | Weekly synthesis agent runs |
-| Sunday morning | Read weekly synthesis, review suggestion lifecycle, adjust priorities |
+┌─────────────────────────────────────────────────────────────────┐
+│  TERMINAL + CLAUDE CODE                                          │
+│  ~/projects/<project-name>/                                      │
+│                                                                  │
+│  You use this for:                                               │
+│  ├── All coding work (TDD, implementation)                       │
+│  ├── Claude Code sessions                                        │
+│  ├── Git operations (commit, push, PR)                           │
+│  ├── Task Master (task-master next, set-status)                  │
+│  ├── Running tests and linters                                   │
+│  └── Acting on briefing suggestions                              │
+│                                                                  │
+│  Automatic (no action needed):                                   │
+│  ├── session-init.sh surfaces relevant suggestions on start      │
+│  ├── session-end.js writes summary → vault sees via symlink      │
+│  └── All template hooks fire as normal                           │
+│                                                                  │
+│  You switch between projects normally:                           │
+│  cd ~/projects/persistent-homology && claude                     │
+│  cd ~/projects/project-template && claude                        │
+└─────────────────────────────────────────────────────────────────┘
 
-### 6.3 Monthly Cycle
+┌─────────────────────────────────────────────────────────────────┐
+│  BACKGROUND (cron, no interface)                                 │
+│  ~/projects/ris/orchestrator.sh                                  │
+│                                                                  │
+│  Runs autonomously:                                              │
+│  ├── 5:30 AM daily: overnight recursive analysis loop            │
+│  ├── 6:00 AM Sunday: weekly synthesis                            │
+│  ├── 6:00 AM 1st of month: monthly synthesis                     │
+│  └── All output written to ~/vault/ (you read in Obsidian)       │
+│                                                                  │
+│  You interact with this ONLY when:                               │
+│  ├── Registering a new project (register-project.sh)             │
+│  ├── Tuning agent prompts (edit Meta/agent-prompts/ in Obsidian) │
+│  └── Debugging orchestrator issues (read logs in Meta/)          │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-| When | What happens |
-|------|-------------|
-| 1st of month, 6 AM | Monthly synthesis agent runs |
-| 1st of month | Review monthly metrics, assess system health, tune agent prompts if needed |
+### 6.1 Daily Cycle (with interface)
 
-### 6.4 System Health Metrics
+| Time | What you do | Where | Automatic? |
+|------|------------|-------|-----------|
+| 5:30-7:00 AM | *Nothing — overnight loop runs* | Background (cron) | Yes |
+| Morning | Read today's briefing | **Obsidian** → Briefings/daily/ | No (~5 min) |
+| Morning | Rate suggestions (👍/👎) | **Obsidian** → edit frontmatter | No (~2 min) |
+| Morning | Check journal from last night | **Obsidian** → Journal/ | Optional |
+| Work start | `cd ~/projects/<name> && claude` | **Terminal** | session-init auto-surfaces suggestions |
+| Work | Code, test, commit | **Terminal** (Claude Code) | Hooks fire automatically |
+| Work end | Session ends naturally | **Terminal** | session-end.js writes to .claude/sessions/ → vault sees via symlink |
+| Evening | Write journal entry | **Obsidian** → Journal/ | Optional |
+| Evening | Add research notes | **Obsidian** → Research/ | Optional |
+| Evening | Rate any remaining suggestions | **Obsidian** → Briefings/daily/ | Optional |
+
+### 6.2 Weekly Cycle (with interface)
+
+| When | What you do | Where |
+|------|------------|-------|
+| Sunday 6 AM | *Weekly synthesis agent runs* | Background (cron) |
+| Sunday morning | Read weekly synthesis | **Obsidian** → Briefings/weekly/ |
+| Sunday morning | Review suggestion lifecycle (what was acted on, what staled) | **Obsidian** → Meta/suggestion-lifecycle.md |
+| Sunday morning | Adjust priorities for next week (optional journal entry) | **Obsidian** → Journal/ |
+
+### 6.3 Monthly Cycle (with interface)
+
+| When | What you do | Where |
+|------|------------|-------|
+| 1st of month, 6 AM | *Monthly synthesis agent runs* | Background (cron) |
+| 1st of month | Read monthly synthesis | **Obsidian** → Briefings/monthly/ |
+| 1st of month | Review system health metrics | **Obsidian** → Meta/convergence-log.md |
+| 1st of month | Tune agent prompts if needed | **Obsidian** → Meta/agent-prompts/ |
+
+### 6.4 Rare Operations (with interface)
+
+| When | What you do | Where |
+|------|------------|-------|
+| New project starts | `register-project.sh <name> <path>` | **Terminal** (one command) |
+| Prompt iteration | Run agent against vault snapshot, evaluate, adjust | **Terminal** (in ~/projects/ris/) |
+| System debugging | Check convergence-log, read agent outputs | **Obsidian** → Meta/ |
+| Zotero library update | Add papers, annotate, highlight | **Zotero** (desktop app) → ZotLit auto-syncs to vault |
+
+### 6.5 Filesystem Layout
+
+```
+~/
+├── vault/                              OBSIDIAN opens this
+│   ├── Projects/                       One folder per registered project
+│   │   ├── project-template/
+│   │   │   ├── sessions/ →            symlink to project's .claude/sessions/
+│   │   │   ├── status.md              vault-native (orchestrator writes)
+│   │   │   ├── architecture.md        vault-native (project agent writes)
+│   │   │   ├── analysis.md            vault-native (project agent writes)
+│   │   │   └── suggestions/active/    vault-native (composer writes)
+│   │   ├── persistent-homology/       same structure
+│   │   └── postiz/                    same structure
+│   ├── Journal/                        Your daily reflections
+│   ├── Research/                       Your research notes
+│   ├── Literature/                     Zotero → ZotLit auto-sync
+│   ├── Briefings/daily|weekly|monthly/ Agent output (you read here)
+│   ├── Meta/                           System config + agent prompts
+│   └── Inbox/                          Quick capture
+│
+├── projects/
+│   ├── project-template/               THE TEMPLATE
+│   ├── persistent-homology/            A PROJECT (uses template)
+│   ├── postiz_social_automation/       ANOTHER PROJECT
+│   └── ris/                            THE ORCHESTRATOR
+│       ├── orchestrator.sh             Cron entry point
+│       ├── register-project.sh         Symlink setup
+│       ├── lib/                        Trust, feedback, lifecycle scripts
+│       ├── CLAUDE.md                   RIS-specific instructions
+│       └── .claude/                    Template structure
+```
+
+Three repos, one vault, zero coupling beyond symlinks and file conventions.
+
+### 6.6 System Health Metrics
 
 Tracked in `Meta/convergence-log.md`:
 
