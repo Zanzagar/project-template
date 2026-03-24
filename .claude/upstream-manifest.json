@@ -9,14 +9,14 @@
     "verdict": "Adopt | Adapt (from audit)"
   },
   "_stats": {
-    "lastAudit": "2026-03-20",
-    "eccHeadAtAdoption": "1b21e08",
-    "totalAdopted": 44,
+    "lastAudit": "2026-03-24",
+    "eccHeadAtAdoption": "2166d80",
+    "totalAdopted": 128,
     "totalAdapted": 41,
     "byCategory": {
       "hookLibs": { "adopted": 8, "adapted": 1 },
       "hookScripts": { "adopted": 2, "adapted": 11 },
-      "skills": { "adopted": 13, "adapted": 9 },
+      "skills": { "adopted": 97, "adapted": 9, "note": "84 new ECC skills + 8 Anthropic Apache 2.0 skills imported 2026-03-24" },
       "commands": { "adopted": 13, "adapted": 3 },
       "agents": { "adopted": 4, "adapted": 9 },
       "rules": { "adopted": 0, "adapted": 6 },

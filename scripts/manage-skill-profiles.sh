@@ -35,17 +35,34 @@ fi
 # ─── Skill Category Definitions ──────────────────────────────────────────────
 
 declare -A CATEGORIES
-CATEGORIES[universal]="agentic-engineering ai-regression-testing api-design autonomous-loops backend-patterns blueprint claude-api code-review continuous-learning-v2 cost-aware-llm-pipeline debugging eval-harness eval-metrics git-recovery iterative-retrieval regex-vs-llm-structured-text search-first security-scan skill-stocktake strategic-compact tdd-workflow verification-loop"
-CATEGORIES[python]="python-patterns python-testing python-data-science python-django django-patterns django-security django-tdd django-verification"
-CATEGORIES[java]="java-springboot jpa-patterns spring-boot-tdd spring-boot-security springboot-verification"
+
+# Core workflow skills (language-agnostic)
+CATEGORIES[universal]="agentic-engineering ai-regression-testing api-design autonomous-loops backend-patterns benchmark blueprint claude-api code-review codebase-onboarding coding-standards context-budget continuous-learning-v2 cost-aware-llm-pipeline debugging deep-research design-system eval-harness eval-metrics git-recovery iterative-retrieval regex-vs-llm-structured-text rules-distill safety-guard search-first security-review security-scan skill-stocktake strategic-compact tdd-workflow verification-loop"
+
+# Language ecosystems
+CATEGORIES[python]="python-patterns python-testing python-data-science python-django django-patterns django-security django-tdd django-verification pytorch-patterns"
+CATEGORIES[java]="java-springboot java-coding-standards jpa-patterns spring-boot-tdd spring-boot-security springboot-verification"
 CATEGORIES[go]="golang-patterns golang-testing"
-CATEGORIES[typescript]="typescript-patterns"
+CATEGORIES[typescript]="typescript-patterns bun-runtime nextjs-turbopack nuxt4-patterns"
 CATEGORIES[cpp]="cpp-testing cpp-coding-standards"
-CATEGORIES[frontend]="frontend-design frontend-patterns e2e-testing webapp-testing web-artifacts-builder"
-CATEGORIES[database]="database-patterns database-migrations postgresql-patterns"
-CATEGORIES[infra]="docker-patterns deployment-patterns"
-CATEGORIES[creative]="algorithmic-art canvas-design theme-factory"
-CATEGORIES[authoring]="doc-coauthoring mcp-builder skill-creator"
+CATEGORIES[kotlin]="kotlin-patterns kotlin-testing kotlin-coroutines-flows kotlin-exposed-patterns kotlin-ktor-patterns"
+CATEGORIES[rust]="rust-patterns rust-testing"
+CATEGORIES[swift]="swift-actor-persistence swift-concurrency-6-2 swift-protocol-di-testing swiftui-patterns"
+CATEGORIES[perl]="perl-patterns perl-security perl-testing"
+CATEGORIES[laravel]="laravel-patterns laravel-security laravel-tdd laravel-verification"
+
+# Domain categories
+CATEGORIES[frontend]="frontend-design frontend-patterns e2e-testing webapp-testing web-artifacts-builder browser-qa click-path-audit frontend-slides liquid-glass-design"
+CATEGORIES[mobile]="android-clean-architecture compose-multiplatform-patterns flutter-dart-code-review foundation-models-on-device"
+CATEGORIES[database]="database-patterns database-migrations postgresql-patterns clickhouse-io"
+CATEGORIES[infra]="docker-patterns deployment-patterns dmux-workflows"
+CATEGORIES[creative]="algorithmic-art canvas-design theme-factory video-editing"
+CATEGORIES[authoring]="doc-coauthoring mcp-builder skill-creator architecture-decision-records"
+CATEGORIES[ai-ops]="agent-eval agent-harness-construction ai-first-engineering canary-watch continuous-agent-loop enterprise-agent-ops mcp-server-patterns prompt-optimizer santa-method plankton-code-quality content-hash-cache-pattern"
+CATEGORIES[media]="fal-ai-media videodb x-api exa-search"
+CATEGORIES[research]="article-writing content-engine crosspost deep-research investor-materials investor-outreach market-research product-lens"
+CATEGORIES[industry]="carrier-relationship-management customs-trade-compliance energy-procurement inventory-demand-planning logistics-exception-management nutrient-document-processing production-scheduling quality-nonconformance returns-reverse-logistics visa-doc-translate"
+CATEGORIES[meta]="claude-devfleet data-scraper-agent documentation-lookup nanoclaw-repl project-guidelines-example ralphinho-rfc-pipeline skill-comply team-builder"
 
 # ─── Named Profile Definitions ───────────────────────────────────────────────
 
@@ -54,11 +71,17 @@ PROFILES[minimal]="universal"
 PROFILES[python]="universal python database"
 PROFILES[java]="universal java database"
 PROFILES[go]="universal go"
+PROFILES[kotlin]="universal kotlin java database"
+PROFILES[rust]="universal rust"
+PROFILES[swift]="universal swift mobile"
 PROFILES[typescript]="universal typescript frontend"
 PROFILES[cpp]="universal cpp"
+PROFILES[laravel]="universal laravel database"
 PROFILES[fullstack]="universal python typescript frontend database infra"
 PROFILES[web]="universal python typescript frontend database infra"
-PROFILES[all]="universal python java go typescript cpp frontend database infra creative authoring"
+PROFILES[mobile-dev]="universal kotlin swift mobile"
+PROFILES[ai-engineer]="universal python ai-ops research"
+PROFILES[all]="universal python java go typescript cpp kotlin rust swift perl laravel frontend mobile database infra creative authoring ai-ops media research industry meta"
 
 # ─── Functions ────────────────────────────────────────────────────────────────
 
@@ -203,7 +226,7 @@ cmd_categories() {
     printf "${BOLD}Skill Categories${NC}\n"
     printf "════════════════════════════════════════════\n\n"
 
-    for cat in universal python java go typescript cpp frontend database infra creative authoring; do
+    for cat in universal python java go typescript cpp kotlin rust swift perl laravel frontend mobile database infra creative authoring ai-ops media research industry meta; do
         local skills="${CATEGORIES[$cat]}"
         local count
         count=$(echo "$skills" | wc -w)

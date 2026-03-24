@@ -106,9 +106,9 @@ for file in $STAGED_FILES; do
     filepath="$PROJECT_DIR/$file"
     [ -f "$filepath" ] || continue
 
-    # Skip hook/meta files that reference debug patterns as search targets
+    # Skip hook/meta files and skill docs that contain code examples
     case "$file" in
-        .claude/hooks/*) continue ;;
+        .claude/hooks/*|.claude/skills-available/*|.claude/skills/*) continue ;;
     esac
 
     # Check for debug statements
