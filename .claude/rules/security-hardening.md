@@ -26,7 +26,7 @@ Add these patterns to your Claude Code settings `permissions.deny` to block acce
 }
 ```
 
-These are recommendations — the `protect-sensitive-files.sh` hook provides runtime enforcement as a second layer.
+These patterns are enforced in `.claude/settings.json` (framework-level deny). The `protect-sensitive-files.sh` hook provides additional runtime enforcement as a second layer, covering Write/Edit operations and linter config tamper protection.
 
 ## Reverse Prompt Injection Guardrails
 
