@@ -110,6 +110,73 @@ count_tokens() {
     echo "$total"
 }
 
+# ─── Language → Related Components Map ────────────────────────────────────────
+
+# Maps profile categories to related commands, agents, and rule directories
+# Format: "commands|agents|rules-dir"
+declare -A RELATED
+RELATED[python]="/python-review|python-reviewer|python"
+RELATED[java]="/gradle-build|java-reviewer,java-build-resolver|java"
+RELATED[go]="/go-build,/go-review,/go-test|go-reviewer,go-build-resolver|golang"
+RELATED[kotlin]="/kotlin-build,/kotlin-review,/kotlin-test,/gradle-build|kotlin-reviewer,kotlin-build-resolver|kotlin"
+RELATED[rust]="/rust-build,/rust-review,/rust-test|rust-reviewer,rust-build-resolver|rust"
+RELATED[cpp]="/cpp-build,/cpp-review,/cpp-test|cpp-reviewer,cpp-build-resolver|cpp"
+RELATED[typescript]="—|typescript-reviewer|typescript"
+RELATED[swift]="—|—|swift"
+RELATED[perl]="—|—|perl"
+RELATED[laravel]="—|—|php"
+RELATED[frontend]="/e2e,/accessibility-audit|ui-visual-validator,e2e-runner|frontend"
+RELATED[ops]="/incident-response,/monitor-setup,/slo-implement,/smart-fix|incident-responder,devops-troubleshooter,observability-engineer,kubernetes-architect|—"
+RELATED[database]="—|database-reviewer,database-optimizer|—"
+RELATED[mobile]="—|flutter-reviewer|—"
+
+show_related_components() {
+    local profile_name="$1"
+    local cats=""
+
+    # Resolve profile to categories
+    if [ -n "${PROFILES[$profile_name]:-}" ]; then
+        cats="${PROFILES[$profile_name]}"
+    elif [[ "$profile_name" == custom:* ]]; then
+        cats="universal $(echo "$profile_name" | sed 's/^custom://' | tr ',' ' ')"
+    else
+        return
+    fi
+
+    local has_related=false
+    local related_cmds="" related_agents="" related_rules=""
+
+    for cat in $cats; do
+        [ "$cat" = "universal" ] && continue
+        local rel="${RELATED[$cat]:-}"
+        [ -z "$rel" ] && continue
+
+        local cmds agents rules_dir
+        cmds=$(echo "$rel" | cut -d'|' -f1)
+        agents=$(echo "$rel" | cut -d'|' -f2)
+        rules_dir=$(echo "$rel" | cut -d'|' -f3)
+
+        [ "$cmds" != "—" ] && [ -n "$cmds" ] && related_cmds="$related_cmds $cmds"
+        [ "$agents" != "—" ] && [ -n "$agents" ] && related_agents="$related_agents $agents"
+        [ "$rules_dir" != "—" ] && [ -n "$rules_dir" ] && related_rules="$related_rules $rules_dir"
+    done
+
+    # Clean up and deduplicate
+    related_cmds=$(echo "$related_cmds" | tr ',' '\n' | tr ' ' '\n' | sort -u | grep -v '^$' | tr '\n' ' ' || true)
+    related_agents=$(echo "$related_agents" | tr ',' '\n' | tr ' ' '\n' | sort -u | grep -v '^$' | tr '\n' ' ' || true)
+    related_rules=$(echo "$related_rules" | tr ',' '\n' | tr ' ' '\n' | sort -u | grep -v '^$' | tr '\n' ' ' || true)
+
+    if [ -n "$related_cmds" ] || [ -n "$related_agents" ] || [ -n "$related_rules" ]; then
+        printf "\n${BOLD}Your toolkit:${NC}\n"
+        [ -n "$related_cmds" ] && printf "  ${BLUE}Commands:${NC}  %s\n" "$related_cmds"
+        [ -n "$related_agents" ] && printf "  ${BLUE}Agents:${NC}    %s\n" "$related_agents"
+        [ -n "$related_rules" ] && printf "  ${BLUE}Rules:${NC}     %s\n" "$(echo $related_rules | sed 's/ /, /g') (auto-load via paths:)"
+    fi
+
+    # Always show universal toolkit
+    printf "  ${BLUE}Universal:${NC} /plan /tdd /test /lint /commit /pr /code-review /verify /brainstorm\n"
+}
+
 activate_skills() {
     local skills="$1"
     local profile_name="$2"
@@ -135,6 +202,9 @@ activate_skills() {
     local tokens
     tokens=$(count_tokens "$skills")
     printf "${GREEN}✓${NC} Activated ${BOLD}%d${NC} skills (profile: ${BOLD}%s${NC}, ~%d metadata tokens)\n" "$count" "$profile_name" "$tokens"
+
+    # Show related components (commands, agents, rules)
+    show_related_components "$profile_name"
 }
 
 cmd_set() {
@@ -249,10 +319,52 @@ if [ ! -d "$SKILLS_AVAILABLE" ]; then
     exit 1
 fi
 
+cmd_toolkit() {
+    local profile
+    profile=$(cat "$SKILLS_ACTIVE/.profile" 2>/dev/null || echo "none")
+
+    if [ "$profile" = "none" ]; then
+        printf "${RED}No profile set.${NC} Run: $0 set <profile>\n"
+        return
+    fi
+
+    printf "${BOLD}Your Toolkit${NC} (profile: ${BOLD}%s${NC})\n" "$profile"
+    printf "════════════════════════════════════════════\n"
+    show_related_components "$profile"
+    printf "\n"
+
+    # Show active skill count
+    local count
+    count=$(find "$SKILLS_ACTIVE" -maxdepth 1 -type l 2>/dev/null | wc -l)
+    printf "${BOLD}Active skills:${NC} %d\n" "$count"
+
+    # Show all agents (always available)
+    local agents_dir="$PROJECT_DIR/.claude/agents"
+    if [ -d "$agents_dir" ]; then
+        printf "${BOLD}Available agents:${NC} %d (always available regardless of profile)\n" "$(ls "$agents_dir"/*.md 2>/dev/null | wc -l)"
+    fi
+
+    # Show all commands
+    local cmds_dir="$PROJECT_DIR/.claude/commands"
+    if [ -d "$cmds_dir" ]; then
+        printf "${BOLD}Available commands:${NC} %d (always available regardless of profile)\n" "$(ls "$cmds_dir"/*.md 2>/dev/null | wc -l)"
+    fi
+
+    # Show rules
+    local rules_dir="$PROJECT_DIR/.claude/rules"
+    if [ -d "$rules_dir" ]; then
+        local core_rules lang_dirs
+        core_rules=$(ls "$rules_dir"/*.md 2>/dev/null | wc -l)
+        lang_dirs=$(ls -d "$rules_dir"/*/ 2>/dev/null | wc -l)
+        printf "${BOLD}Rules:${NC} %d core (always) + %d language dirs (auto-load via paths:)\n" "$core_rules" "$lang_dirs"
+    fi
+}
+
 case "${1:-help}" in
     set)      cmd_set "${2:-}" ;;
     list)     cmd_list ;;
     current)  cmd_current ;;
+    toolkit)  cmd_toolkit ;;
     categories) cmd_categories ;;
     help|--help|-h)
         printf "Usage: $0 <command> [args]\n\n"
@@ -260,6 +372,7 @@ case "${1:-help}" in
         printf "  set <profile|cats>  Activate a skill profile (minimal/python/java/go/fullstack/all)\n"
         printf "  list                Show available profiles with token costs\n"
         printf "  current             Show currently active profile\n"
+        printf "  toolkit             Show your full toolkit (commands, agents, rules for active profile)\n"
         printf "  categories          Show all skill categories and their skills\n"
         ;;
     *)
