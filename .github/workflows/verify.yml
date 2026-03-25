@@ -74,10 +74,14 @@ jobs:
       - name: Run linter
         run: ruff check .
 
-      # Stage 4: Type check
+      # Stage 4: Type check (skip if no src/ — expected for fresh template)
       - name: Run type checker
-        run: mypy src/ --ignore-missing-imports
-        continue-on-error: true
+        run: |
+          if [ -d "src" ]; then
+            mypy src/ --ignore-missing-imports
+          else
+            echo "Type check: SKIP (no src/ directory)"
+          fi
 
       # Stage 5: Security scan (optional — bandit may not be installed)
       - name: Run security scan
