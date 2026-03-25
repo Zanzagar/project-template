@@ -48,6 +48,7 @@ mypy src/
 ## Key Decisions & Constraints
 
 <!-- Document important architectural decisions -->
+- Agent model routing: haiku for lightweight tasks (observer, doc-updater), sonnet for code review and builds, opus for architecture planning
 - Example: "Package-first: Core code in `src/`, notebooks for demos"
 - Example: "All database queries go through the repository layer"
 

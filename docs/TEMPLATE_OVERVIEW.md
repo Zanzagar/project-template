@@ -1,8 +1,8 @@
-# Project Template v2.5.0: An AI-Augmented Software Engineering Framework
+# Project Template v2.6.0: An AI-Augmented Software Engineering Framework
 
 **Author:** Corey Hoydic
-**Version:** 2.5.0
-**Date:** March 20, 2026
+**Version:** 2.6.0
+**Date:** March 24, 2026
 **Repository:** github.com/Zanzagar/project-template
 
 ---
@@ -13,17 +13,18 @@ This template transforms Claude Code from a reactive code-completion tool into a
 
 | Component | Count | Loading | Startup Cost |
 |-----------|-------|---------|--------------|
-| Agents | 14 | On invocation | 0 |
-| Skills | 48 | On relevance | 0 |
-| Commands | 56 | On `/command` | 0 |
-| Rules | 17 | 11 always + 6 on file edit | ~6K |
+| Agents | 40 | Description always (~2.4K) | ~2.4K |
+| Skills | 153 (via profiles) | Metadata for active profile | ~3-25K |
+| Commands | 88 | On `/command` | 0 |
+| Rules | 68 | 11 core always + 57 language on file edit | ~19K |
 | Hooks | 22 | On event trigger | 0 |
 | MCP tools | 6 (recommended) | Always | ~3K |
 | Superpowers | 13 skills | Always | ~3-5K |
-| **Startup total** | | | **~35-40K** |
-| **Working context** | | | **~160-165K** |
+| **Startup total (minimal profile)** | | | **~30-35K** |
+| **Startup total (all profile)** | | | **~55-60K** |
+| **Working context (minimal)** | | | **~145K** |
 
-**v2.5.0 adds:** Hook profile system (minimal/standard/strict), quality gate consolidation, usage telemetry, file size enforcement for source code, deterministic harness scoring (70-point scale), OWASP Agentic Top 10 security mapping, secret scrubbing in observations, three new skills (agentic-engineering, autonomous-loops, eval-metrics), and two new commands (/model-route, /harness-audit).
+**v2.6.0 adds:** Skill profile system (15 named profiles, 22 categories), 84 ECC skill imports, 13 ops plugin skills, Anthropic document-skills plugin (PDF/DOCX/PPTX/XLSX), 26 new agents, 32 new commands, 51 language-specific rule files across 6 new languages (C#, Kotlin, Perl, PHP, Rust, Swift), and toolkit discovery for skill profiles.
 
 ---
 
@@ -109,17 +110,17 @@ The template operates in five layers. Information flows upward; authority flows 
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  AGENTS (14)        Isolated context windows                │
+│  AGENTS (40)        Isolated context windows                │
 │  Opus (reasoning) · Sonnet (frequent) · Haiku (lightweight) │
 ├─────────────────────────────────────────────────────────────┤
-│  COMMANDS (56)      User-invocable workflows                │
+│  COMMANDS (88)      User-invocable workflows                │
 │  /plan, /tdd, /verify, /pr, /orchestrate, /brainstorm      │
 ├─────────────────────────────────────────────────────────────┤
-│  SKILLS (48)        Domain knowledge, loaded on relevance   │
-│  python-testing, api-design, eval-harness, tdd-workflow     │
+│  SKILLS (153)       Domain knowledge, profile-managed       │
+│  22 categories · 15 named profiles · minimal→all            │
 ├─────────────────────────────────────────────────────────────┤
-│  RULES (17)         Behavioral constraints, auto-loaded     │
-│  Commit format, TDD workflow, phase detection, security     │
+│  RULES (68)         Behavioral constraints, auto-loaded     │
+│  11 core + 57 language rules across 12 directories          │
 ├─────────────────────────────────────────────────────────────┤
 │  HOOKS (22)         Event-driven automation                 │
 │  Format, guard, track, persist — 3 profile tiers            │
@@ -547,7 +548,9 @@ The template changes this:
 
 ## Component Inventory
 
-### Agents (14)
+### Agents (40)
+
+**Original (14):**
 
 | Agent | Model | Purpose |
 |-------|-------|---------|
@@ -566,9 +569,13 @@ The template changes this:
 | doc-updater | Haiku | README, docstrings, API docs, CHANGELOG |
 | observer | Haiku | Background pattern analysis, instinct creation |
 
-### Rules (17)
+**ECC Import (15):** cpp-reviewer, cpp-build-resolver, rust-reviewer, rust-build-resolver, java-reviewer, java-build-resolver, kotlin-reviewer, kotlin-build-resolver, typescript-reviewer, flutter-reviewer, pytorch-build-resolver, debugger, error-detective, harness-optimizer, loop-operator
 
-**Core (11, always loaded, ~6K tokens):**
+**Ops Plugins (11):** kubernetes-architect, network-engineer, incident-responder, devops-troubleshooter, observability-engineer, performance-engineer, database-optimizer, chief-of-staff, docs-lookup, test-automator, ui-visual-validator
+
+### Rules (68)
+
+**Core (11, always loaded, ~19K tokens):**
 
 | Rule | Governs |
 |------|---------|
@@ -584,71 +591,75 @@ The template changes this:
 | taskmaster-usage.md | CLI vs MCP matrix, flags, timeouts, token-conscious task viewing |
 | security-hardening.md | Deny lists, prompt injection guardrails, PR audit, OWASP mapping |
 
-**Language-specific (6, loaded on file edit, 0 startup tokens):**
+**Language-specific (57 files across 12 directories, loaded on file edit, 0 startup tokens):**
 
-| Rule | Trigger Files |
-|------|--------------|
-| python/coding-standards.md | `.py` |
-| typescript/coding-standards.md | `.ts`, `.tsx`, `.js`, `.jsx` |
-| golang/coding-standards.md | `.go` |
-| java/coding-standards.md | `.java` |
-| frontend/component-standards.md | `.jsx`, `.tsx`, `.vue`, `.svelte` |
-| frontend/workflow.md | `.jsx`, `.tsx`, `.vue`, `.svelte`, `.css` |
+| Directory | Files | Trigger | Topics |
+|-----------|-------|---------|--------|
+| python/ | 5 | `.py` | coding-standards, testing, security, patterns, hooks |
+| typescript/ | 5 | `.ts`, `.tsx`, `.js`, `.jsx` | coding-standards, testing, security, patterns, hooks |
+| golang/ | 5 | `.go` | coding-standards, testing, security, patterns, hooks |
+| java/ | 5 | `.java` | coding-standards, testing, security, patterns, hooks |
+| cpp/ | 5 | `.cpp`, `.hpp`, `.h` | coding-standards, testing, security, patterns, hooks |
+| rust/ | 5 | `.rs` | coding-style, testing, security, patterns, hooks |
+| kotlin/ | 5 | `.kt`, `.kts` | coding-standards, testing, security, patterns, hooks |
+| swift/ | 5 | `.swift` | coding-standards, testing, security, patterns, hooks |
+| csharp/ | 5 | `.cs` | coding-standards, testing, security, patterns, hooks |
+| php/ | 5 | `.php` | coding-standards, testing, security, patterns, hooks |
+| perl/ | 5 | `.pl`, `.pm` | coding-standards, testing, security, patterns, hooks |
+| frontend/ | 2 | `.jsx`, `.tsx`, `.vue`, `.svelte` | component-standards, workflow |
 
-### Skills (48)
+### Skills (153)
 
-| Skill | Description |
-|-------|-------------|
-| tdd-workflow | RED-GREEN-REFACTOR patterns, coverage thresholds, Arrange-Act-Assert |
-| verification-loop | 6-phase verification: build → types → lint → test → security → diff |
-| debugging | Systematic debugging: reproduce → diagnose → fix |
-| code-review | Quality, security, and maintainability review patterns |
-| git-recovery | Emergency recovery: lost commits, merge conflicts, detached HEAD |
-| iterative-retrieval | Progressive context refinement for large codebases |
-| search-first | Research-before-coding: search for existing tools and patterns |
-| python-patterns | Python idioms, type hints (3.9+), async/await, dataclasses, pathlib |
-| python-testing | pytest strategies, fixtures, mocking, parametrization, coverage |
-| python-django | Django ORM, middleware, signals, admin, DRF patterns |
-| python-data-science | NumPy, pandas, scikit-learn, matplotlib, Jupyter, geostatistics |
-| django-patterns | Django architecture, REST API design with DRF |
-| django-security | Authentication, CSRF, SQL injection prevention, secure deployment |
-| django-tdd | pytest-django, TestCase, factory_boy, DRF APIClient testing |
-| django-verification | System checks, manage.py check --deploy, migration verification |
-| typescript-patterns | Strict mode, generics, utility types, discriminated unions |
-| golang-patterns | Idiomatic Go, error handling, interface design, concurrency |
-| golang-testing | Table-driven tests, subtests, benchmarks, fuzzing, coverage |
-| java-springboot | Spring Boot, dependency injection, JPA/Hibernate, actuator |
-| spring-boot-security | Spring Security, OAuth2/JWT, CORS, CSRF, filter chains |
-| spring-boot-tdd | JUnit 5, Mockito, @WebMvcTest, @DataJpaTest, TestContainers |
-| springboot-verification | Build, static analysis, tests, security scans for Spring Boot |
-| jpa-patterns | Entity mapping, lazy/eager loading, N+1 prevention, @EntityGraph |
-| cpp-coding-standards | C++ Core Guidelines, modern safe idioms |
-| cpp-testing | GoogleTest, CTest, sanitizers, coverage, benchmarks |
-| frontend-patterns | React/Vue/Svelte, state management, accessibility, performance |
-| frontend-design | Distinctive production-grade UI, avoids generic AI aesthetics |
-| api-design | REST resource naming, status codes, pagination, versioning |
-| backend-patterns | Caching, message queues, service communication, resilience |
-| database-patterns | SQL optimization, indexing, N+1 prevention, connection pooling |
-| database-migrations | Schema changes, data migrations, rollbacks, zero-downtime |
-| postgresql-patterns | EXPLAIN ANALYZE, B-tree/GIN/GiST indexes, JSONB, partitioning |
-| docker-patterns | Docker Compose, container security, networking, volumes |
-| deployment-patterns | CI/CD pipelines, health checks, rollback strategies |
-| security-scan | AgentShield auditing: CLAUDE.md secrets, MCP, hooks, agents |
-| e2e-testing | Playwright Page Object Model, CI/CD integration, flaky tests |
-| ai-regression-testing | Sandbox-mode API testing, AI blind spot detection |
-| eval-harness | Eval-driven development: pass@k capability, pass^k regression |
-| eval-metrics | Development (pass@k) and production (pass^k) evaluation frameworks |
-| agentic-engineering | Eval-first AI coding: task decomposition, capability-based model routing |
-| autonomous-loops | Non-interactive agent patterns: pipelines, de-sloppify, PR loops |
-| continuous-learning-v2 | Instinct-based learning with confidence scoring and evolution |
-| skill-stocktake | Quality audit of skills and commands (Quick Scan + Full Stocktake) |
-| blueprint | Multi-session construction plans with cold-start step briefs |
-| strategic-compact | Manual compaction at logical intervals for context preservation |
-| cost-aware-llm-pipeline | LLM cost optimization: model routing, budget tracking, caching |
-| claude-api | Claude API patterns: Messages, streaming, tool use, batches |
-| regex-vs-llm-structured-text | Decision framework: regex vs LLM for structured text parsing |
+Skills live in `.claude/skills-available/` and are symlinked into `.claude/skills/` by the active profile. Use `./scripts/manage-skill-profiles.sh list` for the full inventory.
 
-### Commands (56)
+**By category (22 categories):**
+
+| Category | Skills | Example Skills |
+|----------|--------|----------------|
+| Universal | 31 | tdd-workflow, verification-loop, debugging, code-review, git-recovery, search-first, blueprint, strategic-compact |
+| Python | 5 | python-patterns, python-testing, python-django, python-data-science |
+| Django | 4 | django-patterns, django-security, django-tdd, django-verification |
+| TypeScript | 1 | typescript-patterns |
+| Go | 2 | golang-patterns, golang-testing |
+| Java/Spring | 5 | java-springboot, spring-boot-security, spring-boot-tdd, jpa-patterns |
+| C++ | 2 | cpp-coding-standards, cpp-testing |
+| Rust | 3 | rust-review, rust-build, rust-test |
+| Kotlin | 3 | kotlin-review, kotlin-build, kotlin-test |
+| Flutter | 1 | flutter-review (via agent) |
+| Frontend | 3 | frontend-patterns, frontend-design, e2e-testing |
+| Database | 3 | database-patterns, database-migrations, postgresql-patterns |
+| API/Backend | 2 | api-design, backend-patterns |
+| DevOps | 2 | docker-patterns, deployment-patterns |
+| Security | 2 | security-scan, security-review |
+| AI/Eval | 6 | eval-harness, eval-metrics, agentic-engineering, ai-regression-testing, autonomous-loops, cost-aware-llm-pipeline |
+| Learning | 3 | continuous-learning-v2, skill-stocktake, codebase-onboarding |
+| Ops | 5 | incident-response, accessibility-audit, monitor-setup, slo-implement |
+| Session | 4 | save-session, resume-session, checkpoint, aside |
+| Documentation | 2 | update-docs, update-codemaps |
+| Build | 4 | build-fix, go-build, cpp-build, gradle-build |
+| Multi-model | 3 | multi-plan, multi-execute, multi-workflow |
+
+**By source:**
+
+| Source | Count | Notes |
+|--------|-------|-------|
+| Original template | 48 | Core workflow + domain skills |
+| ECC v1.9.0 import | 84 | Deduplicated, 41 overlaps skipped |
+| Anthropic skills (Apache 2.0) | 8 | Adopted from plugin cache |
+| Ops plugins (wshobson) | 13 | K8s, incident response, observability, accessibility |
+
+**Plugin skills (proprietary, not redistributed):**
+
+| Skill | Plugin | Purpose |
+|-------|--------|---------|
+| pdf | document-skills@anthropic-agent-skills | PDF creation, extraction, merge/split, OCR |
+| docx | document-skills@anthropic-agent-skills | Word document creation and manipulation |
+| pptx | document-skills@anthropic-agent-skills | PowerPoint presentation generation |
+| xlsx | document-skills@anthropic-agent-skills | Excel spreadsheet processing |
+
+### Commands (88)
+
+**Original (56)** shown below. **ECC import (27)** added: /smart-fix, /rust-review, /rust-build, /rust-test, /kotlin-review, /kotlin-build, /kotlin-test, /cpp-review, /cpp-build, /cpp-test, /go-test, /prompt-optimize, /claw, /devfleet, /benchmark, /design-system, /deep-research, /context-budget, /loop-start, /loop-status, /skill-health, /projects, /promote, /prune, /docs, /pm2, /gradle-build. **Ops plugins (5)** added: /incident-response, /accessibility-audit, /monitor-setup, /slo-implement, /e2e.
 
 | Command | Description |
 |---------|-------------|
@@ -783,6 +794,39 @@ Major infrastructure release adding:
 - **Security hardening** — OWASP Agentic Top 10 mapping, config tamper guard, secret scrubbing in observations
 - **Three new skills** — agentic-engineering, autonomous-loops, eval-metrics
 - **Two new commands** — `/model-route`, `/harness-audit`
+
+### v2.6.0: Skill Profiles & Ecosystem Expansion
+
+The largest single expansion in template history, tripling the component count through structured imports and a new profile system to manage the resulting complexity.
+
+**Skill profile system:**
+- Moved all skills from `.claude/skills/` to `.claude/skills-available/` (git-tracked source of truth)
+- `.claude/skills/` now contains symlinks managed by `scripts/manage-skill-profiles.sh`
+- 15 named profiles (minimal, python, go, java, fullstack, all, etc.) across 22 categories
+- `minimal` profile: 31 skills, ~3K metadata tokens. `all` profile: 153 skills, ~25K metadata tokens
+- `toolkit` command shows related commands, agents, and rules per profile
+- `TEMPLATE_SKILL_PROFILE` env var controls activation; `session-init.sh` recreates symlinks on fresh sessions
+
+**ECC v1.9.0 import (84 skills, 15 agents, 27 commands):**
+- Shallow-cloned ECC at commit `2166d80`, deduplicated against existing inventory
+- Skipped 41 skill duplicates, 12 agent duplicates, 33 command duplicates
+- Added language-specific build resolvers (Rust, Kotlin, C++, Java, Go) and reviewers
+- Added multi-model commands (smart-fix, devfleet, claw) and session utilities
+
+**Language rules expansion (51 new files, 6 new directories):**
+- New languages: C#, Kotlin, Perl, PHP, Rust, Swift (5 rules each: coding-standards, testing, security, patterns, hooks)
+- Deepened existing languages: Python, Go, Java, TypeScript, C++ (added testing, security, hooks, patterns)
+- All use `paths:` frontmatter — zero startup cost when not editing that language
+
+**Ops plugins (13 skills, 11 agents, 5 commands):**
+- Extracted from wshobson/agents: accessibility-compliance, incident-response, observability-monitoring, kubernetes-operations
+- New `ops` profile category covering K8s, Helm, GitOps, Prometheus, Grafana, SLOs, WCAG
+
+**Anthropic document-skills plugin:**
+- 4 proprietary skills (PDF, DOCX, PPTX, XLSX) via `/plugin marketplace add anthropics/skills`
+- 8 Apache 2.0 example skills adopted into template, 3 Anthropic-specific deleted, 2 conflicting removed
+
+**CI fixes:** Excluded `skills-available/` from ruff linting; skip mypy when `src/` doesn't exist.
 
 ### Project-Type Presets
 
