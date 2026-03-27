@@ -4,42 +4,32 @@ IMPORTANT: Each subtask you generate MUST include ALL of the following sections 
 
 ### 1. ACCEPTANCE CRITERIA (checkbox format)
 Write 3-7 checkbox acceptance criteria. Each criterion MUST be specific and measurable:
-- For API tasks: include exact HTTP methods, status codes, and response body shapes (e.g., "POST /api/v1/auth/verify-email returns 200 with {message: ...}")
-- For data tasks: include exact field names, types, and enum values (e.g., "sets user.email_verified = True")
-- For UI tasks: include exact user interactions, component states, and accessibility requirements
-- For infrastructure tasks: include exact config keys, service names, and validation commands
-- Include time thresholds where relevant (e.g., "token expires in 24 hours", "response < 200ms")
-- Include edge cases with specific error codes (e.g., "expired token returns 400 with descriptive error")
+- Include exact names: field names, function signatures, config keys, endpoints, CLI flags — whatever is concrete for this domain
+- Include exact values: status codes, thresholds, enum values, expected outputs, error messages
+- Include edge cases: what happens on invalid input, timeout, empty state, boundary conditions
 - NEVER write generic criteria like "works correctly" or "handles errors properly"
+- Each criterion should be independently verifiable by running a test or checking an output
 
 Format:
-- [ ] [Specific, measurable criterion with concrete values]
+- [ ] [Specific, measurable criterion with concrete names and values]
 
 ### 2. SCOPE
 State explicitly what is IN scope and OUT of scope for this subtask:
-- In Scope: [specific components, endpoints, files, or behaviors this subtask covers]
+- In Scope: [specific components, modules, or behaviors this subtask covers]
 - Out of Scope: [related work explicitly excluded — reference sibling subtasks by name when applicable]
 
 ### 3. BUSINESS CONTEXT
 One sentence explaining WHY this subtask matters to the product or user. Not what it does, but why it exists.
 
-### 4. CODE PATTERNS TO FOLLOW
-Reference existing implementations in the codebase that this subtask should mirror:
-- Name specific functions, classes, or files as templates
-- Specify the architectural pattern to follow (e.g., "service layer isolation: logic in auth_service.py, not route handler")
-- If no existing patterns exist, state the convention to establish
-- Only reference files you are confident exist — do not guess at paths
-
-### 5. TECHNICAL CONSTRAINTS
-List hard constraints that narrow implementation choices:
-- Required libraries or services to use (and which NOT to use)
-- Performance requirements (response time, throughput)
-- Security requirements (auth, validation, encryption)
-- Compatibility requirements (existing schema, API contracts)
+### 4. IMPLEMENTATION HINTS (optional, only when non-obvious)
+Only include this section when the implementation approach is non-obvious or when the parent task or PRD specifies a required approach. Skip this section entirely for straightforward subtasks.
+- Name a specific existing function, class, or module to use as a reference pattern — but ONLY if you are confident it exists. Do not guess.
+- State any required library, service, or API that MUST be used (when specified by the PRD or parent task)
+- If nothing non-obvious needs to be said, omit this section
 
 ## Quality Rules
-- Every field name, endpoint, status code, or threshold mentioned must be specific — never placeholder or generic
+- Every name, value, and threshold mentioned must be specific to THIS project — never placeholder or generic
 - If the parent task references a PRD, use PRD-level specificity in the criteria
 - Subtasks should be independently implementable — each one produces a working, testable increment
 - Prefer fewer, richer subtasks over many thin ones
-- When unsure about file paths, describe the module/component instead of guessing a path
+- Do not restate coding standards, security practices, or testing requirements that are already enforced by project rules — focus on what is unique to THIS subtask
