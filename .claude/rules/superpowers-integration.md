@@ -1,4 +1,4 @@
-<!-- template-version: 2.5.0 -->
+<!-- template-version: 2.7.0 -->
 <!-- template-file: .claude/rules/superpowers-integration.md -->
 <!-- superpowers-compat: v5.0.0+ -->
 # Superpowers + Task Master Integration
@@ -19,7 +19,7 @@ Every non-trivial task follows this pipeline:
 3. SPECIFY   → /prd-generate or manual PRD (create .taskmaster/docs/prd_*.txt)
 4. DECOMPOSE → task-master parse-prd --input=<file> --num-tasks=0
 5. ANALYZE   → task-master analyze-complexity (research task difficulty)
-6. EXPAND    → task-master expand (guided by complexity analysis)
+6. EXPAND    → task-master expand --prompt (guided by complexity analysis + quality prompt)
 7. IMPLEMENT → superpowers:test-driven-development (RED-GREEN-REFACTOR per task)
 8. REVIEW    → superpowers:requesting-code-review
 9. SHIP      → superpowers:finishing-a-development-branch
@@ -37,7 +37,7 @@ Every non-trivial task follows this pipeline:
 4. **Create a PRD** from the brainstorming output + validation findings using `/prd-generate` or manually write it to `.taskmaster/docs/prd_<slug>.txt`. Include a **Technical Constraints** section with validated API limits, library versions, known issues.
 5. **Parse the PRD** into Task Master: `task-master parse-prd --input=<file> --num-tasks=0`
 6. **Analyze complexity**: `task-master analyze-complexity`
-7. **Expand tasks** guided by the complexity report: `task-master expand --id=<id>` for tasks flagged as complex
+7. **Expand tasks** guided by the complexity report: `task-master expand --id=<id> --prompt="$(cat .taskmaster/prompts/quality-expand.txt)" --force` for tasks flagged as complex. The quality prompt produces subtasks with checkbox acceptance criteria, scope boundaries, business context, code patterns, and technical constraints.
 8. **Then implement** using Superpowers TDD per task
 
 **Why:** The brainstorming design doc captures the *what* and *why*. Technical validation catches broken assumptions before they're baked into the PRD. The PRD structures both for Task Master consumption. Dogfood testing showed that skipping validation caused mid-implementation discovery of API bugs, rate limits, and preferred integration methods — all of which should have been known before writing the PRD.
@@ -76,10 +76,25 @@ Design docs and PRDs are related but distinct: the design doc captures the valid
 1. `task-master parse-prd` → creates top-level tasks
 2. `task-master analyze-complexity` → produces a complexity report
 3. Review the report — it recommends which tasks need expansion and how deep
-4. `task-master expand --id=<id>` for each task flagged as needing subtasks
+4. `task-master expand --id=<id> --prompt="$(cat .taskmaster/prompts/quality-expand.txt)" --force` for each task flagged as needing subtasks
 5. Simple tasks (complexity < 5) may not need subtasks at all
 
 This prevents over-decomposition of simple tasks and under-decomposition of complex ones.
+
+### Quality Expand Prompt
+
+The file `.taskmaster/prompts/quality-expand.txt` injects structure requirements into subtask generation. Every subtask produced will include:
+
+1. **Checkbox acceptance criteria** — measurable, with HTTP codes/field names/thresholds
+2. **Scope boundaries** — explicit in-scope/out-of-scope per subtask
+3. **Business context** — why the subtask matters to the product
+4. **Code patterns** — existing implementations to follow as templates
+5. **Technical constraints** — hard limits on implementation choices
+
+This was validated against Hamster Studio's task quality (76/100 → TM with quality prompt matched or exceeded). The prompt file is the single highest-leverage improvement for task quality — always use it with expand.
+
+**Without the prompt:** Generic subtasks with prose descriptions and vague test strategies.
+**With the prompt:** Implementation-ready subtasks that an agent can execute with minimal clarification.
 
 ## Superpowers Skills: When to Use Each
 
