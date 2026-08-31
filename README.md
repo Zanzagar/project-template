@@ -1,5 +1,14 @@
 # Project Template
 
+> [!WARNING]
+> **DEPRECATED (2026-08-31).** This template has been retired after a full workflow audit in the Claude Fable 5 era.
+> It has been removed from all projects that used it. Its successor is the lean
+> [`claude-harness`](https://github.com/Zanzagar/claude-harness) standard (12 vendored skills, permissions
+> snippet, per-project adoption matrix). The `research/` directory here — including `10-PRINCIPLES-AUDIT.md`,
+> whose conclusions the retirement audit independently confirmed — is preserved as the rationale record.
+> Rollback archives of the removed per-project installs: `~/projects/.detemplate-archive/`.
+
+
 A standardized project template optimized for **Claude Code** development.
 
 ## Design Philosophy
