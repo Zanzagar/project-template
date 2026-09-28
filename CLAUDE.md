@@ -1,5 +1,7 @@
 # Project: [PROJECT_NAME]
 
+@AGENTS.md
+
 [One-line description of what this project does]
 
 ## Tech Stack
